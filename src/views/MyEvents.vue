@@ -1,78 +1,18 @@
 <template>
   <div class="me-root">
 
-    <!-- ── Sticky topbar ── -->
+    <!-- ── Topbar ── -->
     <nav class="me-topbar">
       <div class="me-topbar-inner">
-        <div class="me-topbar-left">
-          <div class="me-brand" @click="$router.push('/')">
-            <span class="me-brand-glyph">✦</span>
-            <span class="me-brand-name">Haflaway</span>
-          </div>
-          <span class="me-bc-sep">/</span>
-          <span class="me-bc-page">My Events</span>
-        </div>
-        <div class="me-topbar-right">
-          <div class="me-admin-wrap" ref="adminWrapRef">
-            <button class="me-admin-pill" @click="showAdminDropdown = !showAdminDropdown">
-              <span class="me-admin-dot" />
-              <span class="me-admin-label">Admin · {{ userDisplayName }}</span>
-              <svg class="me-admin-chevron" :class="{ 'me-admin-chevron--open': showAdminDropdown }" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
-            <div v-if="showAdminDropdown" class="me-admin-dropdown">
-              <div class="me-dropdown-header">
-                <span class="me-admin-dot me-dropdown-dot" />
-                <div class="me-dropdown-header-text">
-                  <span class="me-dropdown-name">{{ userDisplayName }}</span>
-                  <span class="me-dropdown-email">{{ userEmail }}</span>
-                </div>
-              </div>
-              <!-- Wallet balance card -->
-              <div class="me-dropdown-balance">
-                <div class="me-dbal-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>
-                </div>
-                <div class="me-dbal-body">
-                  <span class="me-dbal-label">Wallet Balance</span>
-                  <span class="me-dbal-amount" :class="{ 'me-dbal-amount--loading': userBalance === null }">
-                    {{ userBalance !== null ? formatBalance(userBalance) : '—' }}
-                  </span>
-                </div>
-              </div>
-              <div class="me-dropdown-divider" />
-              <button class="me-dropdown-item me-dropdown-item--signout" @click="showAdminDropdown = false; showLogoutModal = true">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <polyline points="16 17 21 12 16 7"/>
-                  <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-                Sign out
-              </button>
-            </div>
-          </div>
-          <button class="me-create-btn" @click="$router.push('/create-event')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            Create event
-          </button>
-        </div>
+        <span class="me-page-title">My Events</span>
+        <button class="me-create-btn" @click="$router.push('/create-event')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Create event
+        </button>
       </div>
     </nav>
-
-    <!-- ── Logout confirm modal ── -->
-    <div v-if="showLogoutModal" class="me-modal-backdrop" @click.self="showLogoutModal = false">
-      <div class="me-modal">
-        <p class="me-modal-title">Sign out?</p>
-        <p class="me-modal-body">You'll need to sign back in to access your events.</p>
-        <div class="me-modal-actions">
-          <button class="me-modal-cancel" @click="showLogoutModal = false">Cancel</button>
-          <button class="me-modal-confirm" @click="logout">Sign out</button>
-        </div>
-      </div>
-    </div>
 
     <!-- ── Page shell ── -->
     <div class="me-page">
@@ -110,9 +50,6 @@
           </button>
         </div>
         <div class="me-fb-divider" />
-        <select v-model="activeRole" class="me-fb-select">
-          <option v-for="r in roleFilters" :key="r.value" :value="r.value">{{ r.label }}</option>
-        </select>
         <select v-model="activeSort" class="me-fb-select">
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
@@ -139,99 +76,8 @@
 
       <template v-else>
 
-        <!-- Featured hero -->
-        <div
-          v-if="featuredEvent && !searchQuery && activeFilter === 'all'"
-          class="me-featured"
-          @click="goToEvent(featuredEvent.id)"
-        >
-          <!-- Left: invitation thumb -->
-          <div class="me-feat-thumb-col">
-            <div class="me-feat-thumb-outline" />
-            <div class="me-feat-thumb" v-html="invitationSvg(featuredEvent)" />
-          </div>
-
-          <!-- Middle: content -->
-          <div class="me-feat-content">
-            <div class="me-feat-eyebrow">
-              <span class="me-feat-eyebrow-label">FEATURED · NEXT UP</span>
-              <span class="me-feat-eyebrow-sparkle">✦</span>
-              <span class="me-feat-eyebrow-line" />
-              <span class="me-feat-code">{{ featuredEvent.code || featuredEvent.id?.slice(0,8) }}</span>
-            </div>
-            <h2 class="me-feat-title">{{ featuredEvent.title }}</h2>
-            <p class="me-feat-subtitle">
-              <em>{{ featuredEvent.categoryId ? `A ${featuredEvent.categoryId.toLowerCase()} event` : 'Special event' }}<template v-if="featuredEvent.location"> · in {{ featuredEvent.location }}</template></em>
-            </p>
-            <div class="me-feat-meta">
-              <div class="me-feat-meta-item">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-                <div class="me-feat-meta-block">
-                  <span class="me-feat-meta-label">WHEN</span>
-                  <span class="me-feat-meta-val">{{ formatFullDate(featuredEvent.startDate) }}</span>
-                </div>
-              </div>
-              <div v-if="featuredEvent.location" class="me-feat-meta-item">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-                </svg>
-                <div class="me-feat-meta-block">
-                  <span class="me-feat-meta-label">WHERE</span>
-                  <span class="me-feat-meta-val">{{ featuredEvent.location }}</span>
-                </div>
-              </div>
-              <div class="me-feat-meta-item">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-                <div class="me-feat-meta-block">
-                  <span class="me-feat-meta-label">COMMITTEE</span>
-                  <span class="me-feat-meta-val">{{ featuredEvent.adminsIds?.length ?? 1 }} members</span>
-                </div>
-              </div>
-            </div>
-            <div v-if="featuredEvent.contributionGoal" class="me-feat-progress">
-              <div class="me-feat-progress-track">
-                <div class="me-feat-progress-fill" :style="{ width: Math.min(100, ((featuredEvent.collected || 0) / featuredEvent.contributionGoal) * 100) + '%' }" />
-              </div>
-              <span class="me-feat-progress-label">Mchango collected · TZS {{ ((featuredEvent.collected || 0) / 1000).toFixed(0) }}k / {{ (featuredEvent.contributionGoal / 1000).toFixed(0) }}k</span>
-            </div>
-            <div class="me-feat-actions" @click.stop>
-              <button class="me-feat-open-btn" @click="goToEvent(featuredEvent.id)">
-                Open dashboard
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                </svg>
-              </button>
-              <button class="me-feat-edit-btn" @click="$router.push(`/edit-event/${featuredEvent.id}`)">Edit</button>
-              <span class="me-feat-actions-spacer" />
-              <span class="me-status-pill" :class="`me-status-pill--${statusClass(featuredEvent)}`">
-                <span class="me-status-dot" />{{ statusLabel(featuredEvent) }}
-              </span>
-              <span class="me-role-badge" :class="featuredEvent.authorId === uid ? 'me-role-badge--owner' : 'me-role-badge--admin'">
-                {{ featuredEvent.authorId === uid ? 'OWNER' : 'ADMIN' }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Right: editorial countdown -->
-          <div class="me-feat-countdown">
-            <span class="me-feat-cd-month">{{ formatMonth(featuredEvent.startDate) }}</span>
-            <span class="me-feat-cd-day">{{ formatDay(featuredEvent.startDate) }}</span>
-            <span class="me-feat-cd-year">{{ featuredEvent.startDate ? new Date(featuredEvent.startDate).getFullYear() : '' }}</span>
-            <div class="me-feat-cd-ticket">
-              <span class="me-feat-cd-num">{{ Math.abs(daysAway(featuredEvent.startDate) ?? 0) }}</span>
-              <span class="me-feat-cd-words">{{ (daysAway(featuredEvent.startDate) ?? 0) > 0 ? 'days\naway' : 'days\npast' }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- "Everything else" heading -->
-        <div v-if="nonFeaturedDisplayed.length > 0 || (searchQuery || activeFilter !== 'all')" class="me-section-head">
-          <span class="me-section-title">Everything else</span>
+        <!-- Events count heading -->
+        <div class="me-section-head">
           <span class="me-section-line" />
           <span class="me-section-meta">
             {{ sourceEvents.length }} event{{ sourceEvents.length !== 1 ? 's' : '' }}
@@ -242,7 +88,7 @@
         <!-- Hanging event rows -->
         <div class="me-hanging-list">
           <article
-            v-for="(event, idx) in (searchQuery || activeFilter !== 'all' ? displayedEvents : nonFeaturedDisplayed)"
+            v-for="(event, idx) in displayedEvents"
             :key="event.id"
             class="me-row"
             :style="{ '--rot': rotations[idx % rotations.length] + 'deg' }"
@@ -347,12 +193,11 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { db, auth } from '../firebase'
-import { signOut } from 'firebase/auth'
 import {
-  collection, query, where, orderBy, getDocs, limit, getDoc, doc,
+  collection, collectionGroup, query, where, orderBy, getDocs, limit,
 } from 'firebase/firestore'
 
 const PAGE_SIZE = 10
@@ -366,64 +211,18 @@ const searchResults = ref([])
 const loading = ref(true)
 const currentPage = ref(1)
 const activeFilter = ref('all')
-const activeRole = ref('all')
 const activeSort = ref('newest')
 const searchQuery = ref('')
 let searchTimer = null
 
 const rotations = [-0.35, 0.45, -0.25, 0.5, -0.4, 0.3]
 
-const showLogoutModal = ref(false)
-const showAdminDropdown = ref(false)
-const adminWrapRef = ref(null)
-const userBalance = ref(null)   // null = loading, number = fetched
-
-const userDisplayName = computed(() => {
-  const u = auth.currentUser
-  if (!u) return 'Admin'
-  return u.displayName || u.email?.split('@')[0] || 'Admin'
-})
-
-const userEmail = computed(() => auth.currentUser?.email ?? '')
-
-function formatBalance(n) {
-  if (n == null) return '—'
-  return 'TZS ' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 })
-}
-
-async function loadUserBalance() {
-  if (!uid) return
-  try {
-    const snap = await getDoc(doc(db, 'users', uid))
-    if (snap.exists()) {
-      const b = snap.data().balance
-      userBalance.value = b != null ? Number(b) : 0
-    }
-  } catch (e) {
-    console.error('Failed to load user balance', e)
-  }
-}
-
-function onClickOutside(e) {
-  if (adminWrapRef.value && !adminWrapRef.value.contains(e.target)) {
-    showAdminDropdown.value = false
-  }
-}
-
-async function logout() {
-  showLogoutModal.value = false
-  await signOut(auth)
-  router.push('/login')
-}
-
 // ── Firestore (unchanged) ──────────────────────────────────────────────────
 async function loadEvents() {
-  if (!uid) { loading.value = false; return }
   loading.value = true
   try {
     const snap = await getDocs(query(
       collection(db, 'events'),
-      where('adminsIds', 'array-contains', uid),
       orderBy('startDate', 'desc'),
     ))
     events.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
@@ -435,14 +234,13 @@ async function loadEvents() {
 }
 
 async function performSearch(key) {
-  if (!uid || !key) { searchResults.value = []; return }
+  if (!key) { searchResults.value = []; return }
   const k = key.toLowerCase()
   try {
     const snap = await getDocs(query(
       collection(db, 'events'),
-      where('adminsIds', 'array-contains', uid),
       where('titleLower', '>=', k),
-      where('titleLower', '<=', k + ''),
+      where('titleLower', '<=', k + ''),
       limit(20),
     ))
     searchResults.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
@@ -476,17 +274,9 @@ const statusFilters = computed(() => [
   { label: 'Completed', value: 'completed', count: events.value.filter(e => statusClass(e) === 'completed').length },
 ])
 
-const roleFilters = [
-  { label: 'All roles', value: 'all' },
-  { label: 'Owner',     value: 'owner' },
-  { label: 'Admin',     value: 'admin' },
-]
-
 const filteredEvents = computed(() => {
   let list = events.value
   if (activeFilter.value !== 'all') list = list.filter(e => statusClass(e) === activeFilter.value)
-  if (activeRole.value === 'owner')  list = list.filter(e => e.authorId === uid)
-  if (activeRole.value === 'admin')  list = list.filter(e => e.authorId !== uid)
   if (activeSort.value === 'oldest') list = [...list].sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
   else if (activeSort.value === 'az') list = [...list].sort((a, b) => (a.title || '').localeCompare(b.title || ''))
   return list
@@ -515,19 +305,6 @@ const pageRange = computed(() => {
   pages.push(total)
   return pages
 })
-
-// ── Featured ───────────────────────────────────────────────────────────────
-const featuredEvent = computed(() => {
-  const upcoming = events.value.filter(e =>
-    statusClass(e) === 'upcoming' && e.status === 'Published'
-  )
-  if (!upcoming.length) return null
-  return [...upcoming].sort((a, b) => new Date(a.startDate) - new Date(b.startDate))[0]
-})
-
-const nonFeaturedDisplayed = computed(() =>
-  displayedEvents.value.filter(e => e.id !== featuredEvent.value?.id)
-)
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function daysAway(iso) {
@@ -668,18 +445,12 @@ watch(currentPage, (n) => {
   router.replace({ query: n > 1 ? { page: n } : {} })
 })
 
-watch([activeFilter, activeRole, activeSort], () => { currentPage.value = 1 })
+watch([activeFilter, activeSort], () => { currentPage.value = 1 })
 
 onMounted(() => {
   const qPage = parseInt(route.query.page)
   if (qPage > 1) currentPage.value = qPage
   loadEvents()
-  loadUserBalance()
-  document.addEventListener('click', onClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', onClickOutside)
 })
 </script>
 
@@ -708,185 +479,27 @@ onUnmounted(() => {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(255,255,255,0.82);
+  background: rgba(255,255,255,0.88);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--line);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.05);
 }
 .me-topbar-inner {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 14px 32px;
+  padding: 28px 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-.me-topbar-left { display: flex; align-items: center; gap: 10px; }
-.me-brand { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-.me-brand-glyph { font-size: 13px; color: var(--gold); line-height: 1; }
-.me-brand-name {
+.me-page-title {
   font-family: 'Instrument Serif', Georgia, serif;
   font-size: 20px;
   font-weight: 400;
   color: var(--ink);
   letter-spacing: -0.3px;
 }
-.me-bc-sep { font-size: 15px; color: var(--line-strong); font-weight: 300; }
-.me-bc-page { font-size: 14px; font-weight: 500; color: var(--ink-muted); }
-
-.me-topbar-right { display: flex; align-items: center; gap: 10px; }
-
-/* Admin dropdown */
-.me-admin-wrap { position: relative; }
-.me-admin-pill {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 6px 12px 6px 14px;
-  border-radius: 20px;
-  border: 1px solid var(--line-strong);
-  background: #fff;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--ink-muted);
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 130ms, color 130ms;
-}
-.me-admin-pill:hover { background: var(--paper-soft); color: var(--ink); }
-.me-admin-chevron {
-  color: var(--ink-dim);
-  transition: transform 180ms ease;
-  flex-shrink: 0;
-}
-.me-admin-chevron--open { transform: rotate(180deg); }
-
-.me-admin-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  min-width: 210px;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  box-shadow: 3px 6px 0 rgba(0,0,0,0.10), 1px 2px 0 rgba(0,0,0,0.06);
-  overflow: hidden;
-  z-index: 200;
-}
-.me-dropdown-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
-}
-.me-dropdown-dot { flex-shrink: 0; }
-.me-dropdown-header-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.me-dropdown-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.me-dropdown-email {
-  font-size: 11.5px;
-  color: var(--ink-dim);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.me-dropdown-divider { height: 1px; background: var(--line); }
-.me-dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  padding: 11px 16px;
-  background: transparent;
-  border: none;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-muted);
-  cursor: pointer;
-  font-family: inherit;
-  text-align: left;
-  transition: background 120ms, color 120ms;
-}
-.me-dropdown-item:hover { background: var(--paper-soft); color: var(--ink); }
-.me-dropdown-item--signout:hover { background: #FEF2F2; color: #C0392B; }
-.me-admin-pill {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid var(--line-strong);
-  background: #fff;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--ink-muted);
-}
-.me-admin-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: var(--emerald);
-  flex-shrink: 0;
-}
-.me-pill-balance {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  background: rgba(201,168,76,0.10);
-  border: 1px solid rgba(201,168,76,0.25);
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #9A7218;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-/* Wallet card inside dropdown */
-.me-dropdown-balance {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px 12px;
-}
-.me-dbal-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: rgba(201,168,76,0.10);
-  border: 1px solid rgba(201,168,76,0.20);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #B8924D;
-  flex-shrink: 0;
-}
-.me-dbal-body {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-.me-dbal-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: #9A9690;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.me-dbal-amount {
-  font-size: 15px;
-  font-weight: 700;
-  color: #0A0A0B;
-  letter-spacing: -0.3px;
-}
-.me-dbal-amount--loading { color: #B5B5BB; }
 
 .me-create-btn {
   display: flex;
@@ -1657,74 +1270,6 @@ onUnmounted(() => {
   user-select: none;
 }
 
-/* ── Logout modal ── */
-.me-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.32);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.me-modal {
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 28px 28px 24px;
-  width: 340px;
-  box-shadow: 4px 8px 0 rgba(0,0,0,0.10), 1px 2px 0 rgba(0,0,0,0.06);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.me-modal-title {
-  font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 22px;
-  font-weight: 400;
-  color: var(--ink);
-  margin: 0;
-  letter-spacing: -0.3px;
-}
-.me-modal-body {
-  font-size: 13.5px;
-  color: var(--ink-muted);
-  margin: 0 0 8px;
-  line-height: 1.5;
-}
-.me-modal-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-.me-modal-cancel {
-  background: transparent;
-  border: 1px solid var(--line-strong);
-  color: var(--ink-muted);
-  padding: 8px 16px;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 130ms, color 130ms;
-}
-.me-modal-cancel:hover { background: var(--paper-soft); color: var(--ink); }
-.me-modal-confirm {
-  background: var(--ink);
-  color: #fff;
-  border: none;
-  padding: 8px 18px;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  transition: opacity 130ms;
-}
-.me-modal-confirm:hover { opacity: 0.85; }
 
 /* ── Responsive ── */
 @media (max-width: 1024px) {
