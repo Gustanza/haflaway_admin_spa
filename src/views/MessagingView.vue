@@ -13,7 +13,7 @@
       <!-- Filter bar -->
       <div class="mv-filterbar">
 
-        <!-- Row 1: presets + channel + apply -->
+        <!-- Row 1: presets + channel + view mode -->
         <div class="mv-filterbar-row">
           <div class="mv-preset-chips">
             <button
@@ -30,13 +30,15 @@
               @click="channelFilter = c.value"
             >{{ c.label }}</button>
           </div>
-          <button class="mv-apply-btn" :disabled="loading" @click="fetchLogs">
-            <svg v-if="!loading" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <span>{{ loading ? 'Loading…' : 'Apply' }}</span>
-          </button>
+          <div class="mv-fb-div" />
+          <div class="mv-view-chips">
+            <button :class="['mv-preset-chip', viewMode === 'logs' && 'mv-preset-chip--on']" @click="viewMode = 'logs'">Logs</button>
+            <button :class="['mv-preset-chip', viewMode === 'dispatchers' && 'mv-preset-chip--on']" @click="viewMode = 'dispatchers'">By Dispatcher</button>
+            <button :class="['mv-preset-chip', viewMode === 'events' && 'mv-preset-chip--on']" @click="viewMode = 'events'">By Event</button>
+          </div>
         </div>
 
-        <!-- Row 2: date range + user filter -->
+        <!-- Row 2: date range + user filter + apply -->
         <div class="mv-filterbar-row mv-filterbar-row--sub">
           <div class="mv-sub-field">
             <label class="mv-sub-label">From</label>
@@ -81,6 +83,10 @@
               </button>
             </div>
           </div>
+          <button class="mv-apply-btn" :disabled="loading" @click="fetchLogs">
+            <svg v-if="!loading" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span>{{ loading ? 'Loading…' : 'Apply' }}</span>
+          </button>
         </div>
 
       </div>
@@ -103,91 +109,310 @@
         </div>
         <div class="mv-stat-div" />
         <div class="mv-stat">
+          <span class="mv-stat-num mv-stat-num--gold">{{ formatBalance(smsRevenue) }}</span>
+          <span class="mv-stat-label">SMS Revenue</span>
+        </div>
+        <div class="mv-stat-div" />
+        <div class="mv-stat">
+          <span class="mv-stat-num mv-stat-num--gold">{{ formatBalance(whatsappRevenue) }}</span>
+          <span class="mv-stat-label">WhatsApp Revenue</span>
+        </div>
+        <div class="mv-stat-div" />
+        <div class="mv-stat">
           <span class="mv-stat-num mv-stat-num--gold">{{ formatBalance(totalRevenue) }}</span>
-          <span class="mv-stat-label">Revenue Generated</span>
+          <span class="mv-stat-label">Total Revenue</span>
         </div>
       </div>
 
-      <!-- Initial prompt -->
-      <div v-if="!hasFetched && !loading" class="mv-prompt">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink-dim)"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.62 4.38 2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6.09 6.09l.98-.98a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-        <p class="mv-prompt-title">Select a date range and press Apply</p>
-        <p class="mv-prompt-sub">Message logs will appear here.</p>
-      </div>
+      <!-- ── MESSAGE LOGS VIEW ── -->
+      <template v-if="viewMode === 'logs'">
 
-      <!-- Loading skeletons -->
-      <div v-else-if="loading" class="mv-skeleton-list">
-        <div class="mv-skeleton" v-for="i in 6" :key="i" />
-      </div>
-
-      <!-- Empty -->
-      <div v-else-if="hasFetched && filtered.length === 0" class="mv-empty">
-        <span class="mv-empty-glyph">✦</span>
-        <p class="mv-empty-title">No messages in this range</p>
-        <p class="mv-empty-sub">Try widening the date range or changing the filters.</p>
-      </div>
-
-      <!-- Table -->
-      <div v-else class="mv-table-wrap">
-        <table class="mv-table">
-          <thead>
-            <tr>
-              <th class="mv-th">Time</th>
-              <th class="mv-th">Channel</th>
-              <th class="mv-th">Campaign</th>
-              <th class="mv-th">Event</th>
-              <th class="mv-th">Author</th>
-              <th class="mv-th">Dispatched By</th>
-              <th class="mv-th mv-th--right">Charged</th>
-              <th class="mv-th">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="log in paginated" :key="log.id" class="mv-row">
-              <td class="mv-td mv-td--date">{{ formatLogDate(log.timestamp) }}</td>
-              <td class="mv-td">
-                <span :class="['mv-channel-badge', `mv-channel-badge--${log.channel}`]">
-                  {{ log.channel === 'sms'
-                      ? (resolveSegments(log) > 1 ? `SMS ×${resolveSegments(log)}` : 'SMS')
-                      : 'WhatsApp' }}
-                </span>
-              </td>
-              <td class="mv-td">
-                <span class="mv-campaign-label">{{ campaignLabel(log.type) }}</span>
-              </td>
-              <td class="mv-td mv-td--mono">{{ log.eventId ? log.eventId.slice(0, 10) + '…' : '—' }}</td>
-              <td class="mv-td">{{ userLabel(log.authorId) }}</td>
-              <td class="mv-td mv-td--muted">{{ userLabel(log.dispatchedBy) }}</td>
-              <td class="mv-td mv-td--right">
-                <span v-if="log.chargeAmount > 0" class="mv-charge">{{ formatBalance(log.chargeAmount) }}</span>
-                <span v-else class="mv-charge mv-charge--free">Quota</span>
-              </td>
-              <td class="mv-td">
-                <span :class="['mv-status-badge', `mv-status-badge--${log.status}`]">{{ log.status ?? '—' }}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination -->
-      <div v-if="!loading && totalPages > 1" class="mv-pagination">
-        <span class="mv-pagination-info">
-          Showing {{ (currentPage - 1) * PAGE_SIZE + 1 }}–{{ Math.min(currentPage * PAGE_SIZE, filtered.length) }} of {{ filtered.length }}
-        </span>
-        <div class="mv-pagination-controls">
-          <button class="mv-page-btn mv-page-btn--nav" :disabled="currentPage === 1" @click="currentPage--">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
-          <template v-for="p in pageNumbers" :key="p">
-            <span v-if="p === '…'" class="mv-page-ellipsis">…</span>
-            <button v-else class="mv-page-btn" :class="{ 'mv-page-btn--active': p === currentPage }" @click="currentPage = p">{{ p }}</button>
-          </template>
-          <button class="mv-page-btn mv-page-btn--nav" :disabled="currentPage === totalPages" @click="currentPage++">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
+        <!-- Initial prompt -->
+        <div v-if="!hasFetched && !loading" class="mv-prompt">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink-dim)"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.62 4.38 2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6.09 6.09l.98-.98a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          <p class="mv-prompt-title">Select a date range and press Apply</p>
+          <p class="mv-prompt-sub">Message logs will appear here.</p>
         </div>
-      </div>
+
+        <!-- Loading skeletons -->
+        <div v-else-if="loading" class="mv-skeleton-list">
+          <div class="mv-skeleton" v-for="i in 6" :key="i" />
+        </div>
+
+        <!-- Empty -->
+        <div v-else-if="hasFetched && filtered.length === 0" class="mv-empty">
+          <span class="mv-empty-glyph">✦</span>
+          <p class="mv-empty-title">No messages in this range</p>
+          <p class="mv-empty-sub">Try widening the date range or changing the filters.</p>
+        </div>
+
+        <!-- Table -->
+        <div v-else class="mv-table-wrap">
+          <table class="mv-table">
+            <thead>
+              <tr>
+                <th class="mv-th">Time</th>
+                <th class="mv-th">Channel</th>
+                <th class="mv-th">Campaign</th>
+                <th class="mv-th">Event</th>
+                <th class="mv-th">Author</th>
+                <th class="mv-th">Dispatched By</th>
+                <th class="mv-th mv-th--right">Charged</th>
+                <th class="mv-th">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="log in paginated" :key="log.id" class="mv-row">
+                <td class="mv-td mv-td--date">{{ formatLogDate(log.timestamp) }}</td>
+                <td class="mv-td">
+                  <span :class="['mv-channel-badge', `mv-channel-badge--${log.channel}`]">
+                    {{ log.channel === 'sms'
+                        ? (resolveSegments(log) > 1 ? `SMS ×${resolveSegments(log)}` : 'SMS')
+                        : 'WhatsApp' }}
+                  </span>
+                </td>
+                <td class="mv-td">
+                  <span class="mv-campaign-label">{{ campaignLabel(log.type) }}</span>
+                </td>
+                <td class="mv-td mv-td--event" :title="log.eventId">{{ eventMap[log.eventId] ?? (log.eventId ? log.eventId.slice(0, 10) + '…' : '—') }}</td>
+                <td class="mv-td">{{ userLabel(log.authorId) }}</td>
+                <td class="mv-td mv-td--muted">{{ userLabel(log.dispatchedBy) }}</td>
+                <td class="mv-td mv-td--right">
+                  <span v-if="log.chargeAmount > 0" class="mv-charge">{{ formatBalance(log.chargeAmount) }}</span>
+                  <span v-else class="mv-charge mv-charge--free">Quota</span>
+                </td>
+                <td class="mv-td">
+                  <span :class="['mv-status-badge', `mv-status-badge--${log.status}`]">{{ log.status ?? '—' }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="!loading && totalPages > 1" class="mv-pagination">
+          <span class="mv-pagination-info">
+            Showing {{ (currentPage - 1) * PAGE_SIZE + 1 }}–{{ Math.min(currentPage * PAGE_SIZE, filtered.length) }} of {{ filtered.length }}
+          </span>
+          <div class="mv-pagination-controls">
+            <button class="mv-page-btn mv-page-btn--nav" :disabled="currentPage === 1" @click="currentPage--">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <template v-for="p in pageNumbers" :key="p">
+              <span v-if="p === '…'" class="mv-page-ellipsis">…</span>
+              <button v-else class="mv-page-btn" :class="{ 'mv-page-btn--active': p === currentPage }" @click="currentPage = p">{{ p }}</button>
+            </template>
+            <button class="mv-page-btn mv-page-btn--nav" :disabled="currentPage === totalPages" @click="currentPage++">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+
+      </template>
+
+      <!-- ── BY DISPATCHER VIEW ── -->
+      <template v-else-if="viewMode === 'dispatchers'">
+
+        <!-- Initial prompt -->
+        <div v-if="!hasFetched && !loading" class="mv-prompt">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink-dim)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <p class="mv-prompt-title">Select a date range and press Apply</p>
+          <p class="mv-prompt-sub">Dispatcher breakdown will appear here.</p>
+        </div>
+
+        <!-- Loading -->
+        <div v-else-if="loading" class="mv-skeleton-list">
+          <div class="mv-skeleton" v-for="i in 4" :key="i" />
+        </div>
+
+        <!-- Empty -->
+        <div v-else-if="sortedDispatchers.length === 0" class="mv-empty">
+          <span class="mv-empty-glyph">✦</span>
+          <p class="mv-empty-title">No dispatchers in this range</p>
+          <p class="mv-empty-sub">Try widening the date range or changing the filters.</p>
+        </div>
+
+        <!-- Dispatcher leaderboard -->
+        <div v-else class="mv-table-wrap">
+          <table class="mv-table">
+            <thead>
+              <tr>
+                <th class="mv-th" style="width:44px">#</th>
+                <th class="mv-th mv-th--sortable" @click="toggleSort('name')">
+                  Dispatcher
+                  <svg class="mv-sort-icon" :class="dispatcherSortKey === 'name' && 'mv-sort-icon--on'" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline :points="dispatcherSortKey === 'name' && dispatcherSortDir === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                </th>
+                <th class="mv-th mv-th--sortable mv-th--right" @click="toggleSort('messages')">
+                  Messages
+                  <svg class="mv-sort-icon" :class="dispatcherSortKey === 'messages' && 'mv-sort-icon--on'" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline :points="dispatcherSortKey === 'messages' && dispatcherSortDir === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                </th>
+                <th class="mv-th mv-th--sortable mv-th--right" @click="toggleSort('sms')">
+                  SMS
+                  <svg class="mv-sort-icon" :class="dispatcherSortKey === 'sms' && 'mv-sort-icon--on'" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline :points="dispatcherSortKey === 'sms' && dispatcherSortDir === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                </th>
+                <th class="mv-th mv-th--sortable mv-th--right" @click="toggleSort('whatsapp')">
+                  WhatsApp
+                  <svg class="mv-sort-icon" :class="dispatcherSortKey === 'whatsapp' && 'mv-sort-icon--on'" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline :points="dispatcherSortKey === 'whatsapp' && dispatcherSortDir === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                </th>
+                <th class="mv-th mv-th--sortable mv-th--right" @click="toggleSort('smsRev')">
+                  SMS Rev
+                  <svg class="mv-sort-icon" :class="dispatcherSortKey === 'smsRev' && 'mv-sort-icon--on'" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline :points="dispatcherSortKey === 'smsRev' && dispatcherSortDir === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                </th>
+                <th class="mv-th mv-th--sortable mv-th--right" @click="toggleSort('waRev')">
+                  WA Rev
+                  <svg class="mv-sort-icon" :class="dispatcherSortKey === 'waRev' && 'mv-sort-icon--on'" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline :points="dispatcherSortKey === 'waRev' && dispatcherSortDir === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                </th>
+                <th class="mv-th mv-th--sortable mv-th--right" @click="toggleSort('totalRev')">
+                  Total Rev
+                  <svg class="mv-sort-icon" :class="dispatcherSortKey === 'totalRev' && 'mv-sort-icon--on'" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline :points="dispatcherSortKey === 'totalRev' && dispatcherSortDir === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(d, i) in sortedDispatchers" :key="d.uid" :class="['mv-row', i === 0 && 'mv-row--top']">
+                <td class="mv-td mv-td--rank">
+                  <span :class="['mv-rank', i === 0 && 'mv-rank--gold']">{{ i + 1 }}</span>
+                </td>
+                <td class="mv-td">
+                  <span class="mv-dispatcher-name">{{ d.name }}</span>
+                </td>
+                <td class="mv-td mv-td--right mv-td--num">{{ d.messages.toLocaleString() }}</td>
+                <td class="mv-td mv-td--right mv-td--muted">{{ d.sms.toLocaleString() }}</td>
+                <td class="mv-td mv-td--right mv-td--muted">{{ d.whatsapp.toLocaleString() }}</td>
+                <td class="mv-td mv-td--right">
+                  <span v-if="d.smsRev > 0" class="mv-charge">{{ formatBalance(d.smsRev) }}</span>
+                  <span v-else class="mv-charge mv-charge--free">—</span>
+                </td>
+                <td class="mv-td mv-td--right">
+                  <span v-if="d.waRev > 0" class="mv-charge">{{ formatBalance(d.waRev) }}</span>
+                  <span v-else class="mv-charge mv-charge--free">—</span>
+                </td>
+                <td class="mv-td mv-td--right mv-td--num">
+                  <span v-if="d.totalRev > 0" class="mv-charge mv-charge--gold">{{ formatBalance(d.totalRev) }}</span>
+                  <span v-else class="mv-charge mv-charge--free">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </template>
+
+      <!-- ── BY EVENT VIEW ── -->
+      <template v-else-if="viewMode === 'events'">
+
+        <!-- Initial prompt -->
+        <div v-if="!hasFetched && !loading" class="mv-prompt">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink-dim)"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <p class="mv-prompt-title">Select a date range and press Apply</p>
+          <p class="mv-prompt-sub">Event breakdown will appear here.</p>
+        </div>
+
+        <!-- Loading -->
+        <div v-else-if="loading" class="mv-skeleton-list">
+          <div class="mv-skeleton" v-for="i in 4" :key="i" />
+        </div>
+
+        <!-- Empty -->
+        <div v-else-if="sortedEvents.length === 0" class="mv-empty">
+          <span class="mv-empty-glyph">✦</span>
+          <p class="mv-empty-title">No events in this range</p>
+          <p class="mv-empty-sub">Try widening the date range or changing the filters.</p>
+        </div>
+
+        <!-- Event leaderboard -->
+        <div v-else class="mv-table-wrap">
+          <table class="mv-table">
+            <thead>
+              <tr>
+                <th class="mv-th" style="width:44px">#</th>
+                <th class="mv-th mv-th--sortable" @click="toggleEventSort('title')">
+                  Event
+                  <svg class="mv-sort-icon" :class="eventSortKey === 'title' && 'mv-sort-icon--on'" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline :points="eventSortKey === 'title' && eventSortDir === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                </th>
+                <th class="mv-th mv-th--sortable mv-th--right" @click="toggleEventSort('messages')">
+                  Messages
+                  <svg class="mv-sort-icon" :class="eventSortKey === 'messages' && 'mv-sort-icon--on'" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline :points="eventSortKey === 'messages' && eventSortDir === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                </th>
+                <th class="mv-th mv-th--sortable mv-th--right" @click="toggleEventSort('sms')">
+                  SMS
+                  <svg class="mv-sort-icon" :class="eventSortKey === 'sms' && 'mv-sort-icon--on'" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline :points="eventSortKey === 'sms' && eventSortDir === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                </th>
+                <th class="mv-th mv-th--sortable mv-th--right" @click="toggleEventSort('whatsapp')">
+                  WhatsApp
+                  <svg class="mv-sort-icon" :class="eventSortKey === 'whatsapp' && 'mv-sort-icon--on'" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline :points="eventSortKey === 'whatsapp' && eventSortDir === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                </th>
+                <th class="mv-th mv-th--sortable mv-th--right" @click="toggleEventSort('smsRev')">
+                  SMS Rev
+                  <svg class="mv-sort-icon" :class="eventSortKey === 'smsRev' && 'mv-sort-icon--on'" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline :points="eventSortKey === 'smsRev' && eventSortDir === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                </th>
+                <th class="mv-th mv-th--sortable mv-th--right" @click="toggleEventSort('waRev')">
+                  WA Rev
+                  <svg class="mv-sort-icon" :class="eventSortKey === 'waRev' && 'mv-sort-icon--on'" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline :points="eventSortKey === 'waRev' && eventSortDir === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                </th>
+                <th class="mv-th mv-th--sortable mv-th--right" @click="toggleEventSort('totalRev')">
+                  Total Rev
+                  <svg class="mv-sort-icon" :class="eventSortKey === 'totalRev' && 'mv-sort-icon--on'" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline :points="eventSortKey === 'totalRev' && eventSortDir === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(e, i) in sortedEvents" :key="e.eid" :class="['mv-row', i === 0 && 'mv-row--top']">
+                <td class="mv-td mv-td--rank">
+                  <span :class="['mv-rank', i === 0 && 'mv-rank--gold']">{{ i + 1 }}</span>
+                </td>
+                <td class="mv-td mv-td--event-title" :title="e.eid">
+                  <span class="mv-dispatcher-name">{{ e.title }}</span>
+                </td>
+                <td class="mv-td mv-td--right mv-td--num">{{ e.messages.toLocaleString() }}</td>
+                <td class="mv-td mv-td--right mv-td--muted">{{ e.sms.toLocaleString() }}</td>
+                <td class="mv-td mv-td--right mv-td--muted">{{ e.whatsapp.toLocaleString() }}</td>
+                <td class="mv-td mv-td--right">
+                  <span v-if="e.smsRev > 0" class="mv-charge">{{ formatBalance(e.smsRev) }}</span>
+                  <span v-else class="mv-charge mv-charge--free">—</span>
+                </td>
+                <td class="mv-td mv-td--right">
+                  <span v-if="e.waRev > 0" class="mv-charge">{{ formatBalance(e.waRev) }}</span>
+                  <span v-else class="mv-charge mv-charge--free">—</span>
+                </td>
+                <td class="mv-td mv-td--right mv-td--num">
+                  <span v-if="e.totalRev > 0" class="mv-charge mv-charge--gold">{{ formatBalance(e.totalRev) }}</span>
+                  <span v-else class="mv-charge mv-charge--free">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </template>
 
     </div>
   </div>
@@ -198,7 +423,7 @@ import { ref, computed, onMounted } from 'vue'
 import { db } from '../firebase'
 import {
   collection, getDocs, query,
-  where, orderBy, limit, Timestamp,
+  where, orderBy, limit, Timestamp, doc, getDoc,
 } from 'firebase/firestore'
 
 const PAGE_SIZE = 25
@@ -212,6 +437,7 @@ function toLocalDT(d) {
 // ── State ─────────────────────────────────────────────────────────────────
 const logs        = ref([])
 const users       = ref([])
+const eventMap    = ref({})
 const loading     = ref(false)
 const hasFetched  = ref(false)
 const currentPage = ref(1)
@@ -222,6 +448,12 @@ const userFilter       = ref('')
 const userSearchQuery  = ref('')
 const userDropOpen     = ref(false)
 const selectedUser     = ref(null)
+
+const viewMode           = ref('logs')
+const dispatcherSortKey  = ref('messages')
+const dispatcherSortDir  = ref('desc')
+const eventSortKey       = ref('messages')
+const eventSortDir       = ref('desc')
 
 const userSuggestions = computed(() => {
   const q = userSearchQuery.value.trim().toLowerCase()
@@ -311,9 +543,26 @@ async function fetchLogs() {
     logs.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
     hasFetched.value = true
     currentPage.value = 1
+    fetchEventTitles(logs.value)
   } finally {
     loading.value = false
   }
+}
+
+async function fetchEventTitles(logList) {
+  const ids = [...new Set(logList.map(l => l.eventId).filter(Boolean))]
+  if (!ids.length) return
+  const map = { ...eventMap.value }
+  const missing = ids.filter(id => !map[id])
+  if (!missing.length) return
+  // Firestore 'in' limit is 30 — chunk it
+  const chunks = []
+  for (let i = 0; i < missing.length; i += 30) chunks.push(missing.slice(i, i + 30))
+  await Promise.all(chunks.map(async chunk => {
+    const snap = await getDocs(query(collection(db, 'events'), where('__name__', 'in', chunk)))
+    snap.docs.forEach(d => { map[d.id] = d.data().title ?? d.id })
+  }))
+  eventMap.value = map
 }
 
 async function fetchUsers() {
@@ -343,8 +592,101 @@ function resolveSegments(log) {
 }
 const smsCount = computed(() => filtered.value.filter(l => l.channel === 'sms').reduce((sum, l) => sum + resolveSegments(l), 0))
 const whatsappCount = computed(() => filtered.value.filter(l => l.channel === 'whatsapp').length)
-const totalRevenue  = computed(() => filtered.value.reduce((sum, l) => sum + (l.chargeAmount ?? 0), 0))
+const smsRevenue      = computed(() => filtered.value.filter(l => l.channel === 'sms').reduce((sum, l) => sum + (l.chargeAmount ?? 0), 0))
+const whatsappRevenue = computed(() => filtered.value.filter(l => l.channel === 'whatsapp').reduce((sum, l) => sum + (l.chargeAmount ?? 0), 0))
+const totalRevenue    = computed(() => smsRevenue.value + whatsappRevenue.value)
 const totalMessages = computed(() => smsCount.value + whatsappCount.value)
+
+const groupedByDispatcher = computed(() => {
+  const map = {}
+  const um = userMap.value
+  for (const log of filtered.value) {
+    const uid = log.dispatchedBy ?? '__unknown__'
+    if (!map[uid]) {
+      const u = um[uid]
+      const name = u ? fullName(u) : (uid === '__unknown__' ? 'Unknown' : uid.slice(0, 10) + '…')
+      map[uid] = { uid, name, messages: 0, sms: 0, whatsapp: 0, smsRev: 0, waRev: 0, totalRev: 0 }
+    }
+    const entry = map[uid]
+    if (log.channel === 'sms') {
+      const segs = resolveSegments(log)
+      entry.messages += segs
+      entry.sms += segs
+      entry.smsRev += log.chargeAmount ?? 0
+    } else {
+      entry.messages += 1
+      entry.whatsapp += 1
+      entry.waRev += log.chargeAmount ?? 0
+    }
+    entry.totalRev += log.chargeAmount ?? 0
+  }
+  return Object.values(map)
+})
+
+const sortedDispatchers = computed(() => {
+  const list = [...groupedByDispatcher.value]
+  const key = dispatcherSortKey.value
+  const dir = dispatcherSortDir.value === 'asc' ? 1 : -1
+  list.sort((a, b) => {
+    if (key === 'name') return dir * a.name.localeCompare(b.name)
+    return dir * ((a[key] ?? 0) - (b[key] ?? 0))
+  })
+  return list
+})
+
+function toggleSort(key) {
+  if (dispatcherSortKey.value === key) {
+    dispatcherSortDir.value = dispatcherSortDir.value === 'desc' ? 'asc' : 'desc'
+  } else {
+    dispatcherSortKey.value = key
+    dispatcherSortDir.value = 'desc'
+  }
+}
+
+const groupedByEvent = computed(() => {
+  const map = {}
+  const em = eventMap.value
+  for (const log of filtered.value) {
+    const eid = log.eventId ?? '__unknown__'
+    if (!map[eid]) {
+      const title = em[eid] ?? (eid === '__unknown__' ? 'Unknown Event' : eid.slice(0, 10) + '…')
+      map[eid] = { eid, title, messages: 0, sms: 0, whatsapp: 0, smsRev: 0, waRev: 0, totalRev: 0 }
+    }
+    const entry = map[eid]
+    if (log.channel === 'sms') {
+      const segs = resolveSegments(log)
+      entry.messages += segs
+      entry.sms += segs
+      entry.smsRev += log.chargeAmount ?? 0
+    } else {
+      entry.messages += 1
+      entry.whatsapp += 1
+      entry.waRev += log.chargeAmount ?? 0
+    }
+    entry.totalRev += log.chargeAmount ?? 0
+  }
+  return Object.values(map)
+})
+
+const sortedEvents = computed(() => {
+  const list = [...groupedByEvent.value]
+  const key = eventSortKey.value
+  const dir = eventSortDir.value === 'asc' ? 1 : -1
+  list.sort((a, b) => {
+    if (key === 'title') return dir * a.title.localeCompare(b.title)
+    return dir * ((a[key] ?? 0) - (b[key] ?? 0))
+  })
+  return list
+})
+
+function toggleEventSort(key) {
+  if (eventSortKey.value === key) {
+    eventSortDir.value = eventSortDir.value === 'desc' ? 'asc' : 'desc'
+  } else {
+    eventSortKey.value = key
+    eventSortDir.value = 'desc'
+  }
+}
 
 const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / PAGE_SIZE)))
 const paginated  = computed(() => {
@@ -615,6 +957,7 @@ function campaignLabel(type) {
 .mv-td--date  { color: var(--ink-dim); font-size: 12px; min-width: 140px; }
 .mv-td--muted { color: var(--ink-dim); }
 .mv-td--mono  { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11.5px; }
+.mv-td--event { max-width: 180px; overflow: hidden; text-overflow: ellipsis; color: var(--ink); font-weight: 500; }
 .mv-td--right { text-align: right; }
 
 /* Channel badge */
@@ -664,6 +1007,33 @@ function campaignLabel(type) {
 .mv-page-btn--nav { color: var(--ink-dim); }
 .mv-page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 .mv-page-ellipsis { width: 28px; text-align: center; font-size: 13px; color: var(--ink-dim); user-select: none; }
+
+.mv-view-chips { display: flex; align-items: center; gap: 4px; }
+
+/* ── Dispatcher table ── */
+.mv-th--sortable { cursor: pointer; user-select: none; }
+.mv-th--sortable:hover { color: var(--ink); }
+.mv-sort-icon { vertical-align: middle; margin-left: 4px; color: var(--ink-dim); }
+.mv-sort-icon--on { color: var(--gold-text); }
+
+.mv-row--top { background: rgba(201,168,76,0.04); }
+
+.mv-td--rank { padding: 12px 8px 12px 14px; }
+.mv-td--num  { color: var(--ink); font-weight: 600; font-size: 13px; }
+
+.mv-rank {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 6px;
+  font-size: 11.5px; font-weight: 700; color: var(--ink-muted);
+  background: var(--paper-soft); border: 1px solid var(--line-strong);
+}
+.mv-rank--gold {
+  background: var(--gold-bg); color: var(--gold-text);
+  border-color: var(--gold-border);
+}
+.mv-dispatcher-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+.mv-td--event-title { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.mv-charge--gold    { color: var(--gold-text); font-weight: 700; }
 
 /* ── Responsive ── */
 @media (max-width: 860px) {
