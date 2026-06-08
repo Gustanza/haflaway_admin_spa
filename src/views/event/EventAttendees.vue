@@ -2439,11 +2439,56 @@ function setImportPayment(attendeeId, amount) {
   padding-right: 4px;
 }
 .ea-cb {
-  width: 15px;
-  height: 15px;
-  accent-color: #C9A84C;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  border: 1.5px solid #2a3a52;
+  background: transparent;
   cursor: pointer;
   display: block;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 140ms, border-color 140ms, box-shadow 140ms;
+}
+.ea-cb:hover {
+  border-color: #C9A84C;
+  background: rgba(201,168,76,0.08);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.10);
+}
+.ea-cb:checked {
+  background: #C9A84C;
+  border-color: #C9A84C;
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.15);
+}
+.ea-cb:checked::after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #0a0e1c;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+.ea-cb:indeterminate {
+  background: rgba(201,168,76,0.18);
+  border-color: #C9A84C;
+}
+.ea-cb:indeterminate::after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 3px;
+  top: 6px;
+  width: 8px;
+  height: 2px;
+  background: #C9A84C;
+  border-radius: 2px;
 }
 
 /* Head */

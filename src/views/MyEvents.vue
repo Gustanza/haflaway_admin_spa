@@ -535,7 +535,7 @@ onMounted(() => {
   padding: 28px 32px 80px;
   display: flex;
   flex-direction: column;
-  gap: 36px;
+  gap: 20px;
 }
 
 /* ── Intro ── */
@@ -1012,7 +1012,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 36px;
-  padding-top: 14px;
 }
 
 .me-row {

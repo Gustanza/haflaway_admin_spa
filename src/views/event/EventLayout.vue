@@ -62,7 +62,7 @@
             <span class="el-tb-name">Haflaway</span>
           </div>
           <span class="el-sep">/</span>
-          <span class="el-crumb" @click="$router.push('/my-events')">My Events</span>
+          <span class="el-crumb" @click="$router.push('/')">My Events</span>
           <span class="el-sep">/</span>
           <span class="el-crumb el-crumb--event" @click="$router.push(`/event/${eventId}/overview`)">{{ event?.title ?? '…' }}</span>
           <span class="el-sep">/</span>
@@ -182,12 +182,7 @@ function resolvedTo(segment) {
 }
 
 function goAllEvents() {
-  const back = window.history.state?.back ?? ''
-  if (back && String(back).startsWith('/my-events')) {
-    router.back()
-  } else {
-    router.push('/my-events')
-  }
+  router.push('/')
 }
 
 const eventStatus = computed(() => {
@@ -244,39 +239,40 @@ onMounted(async () => {
 
 /* ── Sidebar ── */
 .el-sidebar {
-  width: 220px;
+  width: 224px;
   flex-shrink: 0;
-  background: #111827;
+  background: #0d1326;
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
-  padding: 0 12px 20px;
+  padding: 0;
   z-index: 10;
   overflow-y: auto;
+  box-shadow: 2px 0 20px rgba(0,0,0,0.4);
 }
 
-/* Brand */
+/* Brand — same vertical padding as topbar so the divider lines align */
 .el-brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 18px 8px 16px;
+  gap: 9px;
+  padding: 28px 18px;
   border-bottom: 1px solid var(--line);
-  margin-bottom: 12px;
   cursor: pointer;
   flex-shrink: 0;
 }
 .el-brand-glyph {
-  font-size: 12px;
+  font-size: 16px;
   color: var(--gold);
   line-height: 1;
+  flex-shrink: 0;
 }
 .el-brand-name {
   font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 400;
   color: var(--ink);
-  letter-spacing: -0.2px;
+  letter-spacing: -0.3px;
 }
 
 /* Event identity */
@@ -284,18 +280,20 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 6px 12px;
+  padding: 12px 14px 14px;
   border-bottom: 1px solid var(--line);
-  margin-bottom: 10px;
 }
 .el-event-thumb {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 9px;
   overflow: hidden;
   flex-shrink: 0;
   background: var(--paper-soft);
   border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .el-event-thumb img {
   width: 100%;
@@ -308,6 +306,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--ink-dim);
 }
 .el-event-info { min-width: 0; }
 .el-event-name {
@@ -330,17 +329,19 @@ onMounted(async () => {
 .el-back-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   background: none;
   border: none;
-  font-size: 12px;
+  font-size: 13.5px;
+  font-weight: 500;
   color: var(--ink-muted);
   cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 8px;
-  margin-bottom: 8px;
+  padding: 9px 8px;
+  margin: 8px 10px 4px;
+  border-radius: 10px;
   transition: color 130ms, background 130ms;
   font-family: inherit;
+  white-space: nowrap;
 }
 .el-back-btn:hover { color: var(--ink); background: var(--paper-soft); }
 
@@ -348,18 +349,20 @@ onMounted(async () => {
 .el-nav {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
+  padding: 0 10px;
 }
 .el-nav-item {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 8px 10px;
-  border-radius: 8px;
+  gap: 10px;
+  padding: 9px 8px;
+  border-radius: 10px;
   text-decoration: none;
   color: var(--ink-muted);
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 500;
+  min-height: 38px;
   transition: background 130ms, color 130ms;
 }
 .el-nav-item:hover {
@@ -367,19 +370,22 @@ onMounted(async () => {
   color: var(--ink);
 }
 .el-nav-item--active {
-  background: rgba(226,232,240,0.10);
+  background: rgba(255,255,255,0.10);
   color: #e2e8f0;
   font-weight: 600;
-  border: 1px solid rgba(226,232,240,0.12);
+  border: 1px solid rgba(255,255,255,0.10);
 }
-.el-nav-item--active .el-nav-icon { opacity: 1; }
+.el-nav-item--active:hover { background: rgba(255,255,255,0.13); }
 .el-nav-icon {
+  width: 24px;
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   opacity: 0.7;
 }
 .el-nav-item--active .el-nav-icon { opacity: 1; }
+.el-nav-label { flex: 1; }
 
 /* ── Main ── */
 .el-main {
@@ -396,11 +402,12 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 24px;
+  padding: 28px 32px;
   background: rgba(10,14,28,0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--line);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.3);
 }
 .el-topbar-left {
   display: flex;
