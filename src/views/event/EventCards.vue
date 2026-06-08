@@ -500,7 +500,7 @@ async function deleteCard(card) {
   flex-direction: column;
   gap: 16px;
   padding: 20px 24px 24px;
-  background: #FFFFFF;
+  background: #0a0e1c;
 }
 
 /* ══ Toolbar ══ */
@@ -524,55 +524,55 @@ async function deleteCard(card) {
 .evc-search-icon { position: absolute; left: 10px; pointer-events: none; }
 .evc-search {
   width: 100%; padding: 8px 32px;
-  border: 1px solid #ECECEF; border-radius: 10px;
+  border: 1px solid #2a3a52; border-radius: 10px;
   font-size: 13px; font-family: inherit; outline: none;
-  background: #FAFAF9; color: #0A0A0B;
+  background: #0f1729; color: #e2e8f0;
   transition: border-color 150ms, box-shadow 150ms;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.03), 0 4px 12px -2px rgba(0,0,0,0.08), 0 16px 32px -8px rgba(0,0,0,0.10);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.12), 0 4px 12px -2px rgba(0,0,0,0.2);
 }
-.evc-search:focus { border-color: #B8924D; box-shadow: 0 0 0 3px rgba(184,146,77,0.10); background: #fff; }
+.evc-search:focus { border-color: #C9A84C; box-shadow: 0 0 0 3px rgba(201,168,76,0.10); background: #0f1729; }
 .evc-search-clear {
   position: absolute; right: 8px;
-  background: none; border: none; cursor: pointer; color: #6B6B72; padding: 2px;
+  background: none; border: none; cursor: pointer; color: #8892a4; padding: 2px;
   display: flex; align-items: center;
 }
-.evc-search-clear:hover { color: #0A0A0B; }
+.evc-search-clear:hover { color: #e2e8f0; }
 
 /* Filter chips */
 .evc-filter-chips { display: flex; gap: 4px; }
 .evc-chip {
   padding: 6px 12px; border-radius: 20px;
-  border: 1px solid #ECECEF; background: #FFFFFF;
-  font-size: 12px; font-weight: 500; color: #6B6B72;
+  border: 1px solid #1e2d44; background: #111827;
+  font-size: 12px; font-weight: 500; color: #8892a4;
   cursor: pointer; transition: all 140ms; font-family: inherit;
 }
-.evc-chip:hover { background: #F4F4F6; color: #6B6B72; }
-.evc-chip--active { background: #0A0A0B; border-color: #0A0A0B; color: #FFFFFF; font-weight: 600; }
+.evc-chip:hover { background: #1a2236; color: #c8d4e0; }
+.evc-chip--active { background: rgba(226,232,240,0.12); border-color: rgba(226,232,240,0.18); color: #e2e8f0; font-weight: 600; }
 .evc-chip-cnt {
   display: inline-flex; min-width: 18px; padding: 1px 5px;
-  background: #EDEDEB; border-radius: 10px;
-  font-size: 11px; font-weight: 600; color: #9A9690; margin-left: 5px;
+  background: rgba(255,255,255,0.08); border-radius: 10px;
+  font-size: 11px; font-weight: 600; color: #4f617a; margin-left: 5px;
 }
-.evc-chip--active .evc-chip-cnt { background: rgba(10,10,11,0.08); color: #9A7218; }
+.evc-chip--active .evc-chip-cnt { background: rgba(201,168,76,0.12); color: #C9A84C; }
 
 /* Refresh + New Template */
 .evc-refresh-btn {
   width: 32px; height: 32px; border-radius: 8px;
-  border: 1px solid #ECECEF; background: #FFFFFF; color: #6B6B72;
+  border: 1px solid #1e2d44; background: #111827; color: #8892a4;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: all 140ms; box-shadow: 0 1px 1px rgba(0,0,0,0.03), 0 4px 12px -2px rgba(0,0,0,0.08), 0 16px 32px -8px rgba(0,0,0,0.10);
+  cursor: pointer; transition: all 140ms; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
-.evc-refresh-btn:hover:not(:disabled) { background: #F4F4F6; color: #0A0A0B; }
+.evc-refresh-btn:hover:not(:disabled) { background: #1a2236; color: #e2e8f0; }
 .evc-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .evc-new-btn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 16px; border-radius: 10px;
-  background: #0A0A0B; color: #FFFFFF;
+  background: linear-gradient(180deg, #2e3a58 0%, #1e2d46 100%); color: #e2e8f0;
   font-size: 13px; font-weight: 600; font-family: inherit;
   text-decoration: none; cursor: pointer;
-  transition: background 140ms; box-shadow: 0 1px 4px rgba(0,0,0,0.14);
+  transition: opacity 140ms; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
-.evc-new-btn:hover { background: #2E2B28; }
+.evc-new-btn:hover { opacity: 0.85; }
 
 /* ══ Stats Bar ══ */
 /* ══ Content / Grid ══ */
@@ -580,16 +580,16 @@ async function deleteCard(card) {
 
 .evc-empty {
   display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: 10px; min-height: 300px; color: #B5B5BB;
+  justify-content: center; gap: 10px; min-height: 300px; color: #4f617a;
 }
-.evc-empty-title { font-size: 15px; font-weight: 600; color: #6B6760; margin: 0; }
-.evc-empty-sub   { font-size: 13px; color: #B5B5BB; margin: 0; }
+.evc-empty-title { font-size: 15px; font-weight: 600; color: #8892a4; margin: 0; }
+.evc-empty-sub   { font-size: 13px; color: #4f617a; margin: 0; }
 .evc-empty-cta {
   margin-top: 6px; padding: 9px 20px; border-radius: 10px;
-  background: #0A0A0B; color: #fff; font-size: 13px; font-weight: 600;
-  text-decoration: none; transition: background 140ms;
+  background: linear-gradient(180deg, #2e3a58 0%, #1e2d46 100%); color: #e2e8f0; font-size: 13px; font-weight: 600;
+  text-decoration: none; transition: opacity 140ms;
 }
-.evc-empty-cta:hover { background: #2E2B28; }
+.evc-empty-cta:hover { opacity: 0.85; }
 
 .evc-grid {
   display: grid;
@@ -600,16 +600,16 @@ async function deleteCard(card) {
 
 /* Card tile */
 .evc-card {
-  background: #FFFFFF;
-  border: 1px solid #ECECEF;
+  background: #111827;
+  border: 1px solid #1e2d44;
   border-radius: 14px;
   overflow: hidden;
   cursor: pointer;
   transition: box-shadow 160ms, border-color 160ms, transform 160ms;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
-.evc-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.10); border-color: #D8D4CC; transform: translateY(-1px); }
-.evc-card--selected { border-color: #B8924D; box-shadow: 0 0 0 3px rgba(184,146,77,0.15); }
+.evc-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.35); border-color: #2a3a52; transform: translateY(-1px); }
+.evc-card--selected { border-color: #C9A84C; box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
 
 .evc-card-thumb {
   width: 100%;
@@ -630,7 +630,7 @@ async function deleteCard(card) {
 .evc-thumb-placeholder {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  color: #6B6B72;
+  color: #4f617a;
 }
 .evc-thumb-badge {
   position: relative; z-index: 1;
@@ -642,31 +642,31 @@ async function deleteCard(card) {
 
 .evc-card-body { padding: 12px 14px 10px; display: flex; align-items: center; gap: 10px; }
 .evc-card-type {
-  font-size: 14px; font-weight: 700; color: #0A0A0B;
+  font-size: 14px; font-weight: 700; color: #e2e8f0;
   margin: 0; letter-spacing: -0.1px; white-space: nowrap;
 }
 .evc-card-meta { display: flex; align-items: center; gap: 10px; }
 .evc-meta-chip {
   display: inline-flex; align-items: center; gap: 4px;
-  font-size: 11px; color: #6B6B72; font-weight: 500;
+  font-size: 11px; color: #8892a4; font-weight: 500;
 }
 
 /* Card action row */
 .evc-card-actions {
   display: flex; align-items: center; gap: 6px;
   padding: 10px 14px;
-  border-top: 1px solid #F4F4F6;
+  border-top: 1px solid #1e2d44;
 }
 .evc-del-confirm-lbl { font-size: 12px; color: #FF3B30; font-weight: 600; flex: 1; }
 .evc-action-btn {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 11px; border-radius: 7px;
   font-size: 12px; font-weight: 500; font-family: inherit;
-  border: 1px solid #ECECEF; background: #FAFAF9; color: #6B6760;
+  border: 1px solid #1e2d44; background: rgba(255,255,255,0.04); color: #8892a4;
   cursor: pointer; transition: all 130ms; text-decoration: none;
 }
-.evc-action-btn:hover { background: #F4F4F6; color: #0A0A0B; }
-.evc-action-btn--edit:hover { border-color: rgba(184,146,77,0.5); color: #B8924D; background: #FAFAFB; }
+.evc-action-btn:hover { background: #1a2236; color: #e2e8f0; }
+.evc-action-btn--edit:hover { border-color: rgba(201,168,76,0.5); color: #C9A84C; background: rgba(201,168,76,0.06); }
 .evc-action-btn--del-ghost:hover { border-color: rgba(255,59,48,0.3); color: #FF3B30; background: rgba(255,59,48,0.05); }
 .evc-action-btn--danger { border-color: rgba(255,59,48,0.4); color: #FF3B30; background: rgba(255,59,48,0.06); }
 .evc-action-btn--danger:hover { background: rgba(255,59,48,0.12); }
@@ -679,54 +679,54 @@ async function deleteCard(card) {
 }
 .evc-drawer {
   position: fixed; right: 0; top: 0; bottom: 0;
-  width: 380px; background: #FFFFFF;
-  box-shadow: -2px 0 32px rgba(0,0,0,0.10);
+  width: 380px; background: #111827;
+  box-shadow: -2px 0 32px rgba(0,0,0,0.45);
   display: flex; flex-direction: column; overflow-y: auto; z-index: 201;
 }
 .evc-drawer-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 16px; border-bottom: 1px solid #F4F4F6; flex-shrink: 0;
+  padding: 14px 16px; border-bottom: 1px solid #1e2d44; flex-shrink: 0;
 }
 .evc-drawer-back {
   display: flex; align-items: center; gap: 5px;
   padding: 6px 10px; border-radius: 8px;
-  border: none; background: #F4F4F6; color: #6B6760;
+  border: none; background: rgba(255,255,255,0.06); color: #8892a4;
   font-size: 13px; font-weight: 500; cursor: pointer;
   transition: all 130ms; font-family: inherit;
 }
-.evc-drawer-back:hover { background: #ECECEF; color: #0A0A0B; }
+.evc-drawer-back:hover { background: rgba(255,255,255,0.10); color: #e2e8f0; }
 .evc-drawer-edit-btn {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 6px 12px; border-radius: 8px;
-  border: 1px solid #ECECEF; background: #FAFAF9; color: #6B6760;
+  border: 1px solid #1e2d44; background: rgba(255,255,255,0.04); color: #8892a4;
   font-size: 12px; font-weight: 500; font-family: inherit;
   text-decoration: none; cursor: pointer; transition: all 130ms;
 }
-.evc-drawer-edit-btn:hover { border-color: rgba(184,146,77,0.5); color: #B8924D; background: #FAFAFB; }
+.evc-drawer-edit-btn:hover { border-color: rgba(201,168,76,0.5); color: #C9A84C; background: rgba(201,168,76,0.06); }
 
 /* Template preview */
-.evc-preview-wrap { padding: 16px 20px; background: #FFFFFF; border-bottom: 1px solid #ECECEF; flex-shrink: 0; }
+.evc-preview-wrap { padding: 16px 20px; background: #0f1729; border-bottom: 1px solid #1e2d44; flex-shrink: 0; }
 .evc-preview-img {
   width: 100%; aspect-ratio: 3 / 2;
   background-size: contain; background-position: center; background-repeat: no-repeat;
-  border-radius: 10px; border: 1px solid #ECECEF; background-color: #FFFFFF;
+  border-radius: 10px; border: 1px solid #1e2d44; background-color: #0f1729;
 }
 .evc-preview-placeholder {
   width: 100%; aspect-ratio: 3 / 2;
-  border-radius: 10px; border: 1px solid #ECECEF;
+  border-radius: 10px; border: 1px solid #1e2d44;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 8px; color: #6B6B72;
+  gap: 8px; color: #8892a4;
 }
-.evc-preview-placeholder p { font-size: 12px; margin: 0; color: #B5B5BB; }
+.evc-preview-placeholder p { font-size: 12px; margin: 0; color: #4f617a; }
 
 /* Drawer body */
 .evc-drawer-body { display: flex; flex-direction: column; padding: 0 0 24px; }
 
 .evc-detail-head {
   display: flex; align-items: flex-start; justify-content: space-between;
-  padding: 16px 20px 12px; border-bottom: 1px solid #F4F4F6;
+  padding: 16px 20px 12px; border-bottom: 1px solid #1e2d44;
 }
-.evc-detail-type { font-size: 18px; font-weight: 700; color: #0A0A0B; margin: 0 0 6px; }
+.evc-detail-type { font-size: 18px; font-weight: 700; color: #e2e8f0; margin: 0 0 6px; }
 .evc-purpose-badge {
   display: inline-block; padding: 3px 10px; border-radius: 20px;
   font-size: 11px; font-weight: 700;
@@ -734,33 +734,33 @@ async function deleteCard(card) {
 
 .evc-detail-stats {
   display: flex; align-items: center;
-  padding: 14px 20px; border-bottom: 1px solid #F4F4F6;
+  padding: 14px 20px; border-bottom: 1px solid #1e2d44;
 }
 .evc-detail-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; }
-.evc-detail-stat-n { font-size: 18px; font-weight: 700; color: #0A0A0B; line-height: 1; }
-.evc-detail-stat-lbl { font-size: 10px; font-weight: 600; color: #B5B5BB; text-transform: uppercase; letter-spacing: 0.4px; }
-.evc-detail-stat-sep { width: 0.8px; height: 28px; background: #ECECEF; flex-shrink: 0; }
+.evc-detail-stat-n { font-size: 18px; font-weight: 700; color: #e2e8f0; line-height: 1; }
+.evc-detail-stat-lbl { font-size: 10px; font-weight: 600; color: #4f617a; text-transform: uppercase; letter-spacing: 0.4px; }
+.evc-detail-stat-sep { width: 0.8px; height: 28px; background: #1e2d44; flex-shrink: 0; }
 
-.evc-drawer-block { padding: 14px 20px; border-bottom: 1px solid #F4F4F6; }
+.evc-drawer-block { padding: 14px 20px; border-bottom: 1px solid #1e2d44; }
 .evc-drawer-block:last-of-type { border-bottom: none; }
 .evc-block-lbl {
-  font-size: 10px; font-weight: 700; color: #B5B5BB;
+  font-size: 10px; font-weight: 700; color: #4f617a;
   text-transform: uppercase; letter-spacing: 0.6px; margin: 0 0 10px;
 }
-.evc-detail-none { font-size: 13px; color: #C0BAB2; font-style: italic; }
+.evc-detail-none { font-size: 13px; color: #4f617a; font-style: italic; }
 
 /* Checkpoints list */
 .evc-cp-list { display: flex; flex-direction: column; gap: 6px; }
 .evc-cp-item {
   display: flex; align-items: center; gap: 7px;
-  font-size: 13px; color: #0A0A0B; font-weight: 500;
+  font-size: 13px; color: #e2e8f0; font-weight: 500;
 }
 
 /* Attendees list */
 .evc-att-list { display: flex; flex-direction: column; gap: 0; }
 .evc-att-row {
   display: flex; align-items: center; gap: 10px;
-  padding: 8px 0; border-bottom: 1px solid #FFFFFF;
+  padding: 8px 0; border-bottom: 1px solid #1e2d44;
 }
 .evc-att-row:last-of-type { border-bottom: none; }
 .evc-att-avatar {
@@ -769,14 +769,14 @@ async function deleteCard(card) {
   font-size: 10px; font-weight: 700; flex-shrink: 0;
 }
 .evc-att-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.evc-att-name  { font-size: 12px; font-weight: 600; color: #0A0A0B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.evc-att-phone { font-size: 11px; color: #6B6B72; }
+.evc-att-name  { font-size: 12px; font-weight: 600; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.evc-att-phone { font-size: 11px; color: #8892a4; }
 .evc-att-card-status { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; flex-shrink: 0; }
-.evc-att-ready   { background: rgba(48,209,88,0.12);  color: #136B2A; }
-.evc-att-pending { background: rgba(255,159,10,0.12); color: #7A4500; }
-.evc-att-more { font-size: 12px; color: #6B6B72; margin: 8px 0 0; padding: 0; }
+.evc-att-ready   { background: rgba(48,209,88,0.12);  color: #34d399; }
+.evc-att-pending { background: rgba(201,168,76,0.12); color: #C9A84C; }
+.evc-att-more { font-size: 12px; color: #8892a4; margin: 8px 0 0; padding: 0; }
 
-.evc-drawer-added { font-size: 12px; color: #C0BAB2; margin: 0; padding: 4px 20px 0; }
+.evc-drawer-added { font-size: 12px; color: #4f617a; margin: 0; padding: 4px 20px 0; }
 
 /* ══ Transitions ══ */
 .evc-fade-enter-active, .evc-fade-leave-active { transition: opacity 200ms ease; }

@@ -2269,7 +2269,7 @@ function setImportPayment(attendeeId, amount) {
   flex-direction: column;
   gap: 16px;
   padding: 20px 24px 24px;
-  background: #FFFFFF;
+  background: #0a0e1c;
 }
 
 /* ── Toolbar ── */
@@ -2297,31 +2297,31 @@ function setImportPayment(attendeeId, amount) {
 .ea-search {
   width: 100%;
   padding: 9px 34px 9px 34px;
-  background: #FFFFFF;
-  border: 1px solid #ECECEF;
+  background: #0f1729;
+  border: 1.5px solid #2a3a52;
   border-radius: 10px;
   font-size: 13px;
-  color: #0A0A0B;
+  color: #e2e8f0;
   outline: none;
   transition: border-color 150ms;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.03), 0 4px 12px -2px rgba(0,0,0,0.08), 0 16px 32px -8px rgba(0,0,0,0.10);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.12), 0 4px 12px -2px rgba(0,0,0,0.18), 0 16px 32px -8px rgba(0,0,0,0.24);
   font-family: inherit;
 }
-.ea-search:focus { border-color: #B8924D; }
-.ea-search::placeholder { color: #B5B5BB; }
+.ea-search:focus { border-color: #C9A84C; }
+.ea-search::placeholder { color: #4f617a; }
 .ea-search-clear {
   position: absolute;
   right: 10px;
   background: none;
   border: none;
-  color: #B5B5BB;
+  color: #4f617a;
   cursor: pointer;
   display: flex;
   align-items: center;
   padding: 3px;
   border-radius: 4px;
 }
-.ea-search-clear:hover { color: #6B6B72; }
+.ea-search-clear:hover { color: #8892a4; }
 
 .ea-toolbar-right {
   display: flex;
@@ -2334,41 +2334,41 @@ function setImportPayment(attendeeId, amount) {
 .ea-chip {
   padding: 7px 13px;
   border-radius: 20px;
-  border: 1px solid #ECECEF;
-  background: #FFFFFF;
+  border: 1px solid #1e2d44;
+  background: #111827;
   font-size: 12px;
   font-weight: 500;
-  color: #6B6B72;
+  color: #8892a4;
   cursor: pointer;
   transition: all 140ms;
   font-family: inherit;
 }
-.ea-chip:hover { background: #F4F4F6; color: #6B6B72; }
-.ea-chip--active { background: #0A0A0B; border-color: #0A0A0B; color: #FFFFFF; font-weight: 600; }
+.ea-chip:hover { background: #1a2236; color: #e2e8f0; }
+.ea-chip--active { background: rgba(226,232,240,0.12); border-color: rgba(226,232,240,0.16); color: #e2e8f0; font-weight: 600; }
 .ea-chip-cnt {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 18px;
   padding: 1px 5px;
-  background: #EDEDEB;
+  background: rgba(255,255,255,0.08);
   border-radius: 10px;
   font-size: 11px;
   font-weight: 600;
-  color: #9A9690;
+  color: #4f617a;
   margin-left: 5px;
   line-height: 1.4;
 }
-.ea-chip--active .ea-chip-cnt { background: rgba(255,255,255,0.18); color: rgba(255,255,255,0.75); }
+.ea-chip--active .ea-chip-cnt { background: rgba(226,232,240,0.12); color: rgba(226,232,240,0.8); }
 
 .ea-add-btn {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: #0A0A0B;
-  color: #FFFFFF;
-  border: none;
+  background: linear-gradient(180deg, #2e3a58 0%, #1e2d46 100%);
+  color: #e2e8f0;
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
@@ -2377,7 +2377,7 @@ function setImportPayment(attendeeId, amount) {
   font-family: inherit;
   flex-shrink: 0;
 }
-.ea-add-btn:hover { opacity: 0.82; }
+.ea-add-btn:hover { opacity: 0.85; }
 
 
 /* ── Selection bar ── */
@@ -2386,9 +2386,10 @@ function setImportPayment(attendeeId, amount) {
   align-items: center;
   justify-content: space-between;
   padding: 11px 16px;
-  background: #0A0A0B;
+  background: #1a2236;
   border-radius: 12px;
   gap: 12px;
+  border: 1px solid #2a3a52;
 }
 .ea-sel-count {
   font-size: 13px;
@@ -2416,11 +2417,11 @@ function setImportPayment(attendeeId, amount) {
 .ea-table-wrap {
   display: flex;
   flex-direction: column;
-  background: #FFFFFF;
-  border: 1px solid #ECECEF;
+  background: #111827;
+  border: 1px solid #1e2d44;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.03), 0 4px 12px -2px rgba(0,0,0,0.08), 0 16px 32px -8px rgba(0,0,0,0.10);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.14), 0 4px 12px -2px rgba(0,0,0,0.22), 0 16px 32px -8px rgba(0,0,0,0.30);
 }
 .ea-table-scroll {
   overflow-x: auto;
@@ -2440,7 +2441,7 @@ function setImportPayment(attendeeId, amount) {
 .ea-cb {
   width: 15px;
   height: 15px;
-  accent-color: #0A0A0B;
+  accent-color: #C9A84C;
   cursor: pointer;
   display: block;
 }
@@ -2450,20 +2451,20 @@ function setImportPayment(attendeeId, amount) {
   padding: 11px 16px;
   font-size: 11px;
   font-weight: 700;
-  color: #6B6B72;
+  color: #8892a4;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   text-align: left;
   white-space: nowrap;
-  background: #FAFAF9;
-  border-bottom: 1px solid #ECECEF;
+  background: #0f1729;
+  border-bottom: 1px solid #1e2d44;
   user-select: none;
   position: sticky;
   top: 0;
   z-index: 1;
 }
 .ea-th--sortable { cursor: pointer; }
-.ea-th--sortable:hover { color: #0A0A0B; }
+.ea-th--sortable:hover { color: #e2e8f0; }
 .ea-th--right { text-align: right; }
 
 /* Sort icon */
@@ -2479,25 +2480,25 @@ function setImportPayment(attendeeId, amount) {
 
 /* Rows */
 .ea-tr {
-  border-bottom: 1px solid #F4F4F6;
+  border-bottom: 1px solid #1e2d44;
   cursor: pointer;
   transition: background 120ms;
 }
 .ea-tr:last-child { border-bottom: none; }
-.ea-tr:hover:not(.ea-tr--skeleton) { background: #FAFAF9; }
+.ea-tr:hover:not(.ea-tr--skeleton) { background: #1a2236; }
 .ea-tr--skeleton { pointer-events: none; }
-.ea-tr--selected { background: #FFFBF0 !important; }
+.ea-tr--selected { background: rgba(201,168,76,0.08) !important; }
 .ea-tr--pending { box-shadow: inset 3px 0 0 #FF9F0A; }
 
 /* Cells */
 .ea-td {
   padding: 11px 16px;
   font-size: 13px;
-  color: #0A0A0B;
+  color: #e2e8f0;
   vertical-align: middle;
   white-space: nowrap;
 }
-.ea-td--muted { color: #6B6B72; font-size: 12px; }
+.ea-td--muted { color: #8892a4; font-size: 12px; }
 .ea-td--right { text-align: right; }
 .ea-td--date  { font-size: 12px; }
 
@@ -2521,7 +2522,7 @@ function setImportPayment(attendeeId, amount) {
 }
 .ea-name-text {
   font-weight: 600;
-  color: #0A0A0B;
+  color: #e2e8f0;
   white-space: nowrap;
 }
 
@@ -2584,17 +2585,17 @@ function setImportPayment(attendeeId, amount) {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  border: 1px solid #ECECEF;
-  background: #FFFFFF;
+  border: 1px solid #2a3a52;
+  background: #1a2236;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 130ms;
-  color: #6B6B72;
+  color: #8892a4;
   flex-shrink: 0;
 }
-.ea-row-btn:hover { background: #F4F4F6; color: #0A0A0B; border-color: #D8D6D0; }
+.ea-row-btn:hover { background: #243048; color: #e2e8f0; border-color: #3a4f6a; }
 .ea-row-btn--edit:hover { color: #0A0A0B; }
 .ea-row-btn--refresh {
   color: #FF9F0A;
@@ -2646,7 +2647,7 @@ function setImportPayment(attendeeId, amount) {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.ea-status-text { font-size: 12px; font-weight: 500; color: #3A3936; }
+.ea-status-text { font-size: 12px; font-weight: 500; color: #8892a4; }
 
 /* Labels */
 .ea-label-list {
@@ -2662,13 +2663,13 @@ function setImportPayment(attendeeId, amount) {
   border-radius: 10px;
   white-space: nowrap;
 }
-.ea-cell-dash { color: #D0CEC9; font-size: 13px; }
+.ea-cell-dash { color: #4f617a; font-size: 13px; }
 
 /* Skeleton */
 .ea-sk-circle {
   width: 32px; height: 32px;
   border-radius: 50%;
-  background: linear-gradient(90deg, #F4F4F6 25%, #E8E8E6 50%, #F4F4F6 75%);
+  background: linear-gradient(90deg, #111827 25%, #1a2236 50%, #111827 75%);
   background-size: 200% 100%;
   animation: ea-shimmer 1.3s infinite;
   flex-shrink: 0;
@@ -2676,7 +2677,7 @@ function setImportPayment(attendeeId, amount) {
 .ea-sk-bar {
   height: 9px;
   border-radius: 5px;
-  background: linear-gradient(90deg, #F4F4F6 25%, #E8E8E6 50%, #F4F4F6 75%);
+  background: linear-gradient(90deg, #111827 25%, #1a2236 50%, #111827 75%);
   background-size: 200% 100%;
   animation: ea-shimmer 1.3s infinite;
 }
@@ -2695,15 +2696,15 @@ function setImportPayment(attendeeId, amount) {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-top: 1px solid #ECECEF;
-  background: #FFFFFF;
+  border-top: 1px solid #1e2d44;
+  background: #111827;
   gap: 12px;
   flex-wrap: wrap;
   flex-shrink: 0;
 }
 .ea-range-label {
   font-size: 12px;
-  color: #6B6B72;
+  color: #8892a4;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -2717,12 +2718,12 @@ function setImportPayment(attendeeId, amount) {
   min-width: 32px;
   height: 32px;
   padding: 0 6px;
-  border: 1px solid #ECECEF;
+  border: 1px solid #1e2d44;
   border-radius: 8px;
-  background: #FFFFFF;
+  background: #111827;
   font-size: 13px;
   font-weight: 500;
-  color: #6B6B72;
+  color: #8892a4;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -2731,18 +2732,18 @@ function setImportPayment(attendeeId, amount) {
   font-family: inherit;
 }
 .ea-page-btn:hover:not(:disabled):not(.ea-page-btn--active) {
-  background: #F4F4F6;
-  border-color: #D8D6D0;
-  color: #0A0A0B;
+  background: #1a2236;
+  border-color: #2a3a52;
+  color: #e2e8f0;
 }
 .ea-page-btn--active {
-  background: #0A0A0B;
-  border-color: #0A0A0B;
-  color: #FFFFFF;
+  background: rgba(226,232,240,0.12);
+  border-color: rgba(226,232,240,0.16);
+  color: #e2e8f0;
   font-weight: 600;
   cursor: default;
 }
-.ea-page-btn--nav { color: #6B6B72; }
+.ea-page-btn--nav { color: #8892a4; }
 .ea-page-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
@@ -2754,7 +2755,7 @@ function setImportPayment(attendeeId, amount) {
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  color: #B5B5BB;
+  color: #4f617a;
   letter-spacing: 1px;
 }
 
@@ -2774,12 +2775,12 @@ function setImportPayment(attendeeId, amount) {
 .ea-empty-title {
   font-size: 15px;
   font-weight: 700;
-  color: #0A0A0B;
+  color: #e2e8f0;
   margin: 0;
 }
 .ea-empty-sub {
   font-size: 13px;
-  color: #6B6B72;
+  color: #8892a4;
   margin: 0 0 14px;
   line-height: 1.5;
 }
@@ -2788,9 +2789,9 @@ function setImportPayment(attendeeId, amount) {
   align-items: center;
   gap: 6px;
   padding: 9px 18px;
-  background: #0A0A0B;
-  color: #FFFFFF;
-  border: none;
+  background: linear-gradient(180deg, #2e3a58 0%, #1e2d46 100%);
+  color: #e2e8f0;
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
@@ -2798,12 +2799,13 @@ function setImportPayment(attendeeId, amount) {
   font-family: inherit;
   transition: opacity 150ms;
 }
-.ea-empty-cta:hover { opacity: 0.82; }
+.ea-empty-cta:hover { opacity: 0.85; }
 .ea-empty-cta--ghost {
-  background: #F4F4F6;
-  color: #6B6B72;
+  background: #1a2236;
+  color: #8892a4;
+  border: 1px solid #1e2d44;
 }
-.ea-empty-cta--ghost:hover { opacity: 1; background: #ECECEF; }
+.ea-empty-cta--ghost:hover { opacity: 1; background: #243048; }
 
 /* ── Overlay ── */
 .ea-overlay {
@@ -2821,11 +2823,12 @@ function setImportPayment(attendeeId, amount) {
 
 /* ── Modal ── */
 .ea-modal {
-  background: #FFFFFF;
+  background: #111827;
+  border: 1px solid #1e2d44;
   border-radius: 16px;
   width: 100%;
   max-width: 440px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
   overflow: hidden;
 }
 .ea-modal-header {
@@ -2833,22 +2836,22 @@ function setImportPayment(attendeeId, amount) {
   align-items: center;
   justify-content: space-between;
   padding: 20px 22px 16px;
-  border-bottom: 1px solid #F4F4F6;
+  border-bottom: 1px solid #1e2d44;
 }
-.ea-modal-title { font-size: 16px; font-weight: 700; color: #0A0A0B; margin: 0; }
+.ea-modal-title { font-size: 16px; font-weight: 700; color: #e2e8f0; margin: 0; }
 .ea-modal-close {
-  background: #F4F4F6;
-  border: none;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
   width: 28px; height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #6B6B72;
+  color: #8892a4;
   transition: background 140ms;
 }
-.ea-modal-close:hover { background: #ECECEF; }
+.ea-modal-close:hover { background: rgba(255,255,255,0.12); }
 
 .ea-form {
   padding: 20px 22px;
@@ -2857,21 +2860,21 @@ function setImportPayment(attendeeId, amount) {
   gap: 16px;
 }
 .ea-field { display: flex; flex-direction: column; gap: 6px; }
-.ea-label { font-size: 12px; font-weight: 600; color: #6B6B72; }
+.ea-label { font-size: 12px; font-weight: 600; color: #8892a4; }
 .ea-required { color: #FF453A; }
 
 .ea-input {
   padding: 9px 12px;
-  border: 1px solid #ECECEF;
+  border: 1.5px solid #2a3a52;
   border-radius: 10px;
   font-size: 13px;
-  color: #0A0A0B;
+  color: #e2e8f0;
   outline: none;
-  background: #FAFAF9;
+  background: #0f1729;
   transition: border-color 150ms, background 150ms;
   font-family: inherit;
 }
-.ea-input:focus { border-color: #B8924D; background: #FFFFFF; }
+.ea-input:focus { border-color: #C9A84C; background: #0a0e1c; }
 .ea-input--error { border-color: #FF453A; }
 .ea-field-error { font-size: 11px; color: #FF453A; }
 
@@ -2888,21 +2891,21 @@ function setImportPayment(attendeeId, amount) {
 .ea-type-opt {
   flex: 1;
   padding: 8px;
-  border: 1px solid #ECECEF;
+  border: 1px solid #1e2d44;
   border-radius: 10px;
-  background: #FAFAF9;
+  background: #0f1729;
   font-size: 12px;
   font-weight: 600;
-  color: #6B6B72;
+  color: #8892a4;
   cursor: pointer;
   transition: all 140ms;
   font-family: inherit;
 }
-.ea-type-opt:hover { background: #F4F4F6; }
+.ea-type-opt:hover { background: #1a2236; }
 .ea-type-opt--active {
-  background: #FAFAFB;
-  border-color: rgba(10,10,11,0.15);
-  color: #B8924D;
+  background: rgba(201,168,76,0.08);
+  border-color: rgba(201,168,76,0.3);
+  color: #C9A84C;
 }
 
 /* ── Card template selector ── */
@@ -2911,7 +2914,7 @@ function setImportPayment(attendeeId, amount) {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #6B6B72;
+  color: #8892a4;
   padding: 10px 0;
 }
 @keyframes ea-tpl-spin { to { transform: rotate(360deg); } }
@@ -2922,14 +2925,14 @@ function setImportPayment(attendeeId, amount) {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #6B6B72;
-  background: #FAFAF9;
-  border: 1px solid #ECECEF;
+  color: #8892a4;
+  background: #0f1729;
+  border: 1px solid #1e2d44;
   border-radius: 10px;
   padding: 12px 14px;
   line-height: 1.4;
 }
-.ea-tpl-empty strong { color: #6B6B72; font-weight: 600; }
+.ea-tpl-empty strong { color: #8892a4; font-weight: 600; }
 
 .ea-tpl-grid {
   display: flex;
@@ -2941,22 +2944,22 @@ function setImportPayment(attendeeId, amount) {
   align-items: center;
   gap: 10px;
   padding: 11px 14px;
-  border: 1px solid #ECECEF;
+  border: 1px solid #1e2d44;
   border-radius: 10px;
-  background: #FAFAF9;
+  background: #0f1729;
   font-size: 13px;
   font-weight: 500;
-  color: #3A3936;
+  color: #c8d4e0;
   cursor: pointer;
   text-align: left;
   transition: all 140ms;
   font-family: inherit;
 }
-.ea-tpl-opt:hover { background: #F4F4F6; border-color: #D8D6D0; }
+.ea-tpl-opt:hover { background: #1a2236; border-color: #2a3a52; }
 .ea-tpl-opt--active {
-  background: #FAFAFB;
-  border-color: rgba(184,146,77,0.5);
-  color: #9A7218;
+  background: rgba(201,168,76,0.08);
+  border-color: rgba(201,168,76,0.3);
+  color: #C9A84C;
   font-weight: 600;
 }
 .ea-tpl-opt--active svg:first-child { stroke: #B8924D; }
@@ -2979,7 +2982,7 @@ function setImportPayment(attendeeId, amount) {
   gap: 8px;
   justify-content: flex-end;
   padding-top: 4px;
-  border-top: 1px solid #F4F4F6;
+  border-top: 1px solid #1e2d44;
 }
 .ea-btn {
   padding: 9px 18px;
@@ -2992,8 +2995,8 @@ function setImportPayment(attendeeId, amount) {
   font-family: inherit;
 }
 .ea-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.ea-btn--primary { background: #0A0A0B; color: #FFFFFF; }
-.ea-btn--ghost   { background: #F4F4F6; color: #6B6B72; }
+.ea-btn--primary { background: linear-gradient(180deg, #2e3a58 0%, #1e2d46 100%); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.12); }
+.ea-btn--ghost   { background: rgba(255,255,255,0.06); color: #8892a4; border: 1px solid rgba(255,255,255,0.08); }
 .ea-btn--danger  { background: rgba(255,69,58,0.1); color: #FF453A; }
 
 /* ── Drawer ── */
@@ -3001,8 +3004,9 @@ function setImportPayment(attendeeId, amount) {
   position: fixed;
   right: 0; top: 0; bottom: 0;
   width: 360px;
-  background: #FFFFFF;
-  box-shadow: -2px 0 32px rgba(0,0,0,0.10);
+  background: #111827;
+  border-left: 1px solid #1e2d44;
+  box-shadow: -2px 0 32px rgba(0,0,0,0.40);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -3023,27 +3027,27 @@ function setImportPayment(attendeeId, amount) {
   background: none;
   border: none;
   font-size: 13px;
-  color: #6B6B72;
+  color: #8892a4;
   cursor: pointer;
   padding: 5px 8px;
   border-radius: 8px;
   transition: all 130ms;
   font-family: inherit;
 }
-.ea-drawer-back:hover { background: #F4F4F6; color: #0A0A0B; }
+.ea-drawer-back:hover { background: #1a2236; color: #e2e8f0; }
 .ea-drawer-edit-btn {
-  background: #F4F4F6;
-  border: none;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
   font-size: 13px;
   font-weight: 600;
-  color: #6B6B72;
+  color: #8892a4;
   padding: 6px 14px;
   border-radius: 8px;
   cursor: pointer;
   transition: background 130ms;
   font-family: inherit;
 }
-.ea-drawer-edit-btn:hover { background: #ECECEF; }
+.ea-drawer-edit-btn:hover { background: rgba(255,255,255,0.10); }
 
 /* Hero */
 .ea-drawer-hero {
@@ -3052,9 +3056,9 @@ function setImportPayment(attendeeId, amount) {
   align-items: center;
   text-align: center;
   padding: 20px 24px 22px;
-  background: #FAFAF9;
-  border-top: 1px solid #F4F4F6;
-  border-bottom: 1px solid #F4F4F6;
+  background: #0f1729;
+  border-top: 1px solid #1e2d44;
+  border-bottom: 1px solid #1e2d44;
   gap: 4px;
 }
 .ea-drawer-avatar {
@@ -3070,13 +3074,13 @@ function setImportPayment(attendeeId, amount) {
 .ea-drawer-name {
   font-size: 17px;
   font-weight: 700;
-  color: #0A0A0B;
+  color: #e2e8f0;
   margin: 0;
   letter-spacing: -0.2px;
 }
 .ea-drawer-phone {
   font-size: 13px;
-  color: #6B6B72;
+  color: #8892a4;
   margin: 0;
 }
 .ea-drawer-hero-meta {
@@ -3090,7 +3094,7 @@ function setImportPayment(attendeeId, amount) {
 .ea-drawer-tpl-name {
   font-size: 11px;
   font-weight: 600;
-  color: #B5B5BB;
+  color: #4f617a;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -3100,22 +3104,23 @@ function setImportPayment(attendeeId, amount) {
   display: flex;
   gap: 8px;
   padding: 14px 18px;
-  border-bottom: 1px solid #F4F4F6;
+  border-bottom: 1px solid #1e2d44;
 }
 .ea-action-pill {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 7px 14px;
-  background: #F4F4F6;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
-  color: #0A0A0B;
+  color: #c8d4e0;
   text-decoration: none;
   transition: background 140ms;
 }
-.ea-action-pill:hover { background: #ECECEF; }
+.ea-action-pill:hover { background: rgba(255,255,255,0.10); }
 .ea-action-pill--pending {
   color: #FF9F0A;
   background: rgba(255,159,10,0.08);
@@ -3140,7 +3145,7 @@ function setImportPayment(attendeeId, amount) {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.7px;
-  color: #C0BAB2;
+  color: #4f617a;
   margin: 0 0 10px;
 }
 .ea-label-wrap {
@@ -3160,18 +3165,18 @@ function setImportPayment(attendeeId, amount) {
   align-items: center;
   gap: 6px;
   padding: 6px 13px;
-  border: 1px solid #ECECEF;
+  border: 1px solid #1e2d44;
   border-radius: 20px;
-  background: #FFFFFF;
+  background: #111827;
   font-size: 12px;
   font-weight: 600;
-  color: #6B6B72;
+  color: #8892a4;
   cursor: pointer;
   transition: all 140ms;
   font-family: inherit;
   white-space: nowrap;
 }
-.ea-status-pill:hover:not(:disabled) { background: #F4F4F6; }
+.ea-status-pill:hover:not(:disabled) { background: #1a2236; }
 .ea-status-pill:disabled { opacity: 0.6; cursor: wait; }
 .ea-status-pill--active { font-weight: 700; }
 
@@ -3185,15 +3190,15 @@ function setImportPayment(attendeeId, amount) {
 .ea-contrib-row { display: flex; gap: 10px; }
 .ea-contrib-card {
   flex: 1;
-  background: #FAFAF9;
-  border: 1px solid #ECECEF;
+  background: #0f1729;
+  border: 1px solid #1e2d44;
   border-radius: 12px;
   padding: 14px 16px;
 }
 .ea-contrib-label {
   display: block;
   font-size: 11px;
-  color: #6B6B72;
+  color: #8892a4;
   font-weight: 500;
   margin-bottom: 4px;
 }
@@ -3201,13 +3206,13 @@ function setImportPayment(attendeeId, amount) {
   font-family: 'JetBrains Mono', monospace;
   font-size: 15px;
   font-weight: 700;
-  color: #0A0A0B;
+  color: #e2e8f0;
 }
 .ea-contrib-val--paid { color: #30D158; }
 
 /* Mchango interactive bits */
 .ea-contrib-card--clickable { cursor: pointer; transition: background 130ms; }
-.ea-contrib-card--clickable:hover { background: #F2F1EE; }
+.ea-contrib-card--clickable:hover { background: #1a2236; }
 .ea-contrib-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
 .ea-contrib-edit-ico { color: #B8924D; opacity: 0.5; flex-shrink: 0; transition: opacity 130ms; }
 .ea-contrib-card--clickable:hover .ea-contrib-edit-ico { opacity: 1; }
@@ -3215,29 +3220,29 @@ function setImportPayment(attendeeId, amount) {
 .ea-inline-field { display: flex; align-items: center; gap: 4px; margin-top: 2px; }
 .ea-inline-inp {
   flex: 1; min-width: 0;
-  border: 1px solid #B8924D; border-radius: 6px;
+  border: 1px solid #C9A84C; border-radius: 6px;
   padding: 4px 8px; font-size: 13px; font-family: inherit;
-  outline: none; background: #FFFDF5; color: #0A0A0B;
+  outline: none; background: rgba(201,168,76,0.06); color: #e2e8f0;
 }
 .ea-inline-ok {
   width: 26px; height: 26px; border-radius: 6px;
-  border: none; background: linear-gradient(180deg, #2A2A2D 0%, #0A0A0B 100%); color: #fff;
+  border: none; background: linear-gradient(180deg, #2e3a58 0%, #1e2d46 100%); color: #e2e8f0;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; flex-shrink: 0; transition: background 130ms;
 }
-.ea-inline-ok:hover:not(:disabled) { background: #B8943E; }
+.ea-inline-ok:hover:not(:disabled) { background: #C9A84C; }
 .ea-inline-ok:disabled { opacity: 0.5; cursor: not-allowed; }
 .ea-inline-x {
   width: 26px; height: 26px; border-radius: 6px;
-  border: 1px solid #E5E4E0; background: #F4F4F6; color: #6B6760;
+  border: 1px solid #1e2d44; background: #1a2236; color: #8892a4;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; flex-shrink: 0; transition: background 130ms;
 }
-.ea-inline-x:hover { background: #ECECEF; }
+.ea-inline-x:hover { background: #243048; }
 
 /* Progress bar */
 .ea-pledge-bar-wrap { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-.ea-pledge-bar { flex: 1; height: 5px; background: #ECECEF; border-radius: 99px; overflow: hidden; }
+.ea-pledge-bar { flex: 1; height: 5px; background: #1e2d44; border-radius: 99px; overflow: hidden; }
 .ea-pledge-bar-fill { height: 100%; background: #30D158; border-radius: 99px; transition: width 500ms ease; }
 .ea-pledge-pct { font-size: 10px; font-weight: 700; color: #30D158; white-space: nowrap; flex-shrink: 0; }
 
@@ -3254,42 +3259,42 @@ function setImportPayment(attendeeId, amount) {
 
 /* Inline add-payment form */
 .ea-pay-form {
-  margin-top: 14px; background: #FAFAF9;
-  border: 1px solid #ECECEF; border-radius: 10px; padding: 12px;
+  margin-top: 14px; background: #0f1729;
+  border: 1px solid #1e2d44; border-radius: 10px; padding: 12px;
 }
 .ea-pay-form-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.ea-pay-form-label { font-size: 11px; font-weight: 700; color: #0A0A0B; letter-spacing: 0.3px; text-transform: uppercase; }
+.ea-pay-form-label { font-size: 11px; font-weight: 700; color: #e2e8f0; letter-spacing: 0.3px; text-transform: uppercase; }
 .ea-pay-form-close {
   width: 22px; height: 22px; border-radius: 50%;
-  border: none; background: #ECECEF; color: #6B6760;
+  border: none; background: rgba(255,255,255,0.06); color: #8892a4;
   display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
-.ea-pay-form-close:hover { background: #E0E0DC; }
+.ea-pay-form-close:hover { background: rgba(255,255,255,0.10); }
 .ea-pay-form-row { display: flex; gap: 6px; }
 .ea-pay-inp {
   flex: 1; min-width: 0;
-  border: 1px solid #E5E4E0; border-radius: 8px;
+  border: 1.5px solid #2a3a52; border-radius: 8px;
   padding: 8px 12px; font-size: 13px; font-family: inherit;
-  outline: none; background: #fff; color: #0A0A0B; transition: border-color 130ms, box-shadow 130ms;
+  outline: none; background: #0a0e1c; color: #e2e8f0; transition: border-color 130ms, box-shadow 130ms;
 }
-.ea-pay-inp:focus { border-color: #B8924D; box-shadow: 0 0 0 3px rgba(10,10,11,0.04); }
+.ea-pay-inp:focus { border-color: #C9A84C; box-shadow: 0 0 0 3px rgba(201,168,76,0.10); }
 .ea-pay-submit {
-  padding: 8px 16px; border: none; border-radius: 8px;
-  background: linear-gradient(180deg, #2A2A2D 0%, #0A0A0B 100%); color: #fff; font-size: 13px; font-weight: 600;
+  padding: 8px 16px; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
+  background: linear-gradient(180deg, #2e3a58 0%, #1e2d46 100%); color: #e2e8f0; font-size: 13px; font-weight: 600;
   font-family: inherit; cursor: pointer; flex-shrink: 0; transition: background 130ms;
 }
-.ea-pay-submit:hover:not(:disabled) { background: #B8943E; }
+.ea-pay-submit:hover:not(:disabled) { background: linear-gradient(180deg, #3a4a6a 0%, #2a3a58 100%); }
 .ea-pay-submit:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* Payment history list */
 .ea-pay-history { margin-top: 14px; }
 .ea-pay-empty {
-  font-size: 12px; color: #C0BAB2; text-align: center;
+  font-size: 12px; color: #4f617a; text-align: center;
   padding: 16px 0; display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0;
 }
 .ea-pay-item {
   display: flex; align-items: center; gap: 10px;
-  padding: 10px 0; border-bottom: 1px solid #F4F4F6;
+  padding: 10px 0; border-bottom: 1px solid #1e2d44;
 }
 .ea-pay-item:last-child { border-bottom: none; }
 .ea-pay-ico {
@@ -3299,23 +3304,23 @@ function setImportPayment(attendeeId, amount) {
 }
 .ea-pay-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .ea-pay-amt {
-  font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: #0A0A0B; }
-.ea-pay-when { font-size: 11px; color: #6B6B72; }
+  font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: #e2e8f0; }
+.ea-pay-when { font-size: 11px; color: #8892a4; }
 .ea-pay-item-actions { display: flex; gap: 4px; flex-shrink: 0; }
 .ea-pay-item-btn {
   width: 28px; height: 28px; border-radius: 6px;
-  border: 1px solid #E5E4E0; background: #FAFAF9; color: #6B6760;
+  border: 1px solid #2a3a52; background: #1a2236; color: #8892a4;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; transition: all 130ms;
 }
-.ea-pay-item-btn:hover { background: #ECECEF; color: #0A0A0B; border-color: #D0D0CC; }
+.ea-pay-item-btn:hover { background: #243048; color: #e2e8f0; border-color: #3a4f6a; }
 .ea-pay-item-btn--del:hover { background: rgba(255,59,48,0.08); color: #FF3B30; border-color: rgba(255,59,48,0.3); }
 .ea-pay-item-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* Footer */
 .ea-drawer-added {
   font-size: 12px;
-  color: #C0BAB2;
+  color: #4f617a;
   margin: 0;
   padding: 4px 20px 0;
 }
@@ -3338,18 +3343,18 @@ function setImportPayment(attendeeId, amount) {
 :deep(.ea-tel-input.vue-tel-input) {
   display: flex;
   align-items: stretch;
-  border: 1px solid #ECECEF;
+  border: 1.5px solid #2a3a52;
   border-radius: 10px;
-  background: #FAFAF9;
+  background: #0f1729;
   box-shadow: none;
   font-family: inherit;
   transition: border-color 150ms, background 150ms;
   overflow: visible;
 }
 :deep(.ea-tel-input.vue-tel-input:focus-within) {
-  border-color: #B8924D;
-  background: #FFFFFF;
-  box-shadow: 0 0 0 3px rgba(184,146,77,0.10);
+  border-color: #C9A84C;
+  background: #0a0e1c;
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.10);
 }
 :deep(.ea-tel-input--valid.vue-tel-input) { border-color: rgba(48,209,88,0.55); }
 :deep(.ea-tel-input--invalid.vue-tel-input) { border-color: rgba(255,69,58,0.55); }
@@ -3357,7 +3362,7 @@ function setImportPayment(attendeeId, amount) {
 /* Country dropdown button */
 :deep(.ea-tel-input .vti__dropdown) {
   border: none;
-  border-right: 1px solid #ECECEF;
+  border-right: 1px solid #2a3a52;
   border-radius: 10px 0 0 10px;
   background: transparent;
   padding: 0 10px;
@@ -3370,7 +3375,7 @@ function setImportPayment(attendeeId, amount) {
 }
 :deep(.ea-tel-input .vti__dropdown:hover),
 :deep(.ea-tel-input .vti__dropdown.open) {
-  background: #F4F4F6;
+  background: rgba(255,255,255,0.06);
 }
 
 /* Flag */
@@ -3383,14 +3388,14 @@ function setImportPayment(attendeeId, amount) {
 :deep(.ea-tel-input .vti__selection .vti__country-code) {
   font-size: 12px;
   font-weight: 600;
-  color: #3A3936;
+  color: #8892a4;
   font-family: inherit;
 }
 
 /* Dropdown arrow */
 :deep(.ea-tel-input .vti__dropdown-arrow) {
   font-size: 9px;
-  color: #B5B5BB;
+  color: #4f617a;
   margin-left: 2px;
 }
 
@@ -3402,19 +3407,19 @@ function setImportPayment(attendeeId, amount) {
   background: transparent;
   padding: 9px 12px;
   font-size: 13px;
-  color: #0A0A0B;
+  color: #e2e8f0;
   font-family: inherit;
   border-radius: 0 10px 10px 0;
   min-width: 0;
 }
-:deep(.ea-tel-input .vti__input::placeholder) { color: #B5B5BB; }
+:deep(.ea-tel-input .vti__input::placeholder) { color: #4f617a; }
 
 /* Dropdown list */
 :deep(.ea-tel-input .vti__dropdown-list) {
-  border: 1px solid #ECECEF;
+  border: 1px solid #1e2d44;
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.10);
-  background: #FFFFFF;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.40);
+  background: #111827;
   z-index: 9999;
   padding: 6px;
   max-height: 260px;
@@ -3429,16 +3434,16 @@ function setImportPayment(attendeeId, amount) {
   width: calc(100% - 16px);
   margin: 0 8px 6px;
   padding: 7px 10px;
-  border: 1px solid #ECECEF;
+  border: 1px solid #2a3a52;
   border-radius: 8px;
   font-size: 12px;
   font-family: inherit;
   outline: none;
-  background: #FAFAF9;
-  color: #0A0A0B;
+  background: #0f1729;
+  color: #e2e8f0;
   display: block;
 }
-:deep(.ea-tel-input .vti__search_box:focus) { border-color: #B8924D; }
+:deep(.ea-tel-input .vti__search_box:focus) { border-color: #C9A84C; }
 
 /* Country list items */
 :deep(.ea-tel-input .vti__dropdown-item) {
@@ -3447,7 +3452,7 @@ function setImportPayment(attendeeId, amount) {
   gap: 10px;
   padding: 8px 10px;
   font-size: 12px;
-  color: #3A3936;
+  color: #c8d4e0;
   font-family: inherit;
   border-radius: 8px;
   cursor: pointer;
@@ -3456,15 +3461,15 @@ function setImportPayment(attendeeId, amount) {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-:deep(.ea-tel-input .vti__dropdown-item:hover) { background: #F4F4F6; }
+:deep(.ea-tel-input .vti__dropdown-item:hover) { background: #1a2236; }
 :deep(.ea-tel-input .vti__dropdown-item.highlighted) {
-  background: #FAFAFB;
-  color: #9A7218;
+  background: rgba(201,168,76,0.08);
+  color: #C9A84C;
   font-weight: 600;
 }
 :deep(.ea-tel-input .vti__dropdown-item strong) {
   font-weight: 600;
-  color: #6B6B72;
+  color: #4f617a;
   font-size: 11px;
   margin-left: auto;
   flex-shrink: 0;
@@ -3480,9 +3485,9 @@ function setImportPayment(attendeeId, amount) {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background: #FFFFFF;
-  color: #6B6B72;
-  border: 1px solid #ECECEF;
+  background: #111827;
+  color: #8892a4;
+  border: 1px solid #1e2d44;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
@@ -3490,12 +3495,12 @@ function setImportPayment(attendeeId, amount) {
   transition: all 150ms;
   font-family: inherit;
   flex-shrink: 0;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.03), 0 4px 12px -2px rgba(0,0,0,0.08), 0 16px 32px -8px rgba(0,0,0,0.10);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.12), 0 4px 12px -2px rgba(0,0,0,0.18), 0 16px 32px -8px rgba(0,0,0,0.24);
 }
 .ea-import-btn:hover {
-  background: #FAFAFB;
-  border-color: rgba(10,10,11,0.15);
-  color: #B8924D;
+  background: #1a2236;
+  border-color: rgba(201,168,76,0.3);
+  color: #C9A84C;
 }
 
 /* ── Import modal sizing ── */
@@ -3525,9 +3530,9 @@ function setImportPayment(attendeeId, amount) {
 
 /* ── Drop zone ── */
 .ea-dropzone {
-  border: 1.5px dashed #D8D6D0;
+  border: 1.5px dashed #2a3a52;
   border-radius: 14px;
-  background: #FAFAF9;
+  background: #0f1729;
   transition: all 180ms;
   position: relative;
   min-height: 130px;
@@ -3536,13 +3541,13 @@ function setImportPayment(attendeeId, amount) {
   justify-content: center;
 }
 .ea-dropzone--over {
-  border-color: #B8924D;
-  background: #FAFAFB;
+  border-color: #C9A84C;
+  background: rgba(201,168,76,0.06);
 }
 .ea-dropzone--filled {
   border-style: solid;
-  border-color: rgba(10,10,11,0.16);
-  background: #FFFCF5;
+  border-color: rgba(201,168,76,0.3);
+  background: rgba(201,168,76,0.04);
 }
 .ea-file-input {
   position: absolute;
@@ -3564,28 +3569,28 @@ function setImportPayment(attendeeId, amount) {
 }
 .ea-drop-icon {
   width: 52px; height: 52px;
-  background: #F4F4F6;
+  background: #1a2236;
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #B5B5BB;
+  color: #4f617a;
   margin-bottom: 4px;
   transition: background 180ms, color 180ms;
 }
 .ea-dropzone--over .ea-drop-icon {
-  background: rgba(10,10,11,0.04);
-  color: #B8924D;
+  background: rgba(201,168,76,0.10);
+  color: #C9A84C;
 }
 .ea-drop-title {
   font-size: 13px;
   font-weight: 600;
-  color: #3A3936;
+  color: #c8d4e0;
   margin: 0;
 }
 .ea-drop-sub {
   font-size: 12px;
-  color: #6B6B72;
+  color: #8892a4;
   margin: 0;
 }
 .ea-drop-link { color: #B8924D; font-weight: 600; }
@@ -3602,13 +3607,13 @@ function setImportPayment(attendeeId, amount) {
   flex: 1;
   font-size: 13px;
   font-weight: 600;
-  color: #3A3936;
+  color: #c8d4e0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .ea-file-clear {
-  background: #F4F4F6;
+  background: rgba(255,255,255,0.06);
   border: none;
   width: 24px; height: 24px;
   border-radius: 50%;
@@ -3616,11 +3621,11 @@ function setImportPayment(attendeeId, amount) {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #6B6B72;
+  color: #8892a4;
   flex-shrink: 0;
   transition: background 140ms;
 }
-.ea-file-clear:hover { background: #ECECEF; }
+.ea-file-clear:hover { background: rgba(255,255,255,0.10); }
 
 /* ── Import error ── */
 .ea-imp-error {
@@ -3640,18 +3645,18 @@ function setImportPayment(attendeeId, amount) {
   gap: 8px;
 }
 .ea-imp-back {
-  background: #F4F4F6;
-  border: none;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
   width: 28px; height: 28px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #6B6B72;
+  color: #8892a4;
   transition: background 130ms;
 }
-.ea-imp-back:hover { background: #ECECEF; }
+.ea-imp-back:hover { background: rgba(255,255,255,0.10); }
 
 /* ── File pill (phase 2) ── */
 .ea-imp-file-pill {
@@ -3659,11 +3664,12 @@ function setImportPayment(attendeeId, amount) {
   align-items: center;
   gap: 6px;
   padding: 5px 12px;
-  background: #F4F4F6;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 20px;
   font-size: 11px;
   font-weight: 500;
-  color: #6B6B72;
+  color: #8892a4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3706,8 +3712,8 @@ function setImportPayment(attendeeId, amount) {
   align-items: center;
   gap: 10px;
   padding: 11px 14px;
-  background: #FAFAF9;
-  border: 1px solid #ECECEF;
+  background: #0f1729;
+  border: 1px solid #1e2d44;
   border-radius: 12px;
 }
 .ea-map-icon-wrap {
@@ -3722,7 +3728,7 @@ function setImportPayment(attendeeId, amount) {
 .ea-map-label {
   font-size: 12px;
   font-weight: 600;
-  color: #3A3936;
+  color: #c8d4e0;
   width: 110px;
   flex-shrink: 0;
 }
@@ -3730,22 +3736,23 @@ function setImportPayment(attendeeId, amount) {
 .ea-map-select {
   width: 100%;
   padding: 7px 10px;
-  border: 1px solid #ECECEF;
+  border: 1.5px solid #2a3a52;
   border-radius: 8px;
-  background: #FFFFFF;
+  background: #0a0e1c;
   font-size: 12px;
-  color: #0A0A0B;
+  color: #e2e8f0;
   outline: none;
   cursor: pointer;
   font-family: inherit;
   transition: border-color 140ms;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23B5B0A8' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%234f617a' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 9px center;
   padding-right: 28px;
+  color-scheme: dark;
 }
-.ea-map-select:focus { border-color: #B8924D; }
+.ea-map-select:focus { border-color: #C9A84C; }
 .ea-map-toggle-group {
   flex: 1;
   display: flex;
@@ -3757,11 +3764,11 @@ function setImportPayment(attendeeId, amount) {
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: #6B6B72;
+  color: #8892a4;
 }
 .ea-map-skip {
   font-size: 11px;
-  color: #B5B5BB;
+  color: #4f617a;
   font-style: italic;
 }
 
@@ -3776,20 +3783,20 @@ function setImportPayment(attendeeId, amount) {
 .ea-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
 .ea-toggle-track {
   width: 34px; height: 19px;
-  background: #D8D6D0;
+  background: #1e2d44;
   border-radius: 10px;
   position: relative;
   transition: background 200ms;
 }
-.ea-toggle input:checked + .ea-toggle-track { background: linear-gradient(180deg, #2A2A2D 0%, #0A0A0B 100%); }
+.ea-toggle input:checked + .ea-toggle-track { background: linear-gradient(180deg, #2e3a58 0%, #1e2d46 100%); }
 .ea-toggle-thumb {
   position: absolute;
   top: 2px; left: 2px;
   width: 15px; height: 15px;
-  background: #FFFFFF;
+  background: rgba(226,232,240,0.75);
   border-radius: 50%;
   transition: transform 200ms;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.30);
 }
 .ea-toggle input:checked + .ea-toggle-track .ea-toggle-thumb {
   transform: translateX(15px);
@@ -3803,9 +3810,9 @@ function setImportPayment(attendeeId, amount) {
   gap: 7px;
   width: 100%;
   padding: 12px;
-  background: #0A0A0B;
-  color: #FFFFFF;
-  border: none;
+  background: linear-gradient(180deg, #2e3a58 0%, #1e2d46 100%);
+  color: #e2e8f0;
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 12px;
   font-size: 14px;
   font-weight: 600;
@@ -3825,12 +3832,12 @@ function setImportPayment(attendeeId, amount) {
   justify-content: space-between;
   padding: 14px 18px;
   flex-shrink: 0;
-  border-bottom: 1px solid #F4F4F6;
+  border-bottom: 1px solid #1e2d44;
 }
 
 .ea-imp-preview-hero {
   padding: 16px 20px 12px;
-  border-bottom: 1px solid #F4F4F6;
+  border-bottom: 1px solid #1e2d44;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -3839,12 +3846,12 @@ function setImportPayment(attendeeId, amount) {
 .ea-imp-preview-title {
   font-size: 17px;
   font-weight: 700;
-  color: #0A0A0B;
+  color: #e2e8f0;
   margin: 0;
 }
 .ea-imp-preview-sub {
   font-size: 12px;
-  color: #6B6B72;
+  color: #8892a4;
   margin: 0;
 }
 .ea-imp-preview-labels { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -3854,13 +3861,13 @@ function setImportPayment(attendeeId, amount) {
   align-items: center;
   gap: 6px;
   padding: 8px 20px;
-  background: #FAFAF9;
-  border-bottom: 1px solid #F4F4F6;
+  background: #0f1729;
+  border-bottom: 1px solid #1e2d44;
   font-size: 11px;
-  color: #6B6B72;
+  color: #8892a4;
   flex-shrink: 0;
 }
-.ea-imp-tpl-banner strong { color: #3A3936; }
+.ea-imp-tpl-banner strong { color: #c8d4e0; }
 
 /* ── Preview list ── */
 .ea-imp-preview-list {
@@ -3876,22 +3883,22 @@ function setImportPayment(attendeeId, amount) {
   align-items: flex-start;
   gap: 10px;
   padding: 11px 13px;
-  background: #FFFFFF;
-  border: 1px solid #ECECEF;
+  background: #111827;
+  border: 1px solid #1e2d44;
   border-radius: 12px;
   transition: background 120ms;
 }
-.ea-imp-preview-row:hover { background: #FAFAF9; }
+.ea-imp-preview-row:hover { background: #1a2236; }
 .ea-imp-row-num {
   width: 24px; height: 24px;
-  background: #F4F4F6;
+  background: rgba(255,255,255,0.06);
   border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 11px;
   font-weight: 700;
-  color: #6B6B72;
+  color: #8892a4;
   flex-shrink: 0;
 }
 .ea-imp-row-info {
@@ -3904,12 +3911,12 @@ function setImportPayment(attendeeId, amount) {
 .ea-imp-row-name {
   font-size: 13px;
   font-weight: 600;
-  color: #0A0A0B;
+  color: #e2e8f0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.ea-imp-row-phone { font-size: 11px; color: #6B6B72; }
+.ea-imp-row-phone { font-size: 11px; color: #8892a4; }
 .ea-imp-row-amounts {
   display: flex;
   flex-wrap: wrap;
@@ -3956,7 +3963,7 @@ function setImportPayment(attendeeId, amount) {
 /* ── Footer: run button ── */
 .ea-imp-drawer-footer {
   padding: 14px 16px;
-  border-top: 1px solid #F4F4F6;
+  border-top: 1px solid #1e2d44;
   flex-shrink: 0;
 }
 .ea-imp-run-btn {
@@ -3966,8 +3973,8 @@ function setImportPayment(attendeeId, amount) {
   justify-content: center;
   gap: 8px;
   padding: 13px;
-  background: #0A0A0B;
-  color: #FFFFFF;
+  background: linear-gradient(180deg, #2e3a58 0%, #1e2d46 100%);
+  color: #e2e8f0;
   border: none;
   border-radius: 12px;
   font-size: 14px;
@@ -3995,17 +4002,17 @@ function setImportPayment(attendeeId, amount) {
   gap: 5px;
   padding: 5px 12px;
   border-radius: 20px;
-  border: 1px solid #E5E4E0;
-  background: #fff;
+  border: 1px solid #1e2d44;
+  background: #111827;
   font-size: 12px;
   font-weight: 500;
-  color: #6B6B72;
+  color: #8892a4;
   cursor: pointer;
   transition: all 130ms;
   font-family: inherit;
 }
-.ea-lf-pill:hover { background: #F4F4F6; }
-.ea-lf-pill--active { background: #0A0A0B; color: #fff; border-color: #0A0A0B; font-weight: 600; }
+.ea-lf-pill:hover { background: #1a2236; }
+.ea-lf-pill--active { background: rgba(226,232,240,0.12); color: #e2e8f0; border-color: rgba(226,232,240,0.18); font-weight: 600; }
 .ea-lf-dot {
   width: 7px;
   height: 7px;
@@ -4018,17 +4025,17 @@ function setImportPayment(attendeeId, amount) {
   gap: 5px;
   padding: 5px 11px;
   border-radius: 20px;
-  border: 1px dashed #CFCDC8;
+  border: 1px dashed #2a3a52;
   background: transparent;
   font-size: 12px;
   font-weight: 500;
-  color: #9A9690;
+  color: #4f617a;
   cursor: pointer;
   transition: all 130ms;
   font-family: inherit;
   margin-left: 2px;
 }
-.ea-lf-manage:hover { border-color: #B8924D; color: #B8924D; }
+.ea-lf-manage:hover { border-color: #C9A84C; color: #C9A84C; }
 .ea-lf-manage--ghost { border-style: dashed; }
 
 /* ── Bulk label dropdown ── */
@@ -4053,10 +4060,10 @@ function setImportPayment(attendeeId, amount) {
   position: absolute;
   bottom: calc(100% + 8px);
   left: 0;
-  background: #fff;
-  border: 1px solid #ECECEF;
+  background: #111827;
+  border: 1px solid #1e2d44;
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
   min-width: 180px;
   padding: 6px;
   z-index: 200;
@@ -4072,15 +4079,15 @@ function setImportPayment(attendeeId, amount) {
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: #0A0A0B;
+  color: #e2e8f0;
   cursor: pointer;
   font-family: inherit;
   text-align: left;
   transition: background 120ms;
 }
-.ea-bld-item:hover { background: #F4F4F6; }
-.ea-bld-item--clear { color: #8E8E93; font-size: 12px; }
-.ea-bld-divider { height: 1px; background: #F0EFEC; margin: 4px 0; }
+.ea-bld-item:hover { background: #1a2236; }
+.ea-bld-item--clear { color: #4f617a; font-size: 12px; }
+.ea-bld-divider { height: 1px; background: #1e2d44; margin: 4px 0; }
 .ea-bld-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 
 /* ── Label Manager modal ── */
@@ -4095,26 +4102,26 @@ function setImportPayment(attendeeId, amount) {
   border-radius: 9px;
   transition: background 120ms;
 }
-.ea-lm-row:hover { background: #F4F4F6; }
+.ea-lm-row:hover { background: #1a2236; }
 .ea-lm-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
-.ea-lm-name { flex: 1; font-size: 13px; font-weight: 500; color: #0A0A0B; }
+.ea-lm-name { flex: 1; font-size: 13px; font-weight: 500; color: #e2e8f0; }
 .ea-lm-action {
   width: 28px; height: 28px;
   display: flex; align-items: center; justify-content: center;
   border: none; background: transparent;
-  border-radius: 7px; cursor: pointer; color: #9A9690;
+  border-radius: 7px; cursor: pointer; color: #4f617a;
   transition: all 120ms;
 }
-.ea-lm-action:hover { background: #EDEDEB; color: #0A0A0B; }
+.ea-lm-action:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
 .ea-lm-action--del:hover { background: rgba(255,69,58,0.08); color: #FF453A; }
 .ea-lm-edit-row {
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 10px;
-  background: #F9F8F6;
+  background: #0f1729;
   border-radius: 10px;
-  border: 1px solid #E8E6E0;
+  border: 1px solid #1e2d44;
 }
 .ea-lm-palette { display: flex; gap: 6px; flex-wrap: wrap; }
 .ea-lm-color {
@@ -4126,33 +4133,34 @@ function setImportPayment(attendeeId, amount) {
   flex-shrink: 0;
 }
 .ea-lm-color:hover { transform: scale(1.15); }
-.ea-lm-color--on { border-color: #0A0A0B; transform: scale(1.15); }
+.ea-lm-color--on { border-color: #e2e8f0; transform: scale(1.15); }
 .ea-lm-edit-fields { display: flex; flex-direction: column; gap: 6px; }
 .ea-lm-edit-actions { display: flex; gap: 6px; justify-content: flex-end; }
 .ea-lm-edit-cancel {
-  padding: 5px 12px; border: 1px solid #E5E4E0; border-radius: 7px;
-  background: #fff; font-size: 12px; font-weight: 500; color: #6B6B72;
+  padding: 5px 12px; border: 1px solid #2a3a52; border-radius: 7px;
+  background: transparent; font-size: 12px; font-weight: 500; color: #8892a4;
   cursor: pointer; font-family: inherit;
 }
 .ea-lm-input {
   width: 100%; padding: 8px 11px;
-  border: 1px solid #E5E4E0; border-radius: 8px;
-  font-size: 13px; color: #0A0A0B; outline: none;
+  border: 1px solid #2a3a52; border-radius: 8px;
+  font-size: 13px; color: #e2e8f0; outline: none;
   font-family: inherit; box-sizing: border-box;
+  background: #0f1729;
   transition: border-color 150ms;
 }
-.ea-lm-input:focus { border-color: #B8924D; }
+.ea-lm-input:focus { border-color: #C9A84C; }
 .ea-lm-save-btn {
   padding: 6px 14px; border: none; border-radius: 8px;
-  background: #0A0A0B; color: #fff;
+  background: linear-gradient(180deg, #2e3a58 0%, #1e2d46 100%); color: #e2e8f0;
   font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
   transition: opacity 140ms; white-space: nowrap;
 }
 .ea-lm-save-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .ea-lm-save-btn:not(:disabled):hover { opacity: 0.82; }
-.ea-lm-empty { font-size: 13px; color: #9A9690; text-align: center; padding: 12px 0 8px; }
-.ea-lm-divider { height: 1px; background: #F0EFEC; margin: 14px 0; }
-.ea-lm-section-hd { font-size: 11px; font-weight: 700; color: #6B6B72; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.ea-lm-empty { font-size: 13px; color: #4f617a; text-align: center; padding: 12px 0 8px; }
+.ea-lm-divider { height: 1px; background: #1e2d44; margin: 14px 0; }
+.ea-lm-section-hd { font-size: 11px; font-weight: 700; color: #8892a4; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
 .ea-lm-create { display: flex; flex-direction: column; gap: 10px; }
 .ea-lm-create-row { display: flex; align-items: center; gap: 8px; }
 .ea-lm-preview-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }

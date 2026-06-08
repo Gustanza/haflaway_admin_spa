@@ -196,18 +196,18 @@ onMounted(() => {
 .as-root {
   --sb-w: 224px;
   --sb-icon-w: 60px;
-  --ink: #0A0A0B;
-  --ink-muted: #6B6B72;
-  --ink-dim: #B5B5BB;
-  --line: #ECECEF;
-  --line-strong: #DCDCE0;
-  --paper: #FAFAFB;
+  --ink: #e2e8f0;
+  --ink-muted: #8892a4;
+  --ink-dim: #4f617a;
+  --line: #1e2d44;
+  --line-strong: #2a3a52;
+  --paper: #111827;
   --gold: #C9A84C;
-  --emerald: #0A9C5F;
+  --emerald: #34d399;
 
   width: var(--sb-w);
   min-height: 100vh;
-  background: #fff;
+  background: #0d1326;
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
@@ -219,7 +219,7 @@ onMounted(() => {
   align-self: flex-start;
   height: 100vh;
   flex-shrink: 0;
-  box-shadow: 2px 0 12px rgba(0,0,0,0.03);
+  box-shadow: 2px 0 20px rgba(0,0,0,0.4);
 }
 .as-root--collapsed { width: var(--sb-icon-w); }
 
@@ -322,10 +322,11 @@ onMounted(() => {
 }
 .as-item:hover { background: var(--paper); color: var(--ink); }
 .as-item--active {
-  background: var(--ink);
-  color: #fff;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: #e2e8f0;
 }
-.as-item--active:hover { background: #1a1a1d; }
+.as-item--active:hover { background: rgba(255,255,255,0.13); }
 
 .as-item-icon {
   flex-shrink: 0;
@@ -334,7 +335,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
 }
-.as-item--active .as-item-icon svg { stroke: #fff; }
+.as-item--active .as-item-icon svg { stroke: #e2e8f0; }
 
 .as-item-label {
   overflow: hidden;
@@ -350,7 +351,7 @@ onMounted(() => {
 }
 
 .as-item-badge {
-  background: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.12);
   border-radius: 10px;
   font-size: 10.5px;
   font-weight: 700;
@@ -359,6 +360,7 @@ onMounted(() => {
   text-align: center;
   flex-shrink: 0;
   transition: opacity 160ms;
+  color: rgba(226,232,240,0.8);
 }
 .as-item:not(.as-item--active) .as-item-badge {
   background: var(--paper);
@@ -419,7 +421,7 @@ onMounted(() => {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  color: #9A7218;
+  color: rgba(201,168,76,0.65);
 }
 .as-balance-val {
   font-size: 13px;
@@ -514,40 +516,40 @@ onMounted(() => {
   overflow: hidden;
   white-space: nowrap;
 }
-.as-signout:hover { background: #FEF2F2; color: #C0392B; }
+.as-signout:hover { background: rgba(255,69,58,0.12); color: #FF453A; }
 .as-signout svg { flex-shrink: 0; width: 24px; display: flex; align-items: center; justify-content: center; }
 
 /* ── Modal ── */
 .as-backdrop {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.32);
+  background: rgba(0,0,0,0.55);
   backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
   z-index: 9999;
   display: flex; align-items: center; justify-content: center;
 }
 .as-modal {
-  background: #fff;
-  border: 1px solid #ECECEF;
+  background: #111827;
+  border: 1px solid #1e2d44;
   border-radius: 16px;
   padding: 28px 28px 24px;
   width: 340px;
-  box-shadow: 4px 8px 0 rgba(0,0,0,0.10), 1px 2px 0 rgba(0,0,0,0.06);
+  box-shadow: 4px 8px 0 rgba(0,0,0,0.4), 1px 2px 0 rgba(0,0,0,0.3);
   display: flex; flex-direction: column; gap: 8px;
 }
 .as-modal-title {
   font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 22px; font-weight: 400; color: #0A0A0B; margin: 0; letter-spacing: -0.3px;
+  font-size: 22px; font-weight: 400; color: #e2e8f0; margin: 0; letter-spacing: -0.3px;
 }
-.as-modal-body { font-size: 13.5px; color: #6B6B72; margin: 0 0 8px; line-height: 1.5; }
+.as-modal-body { font-size: 13.5px; color: #8892a4; margin: 0 0 8px; line-height: 1.5; }
 .as-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .as-modal-cancel {
-  background: transparent; border: 1px solid #DCDCE0; color: #6B6B72;
+  background: transparent; border: 1px solid #2a3a52; color: #8892a4;
   padding: 8px 16px; border-radius: 9px; font-size: 13px; font-weight: 500;
   cursor: pointer; font-family: inherit; transition: background 130ms;
 }
-.as-modal-cancel:hover { background: #FAFAFB; }
+.as-modal-cancel:hover { background: #1a2236; }
 .as-modal-confirm {
-  background: #0A0A0B; color: #fff; border: none;
+  background: rgba(255,255,255,0.12); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.12);
   padding: 8px 18px; border-radius: 9px; font-size: 13px; font-weight: 600;
   cursor: pointer; font-family: inherit; transition: opacity 130ms;
 }

@@ -632,7 +632,7 @@ async function toggleSlotGeneric(att, slotIndex) {
   flex-direction: column;
   gap: 16px;
   padding: 20px 24px 24px;
-  background: #FFFFFF;
+  background: #0a0e1c;
 }
 
 /* ══ Toolbar ══ */
@@ -660,75 +660,75 @@ async function toggleSlotGeneric(att, slotIndex) {
 .ec-search {
   width: 100%;
   padding: 8px 32px;
-  border: 1px solid #ECECEF;
+  border: 1px solid #2a3a52;
   border-radius: 10px;
   font-size: 13px;
   font-family: inherit;
   outline: none;
-  background: #FAFAF9;
-  color: #0A0A0B;
+  background: #0f1729;
+  color: #e2e8f0;
   transition: border-color 150ms, box-shadow 150ms;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.03), 0 4px 12px -2px rgba(0,0,0,0.08), 0 16px 32px -8px rgba(0,0,0,0.10);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
-.ec-search:focus { border-color: #B8924D; box-shadow: 0 0 0 3px rgba(184,146,77,0.10); background: #fff; }
+.ec-search:focus { border-color: #C9A84C; box-shadow: 0 0 0 3px rgba(201,168,76,0.10); background: #0f1729; }
 .ec-search-clear {
   position: absolute; right: 8px;
-  background: none; border: none; cursor: pointer; color: #6B6B72; padding: 2px;
+  background: none; border: none; cursor: pointer; color: #8892a4; padding: 2px;
   display: flex; align-items: center; justify-content: center;
 }
-.ec-search-clear:hover { color: #0A0A0B; }
+.ec-search-clear:hover { color: #e2e8f0; }
 
 /* Filter chips */
 .ec-filter-chips { display: flex; gap: 4px; }
 .ec-chip {
   padding: 6px 12px; border-radius: 20px;
-  border: 1px solid #ECECEF; background: #FFFFFF;
-  font-size: 12px; font-weight: 500; color: #6B6B72;
+  border: 1px solid #1e2d44; background: #111827;
+  font-size: 12px; font-weight: 500; color: #8892a4;
   cursor: pointer; transition: all 140ms; font-family: inherit;
 }
-.ec-chip:hover { background: #F4F4F6; color: #6B6B72; }
-.ec-chip--active { background: #0A0A0B; border-color: #0A0A0B; color: #FFFFFF; font-weight: 600; }
+.ec-chip:hover { background: #1a2236; color: #c8d4e0; }
+.ec-chip--active { background: rgba(226,232,240,0.12); border-color: rgba(226,232,240,0.18); color: #e2e8f0; font-weight: 600; }
 .ec-chip-cnt {
   display: inline-flex; min-width: 18px; padding: 1px 5px;
-  background: #EDEDEB; border-radius: 10px;
-  font-size: 11px; font-weight: 600; color: #9A9690; margin-left: 5px;
+  background: rgba(255,255,255,0.08); border-radius: 10px;
+  font-size: 11px; font-weight: 600; color: #4f617a; margin-left: 5px;
 }
-.ec-chip--active .ec-chip-cnt { background: rgba(255,255,255,0.18); color: rgba(255,255,255,0.75); }
+.ec-chip--active .ec-chip-cnt { background: rgba(201,168,76,0.12); color: #C9A84C; }
 
 /* Checkpoint dropdown */
 .ec-cp-wrap { position: relative; }
 .ec-cp-btn {
   display: flex; align-items: center; gap: 5px;
   padding: 6px 12px; border-radius: 10px;
-  border: 1px solid #ECECEF; background: #fff;
-  font-size: 12px; font-weight: 500; color: #6B6B72;
+  border: 1px solid #1e2d44; background: #111827;
+  font-size: 12px; font-weight: 500; color: #8892a4;
   cursor: pointer; transition: all 140ms; font-family: inherit;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.03), 0 4px 12px -2px rgba(0,0,0,0.08), 0 16px 32px -8px rgba(0,0,0,0.10);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
-.ec-cp-btn:hover { background: #F4F4F6; }
-.ec-cp-btn--active { background: #0A0A0B; border-color: #0A0A0B; color: #FFFFFF; }
+.ec-cp-btn:hover { background: #1a2236; }
+.ec-cp-btn--active { background: rgba(226,232,240,0.12); border-color: rgba(226,232,240,0.18); color: #e2e8f0; }
 .ec-cp-menu {
   position: absolute; top: calc(100% + 6px); left: 0; z-index: 100;
-  background: #fff; border: 1px solid #E5E4E0; border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.10); padding: 4px; min-width: 180px;
+  background: #111827; border: 1px solid #1e2d44; border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4); padding: 4px; min-width: 180px;
 }
 .ec-cp-item {
   display: block; width: 100%; text-align: left;
   padding: 8px 12px; border: none; background: none; border-radius: 7px;
-  font-size: 13px; font-family: inherit; color: #0A0A0B; cursor: pointer; transition: background 130ms;
+  font-size: 13px; font-family: inherit; color: #e2e8f0; cursor: pointer; transition: background 130ms;
 }
-.ec-cp-item:hover { background: #F4F4F6; }
-.ec-cp-item--on { color: #B8924D; font-weight: 600; background: #FAFAFB; }
+.ec-cp-item:hover { background: #1a2236; }
+.ec-cp-item--on { color: #C9A84C; font-weight: 600; background: rgba(201,168,76,0.06); }
 
 /* Refresh button */
 .ec-refresh-btn {
   width: 32px; height: 32px; border-radius: 8px;
-  border: 1px solid #ECECEF; background: #FFFFFF; color: #6B6B72;
+  border: 1px solid #1e2d44; background: #111827; color: #8892a4;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; transition: all 140ms;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.03), 0 4px 12px -2px rgba(0,0,0,0.08), 0 16px 32px -8px rgba(0,0,0,0.10);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
-.ec-refresh-btn:hover:not(:disabled) { background: #F4F4F6; color: #0A0A0B; }
+.ec-refresh-btn:hover:not(:disabled) { background: #1a2236; color: #e2e8f0; }
 .ec-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ══ Stats Bar ══ */
@@ -738,10 +738,10 @@ async function toggleSlotGeneric(att, slotIndex) {
   gap: 0;
   flex-shrink: 0;
   padding: 0 16px;
-  background: #FFFFFF;
-  border: 1px solid #ECECEF;
+  background: #111827;
+  border: 1px solid #1e2d44;
   border-radius: 12px;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.03), 0 4px 12px -2px rgba(0,0,0,0.08), 0 16px 32px -8px rgba(0,0,0,0.10);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
   min-height: 56px;
 }
 .ec-stat {
@@ -754,19 +754,19 @@ async function toggleSlotGeneric(att, slotIndex) {
   transition: background 130ms;
 }
 .ec-stat--link { cursor: pointer; }
-.ec-stat--link:hover { background: #FFFFFF; }
-.ec-stat--active { background: #FAFAFB !important; }
+.ec-stat--link:hover { background: rgba(255,255,255,0.04); }
+.ec-stat--active { background: rgba(201,168,76,0.06) !important; }
 .ec-stat-n {
   font-size: 18px;
   font-weight: 700;
-  color: #0A0A0B;
+  color: #e2e8f0;
   line-height: 1;
 }
-.ec-stat-n--gold { color: #B8924D; }
+.ec-stat-n--gold { color: #C9A84C; }
 .ec-stat-lbl {
   font-size: 10px;
   font-weight: 600;
-  color: #B5B5BB;
+  color: #4f617a;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   white-space: nowrap;
@@ -774,7 +774,7 @@ async function toggleSlotGeneric(att, slotIndex) {
 .ec-stat-sep {
   width: 0.8px;
   height: 28px;
-  background: #ECECEF;
+  background: #1e2d44;
   flex-shrink: 0;
 }
 
@@ -782,11 +782,11 @@ async function toggleSlotGeneric(att, slotIndex) {
 .ec-table-wrap {
   display: flex;
   flex-direction: column;
-  background: #FFFFFF;
-  border: 1px solid #ECECEF;
+  background: #111827;
+  border: 1px solid #1e2d44;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.03), 0 4px 12px -2px rgba(0,0,0,0.08), 0 16px 32px -8px rgba(0,0,0,0.10);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 .ec-table-scroll { overflow-x: auto; }
 .ec-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -796,12 +796,12 @@ async function toggleSlotGeneric(att, slotIndex) {
   padding: 11px 16px;
   font-size: 11px;
   font-weight: 700;
-  color: #6B6B72;
+  color: #8892a4;
   text-align: left;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  border-bottom: 1px solid #ECECEF;
-  background: #FAFAF9;
+  border-bottom: 1px solid #1e2d44;
+  background: #0f1729;
   position: sticky;
   top: 0;
   z-index: 1;
@@ -810,7 +810,7 @@ async function toggleSlotGeneric(att, slotIndex) {
 }
 .ec-th-name  { width: 240px; }
 .ec-th--sortable { cursor: pointer; }
-.ec-th--sortable:hover { color: #0A0A0B; }
+.ec-th--sortable:hover { color: #e2e8f0; }
 
 .ec-sort-ico {
   display: inline-block;
@@ -826,31 +826,31 @@ async function toggleSlotGeneric(att, slotIndex) {
 .ec-row {
   cursor: pointer;
   transition: background 120ms;
-  border-bottom: 1px solid #F4F4F6;
+  border-bottom: 1px solid #1e2d44;
 }
-.ec-row:nth-child(even) { background: #FAFAF9; }
-.ec-row:nth-child(odd)  { background: #FFFFFF; }
-.ec-row:hover           { background: #FAFAFB; }
+.ec-row:nth-child(even) { background: rgba(255,255,255,0.02); }
+.ec-row:nth-child(odd)  { background: transparent; }
+.ec-row:hover           { background: #1a2236; }
 
 .ec-td {
   padding: 12px 16px;
   font-size: 13px;
-  color: #0A0A0B;
+  color: #e2e8f0;
   vertical-align: middle;
   white-space: nowrap;
 }
 .ec-td-empty {
   padding: 48px 16px;
   text-align: center;
-  color: #B5B5BB;
+  color: #4f617a;
   font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
 }
-.ec-td-mono  { font-variant-numeric: tabular-nums; color: #6B6760; font-size: 12px; }
-.ec-td-date  { color: #6B6B72; font-size: 12px; }
+.ec-td-mono  { font-variant-numeric: tabular-nums; color: #8892a4; font-size: 12px; }
+.ec-td-date  { color: #8892a4; font-size: 12px; }
 
 /* Name cell */
 .ec-name-cell { display: flex; align-items: center; gap: 10px; }
@@ -859,7 +859,7 @@ async function toggleSlotGeneric(att, slotIndex) {
   display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 700; flex-shrink: 0;
 }
-.ec-name { font-weight: 600; font-size: 13px; color: #0A0A0B; }
+.ec-name { font-weight: 600; font-size: 13px; color: #e2e8f0; }
 
 /* Type badge */
 .ec-type-badge {
@@ -870,9 +870,9 @@ async function toggleSlotGeneric(att, slotIndex) {
   font-weight: 600;
   white-space: nowrap;
 }
-.ec-type--invitation   { background: rgba(10,10,11,0.04); color: #9A7218; }
-.ec-type--contribution { background: rgba(48,209,88,0.12);  color: #1A7A35; }
-.ec-type--contact      { background: rgba(138,133,128,0.12); color: #5A5550; }
+.ec-type--invitation   { background: rgba(201,168,76,0.12); color: #C9A84C; }
+.ec-type--contribution { background: rgba(52,211,153,0.12); color: #34d399; }
+.ec-type--contact      { background: rgba(255,255,255,0.06); color: #8892a4; }
 
 /* Status badge */
 .ec-sb {
@@ -890,21 +890,21 @@ async function toggleSlotGeneric(att, slotIndex) {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.ec-sb--checked { background: rgba(48,209,88,0.12);    color: #1A7A35; }
-.ec-sb--checked .ec-sb-dot { background: #30D158; }
-.ec-sb--partial { background: rgba(255,159,10,0.12);   color: #9A5A00; }
+.ec-sb--checked { background: rgba(52,211,153,0.12); color: #34d399; }
+.ec-sb--checked .ec-sb-dot { background: #34d399; }
+.ec-sb--partial { background: rgba(255,159,10,0.12); color: #f59e0b; }
 .ec-sb--partial .ec-sb-dot { background: #FF9F0A; }
-.ec-sb--none    { background: rgba(138,133,128,0.10);  color: #5A5550; }
-.ec-sb--none    .ec-sb-dot { background: #6B6B72; }
-.ec-sb--nocard  { background: rgba(192,186,178,0.10);  color: #B5B5BB; }
-.ec-sb--nocard  .ec-sb-dot { background: #C0BAB2; }
+.ec-sb--none    { background: rgba(255,255,255,0.06); color: #8892a4; }
+.ec-sb--none    .ec-sb-dot { background: #8892a4; }
+.ec-sb--nocard  { background: rgba(255,255,255,0.04); color: #4f617a; }
+.ec-sb--nocard  .ec-sb-dot { background: #4f617a; }
 
 /* Slots fraction */
 .ec-td-slots { font-variant-numeric: tabular-nums; }
-.ec-slots-checked { font-weight: 700; color: #30D158; }
-.ec-slots-sep     { color: #C0BAB2; margin: 0 2px; }
-.ec-slots-total   { color: #6B6B72; }
-.ec-slots-na      { color: #C0BAB2; }
+.ec-slots-checked { font-weight: 700; color: #34d399; }
+.ec-slots-sep     { color: #4f617a; margin: 0 2px; }
+.ec-slots-total   { color: #8892a4; }
+.ec-slots-na      { color: #4f617a; }
 
 /* ══ Paginator ══ */
 .ec-table-footer {
@@ -912,20 +912,20 @@ async function toggleSlotGeneric(att, slotIndex) {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-top: 1px solid #ECECEF;
-  background: #FFFFFF;
+  border-top: 1px solid #1e2d44;
+  background: #111827;
   gap: 12px;
   flex-wrap: wrap;
   flex-shrink: 0;
 }
 .ec-range-lbl {
   font-size: 12px;
-  color: #6B6B72;
+  color: #8892a4;
   font-weight: 500;
   white-space: nowrap;
 }
 .ec-filter-clear {
-  background: none; border: none; color: #B8924D;
+  background: none; border: none; color: #C9A84C;
   font-size: 12px; font-family: inherit; cursor: pointer; padding: 0;
 }
 .ec-filter-clear:hover { text-decoration: underline; }
@@ -935,12 +935,12 @@ async function toggleSlotGeneric(att, slotIndex) {
   min-width: 32px;
   height: 32px;
   padding: 0 6px;
-  border: 1px solid #ECECEF;
+  border: 1px solid #1e2d44;
   border-radius: 8px;
-  background: #FFFFFF;
+  background: #111827;
   font-size: 13px;
   font-weight: 500;
-  color: #6B6B72;
+  color: #8892a4;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -949,18 +949,18 @@ async function toggleSlotGeneric(att, slotIndex) {
   font-family: inherit;
 }
 .ec-page-btn:hover:not(:disabled):not(.ec-page-btn--active) {
-  background: #F4F4F6;
-  border-color: #D8D6D0;
-  color: #0A0A0B;
+  background: #1a2236;
+  border-color: #2a3a52;
+  color: #e2e8f0;
 }
 .ec-page-btn--active {
-  background: #0A0A0B;
-  border-color: #0A0A0B;
-  color: #FFFFFF;
+  background: rgba(226,232,240,0.12);
+  border-color: rgba(226,232,240,0.18);
+  color: #e2e8f0;
   font-weight: 600;
   cursor: default;
 }
-.ec-page-btn--nav { color: #6B6B72; }
+.ec-page-btn--nav { color: #8892a4; }
 .ec-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .ec-page-ellipsis {
   min-width: 28px;
@@ -969,40 +969,40 @@ async function toggleSlotGeneric(att, slotIndex) {
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  color: #B5B5BB;
+  color: #4f617a;
   letter-spacing: 1px;
 }
 
 /* ══ Drawer ══ */
 .ec-overlay {
   position: fixed; inset: 0; z-index: 200;
-  background: rgba(28,26,24,0.35);
+  background: rgba(0,0,0,0.55);
   backdrop-filter: blur(1px);
 }
 .ec-drawer {
   position: fixed; right: 0; top: 0; bottom: 0;
-  width: 360px; background: #FFFFFF;
-  box-shadow: -2px 0 32px rgba(0,0,0,0.10);
+  width: 360px; background: #111827;
+  box-shadow: -2px 0 32px rgba(0,0,0,0.45);
   display: flex; flex-direction: column; overflow-y: auto; z-index: 201;
 }
 .ec-drawer-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 16px; border-bottom: 1px solid #F4F4F6; flex-shrink: 0;
+  padding: 14px 16px; border-bottom: 1px solid #1e2d44; flex-shrink: 0;
 }
 .ec-drawer-back {
   display: flex; align-items: center; gap: 5px;
   padding: 6px 10px; border-radius: 8px;
-  border: none; background: #F4F4F6; color: #6B6760;
+  border: none; background: rgba(255,255,255,0.06); color: #8892a4;
   font-size: 13px; font-weight: 500; cursor: pointer;
   transition: all 130ms; font-family: inherit;
 }
-.ec-drawer-back:hover { background: #ECECEF; color: #0A0A0B; }
+.ec-drawer-back:hover { background: rgba(255,255,255,0.10); color: #e2e8f0; }
 
 /* Hero */
 .ec-drawer-hero {
   display: flex; flex-direction: column; align-items: center;
   padding: 24px 20px 20px; gap: 4px;
-  border-bottom: 1px solid #F4F4F6;
+  border-bottom: 1px solid #1e2d44;
 }
 .ec-drawer-avatar {
   width: 60px; height: 60px; border-radius: 50%;
@@ -1010,47 +1010,47 @@ async function toggleSlotGeneric(att, slotIndex) {
   font-size: 18px; font-weight: 700; margin-bottom: 8px;
 }
 .ec-drawer-name {
-  font-size: 17px; font-weight: 700; color: #0A0A0B;
+  font-size: 17px; font-weight: 700; color: #e2e8f0;
   margin: 0; text-align: center; letter-spacing: -0.2px;
 }
-.ec-drawer-phone { font-size: 13px; color: #6B6B72; margin: 0 0 4px; }
+.ec-drawer-phone { font-size: 13px; color: #8892a4; margin: 0 0 4px; }
 
 /* Body */
 .ec-drawer-body { display: flex; flex-direction: column; padding: 6px 0 24px; }
 .ec-drawer-block { padding: 16px 20px; }
 .ec-block-lbl {
-  font-size: 10px; font-weight: 700; color: #B5B5BB;
+  font-size: 10px; font-weight: 700; color: #4f617a;
   text-transform: uppercase; letter-spacing: 0.6px; margin: 0 0 14px;
 }
 .ec-block-lbl-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .ec-block-lbl-row .ec-block-lbl { margin: 0; }
-.ec-slots-summary { font-size: 12px; color: #6B6B72; font-weight: 500; }
-.ec-drawer-added { font-size: 12px; color: #C0BAB2; margin: 0; padding: 4px 20px 0; }
+.ec-slots-summary { font-size: 12px; color: #8892a4; font-weight: 500; }
+.ec-drawer-added { font-size: 12px; color: #4f617a; margin: 0; padding: 4px 20px 0; }
 
 /* No card */
 .ec-no-card {
   display: flex; flex-direction: column; align-items: center;
-  gap: 8px; padding: 24px 0; color: #B5B5BB; text-align: center;
+  gap: 8px; padding: 24px 0; color: #4f617a; text-align: center;
 }
 .ec-no-card p { font-size: 13px; margin: 0; line-height: 1.5; }
 
 /* Slot rows */
 .ec-slot {
   padding: 12px 0;
-  border-bottom: 1px solid #F4F4F6;
+  border-bottom: 1px solid #1e2d44;
 }
 .ec-slot:last-child { border-bottom: none; }
 .ec-slot-head {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 10px;
 }
-.ec-slot-name { font-size: 13px; font-weight: 600; color: #0A0A0B; }
+.ec-slot-name { font-size: 13px; font-weight: 600; color: #e2e8f0; }
 .ec-slot-badge {
   font-size: 10px; font-weight: 700;
   padding: 2px 8px; border-radius: 20px;
 }
-.ec-slot-badge--on  { background: rgba(48,209,88,0.12);   color: #1A7A35; }
-.ec-slot-badge--off { background: rgba(138,133,128,0.10); color: #6B6B72; }
+.ec-slot-badge--on  { background: rgba(52,211,153,0.12); color: #34d399; }
+.ec-slot-badge--off { background: rgba(255,255,255,0.06); color: #8892a4; }
 
 /* Checkpoint toggles */
 .ec-cp-toggles { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -1060,10 +1060,10 @@ async function toggleSlotGeneric(att, slotIndex) {
   font-size: 12px; font-weight: 600; font-family: inherit;
   cursor: pointer; transition: all 160ms; border: none;
 }
-.ec-cp-toggle--on  { background: #30D158; color: #fff; box-shadow: 0 2px 8px rgba(48,209,88,0.30); }
-.ec-cp-toggle--off { background: #F4F4F6; color: #6B6B72; }
-.ec-cp-toggle--off:hover:not(:disabled) { background: #ECECEF; color: #0A0A0B; }
-.ec-cp-toggle--on:hover:not(:disabled)  { background: #28BA4E; }
+.ec-cp-toggle--on  { background: #34d399; color: #0a2a1a; box-shadow: 0 2px 8px rgba(52,211,153,0.25); }
+.ec-cp-toggle--off { background: rgba(255,255,255,0.07); color: #8892a4; }
+.ec-cp-toggle--off:hover:not(:disabled) { background: rgba(255,255,255,0.12); color: #e2e8f0; }
+.ec-cp-toggle--on:hover:not(:disabled)  { background: #2ec085; }
 .ec-cp-toggle:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ══ Transitions ══ */

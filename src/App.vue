@@ -9,7 +9,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute } from 'vue-router' 
 import AdminSidebar from './components/AdminSidebar.vue'
 
 const route = useRoute()
@@ -34,7 +34,7 @@ body { margin: 0; }
 .app-shell {
   display: flex;
   min-height: 100vh;
-  background: #fff;
+  background: #0a0e1c;
 }
 
 .app-main {

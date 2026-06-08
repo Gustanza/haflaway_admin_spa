@@ -103,11 +103,11 @@ const icon = computed(() => meta.value.icon)
   flex-direction: column;
   align-items: center;
   gap: 14px;
-  background: #FFFFFF;
-  border: 1px solid #ECECEF;
+  background: #111827;
+  border: 1px solid #1e2d44;
   border-radius: 20px;
   padding: 48px 56px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
   text-align: center;
   max-width: 380px;
 }
@@ -115,7 +115,7 @@ const icon = computed(() => meta.value.icon)
   width: 80px;
   height: 80px;
   border-radius: 20px;
-  background: #FFFFFF;
+  background: #0f1729;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -124,26 +124,26 @@ const icon = computed(() => meta.value.icon)
 .cs-title {
   font-size: 20px;
   font-weight: 700;
-  color: #0A0A0B;
+  color: #e2e8f0;
   margin: 0;
 }
 .cs-sub {
   font-size: 14px;
-  color: #6B6B72;
+  color: #8892a4;
   margin: 0;
   line-height: 1.5;
 }
 .cs-back-btn {
   margin-top: 8px;
   background: none;
-  border: 1px solid #ECECEF;
+  border: 1px solid #2a3a52;
   border-radius: 10px;
   padding: 9px 18px;
   font-size: 13px;
   font-weight: 600;
-  color: #B8924D;
+  color: #C9A84C;
   cursor: pointer;
   transition: background 130ms;
 }
-.cs-back-btn:hover { background: #FAFAFB; }
+.cs-back-btn:hover { background: rgba(255,255,255,0.04); }
 </style>

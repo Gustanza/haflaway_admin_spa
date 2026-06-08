@@ -80,15 +80,15 @@
         <div class="eo-goal-body">
           <div class="eo-arc-wrap">
             <svg viewBox="0 0 120 120" class="eo-arc-svg">
-              <circle cx="60" cy="60" r="48" fill="none" stroke="#F0F0F2" stroke-width="11" />
+              <circle cx="60" cy="60" r="48" fill="none" stroke="#1e2d44" stroke-width="11" />
               <circle cx="60" cy="60" r="48" fill="none"
-                stroke="#B8924D" stroke-width="11" stroke-linecap="round"
+                stroke="#C9A84C" stroke-width="11" stroke-linecap="round"
                 :stroke-dasharray="arcC" :stroke-dashoffset="arcOffset"
                 transform="rotate(-90 60 60)"
                 style="transition: stroke-dashoffset 800ms cubic-bezier(.4,0,.2,1)"
               />
-              <text x="60" y="56" text-anchor="middle" font-family="'Instrument Serif',Georgia,serif" font-size="20" fill="#0A0A0B">{{ progressPct }}%</text>
-              <text x="60" y="70" text-anchor="middle" font-family="Inter,sans-serif" font-size="8.5" fill="#B5B5BB" letter-spacing="0.5">REACHED</text>
+              <text x="60" y="56" text-anchor="middle" font-family="'Instrument Serif',Georgia,serif" font-size="20" fill="#e2e8f0">{{ progressPct }}%</text>
+              <text x="60" y="70" text-anchor="middle" font-family="Inter,sans-serif" font-size="8.5" fill="#4f617a" letter-spacing="0.5">REACHED</text>
             </svg>
           </div>
           <div class="eo-goal-stats">
@@ -131,7 +131,7 @@
           <div class="eo-rsvp-row">
             <span class="eo-dot eo-dot--pending" />
             <span class="eo-rsvp-lbl">Pending</span>
-            <div class="eo-rsvp-track"><div class="eo-rsvp-fill" style="background:#B5B5BB" :style="{ width: rsvpPct(rsvp.pending) + '%' }" /></div>
+            <div class="eo-rsvp-track"><div class="eo-rsvp-fill" style="background:#4f617a" :style="{ width: rsvpPct(rsvp.pending) + '%' }" /></div>
             <span class="eo-rsvp-n">{{ rsvp.pending }}</span>
           </div>
           <div class="eo-rsvp-row">
@@ -278,23 +278,23 @@ watch(() => props.event, loadStats)
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
 }
 .eo-kpi {
-  background: #fff; border: 1px solid #ECECEF; border-radius: 14px;
+  background: #111827; border: 1px solid #1e2d44; border-radius: 14px;
   padding: 16px 18px; display: flex; flex-direction: column; gap: 5px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 10px -2px rgba(0,0,0,0.06), 0 10px 20px -8px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.16), 0 4px 10px -2px rgba(0,0,0,0.22), 0 10px 20px -8px rgba(0,0,0,0.28);
 }
 .eo-kpi-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-.eo-kpi-lbl { font-size: 11.5px; font-weight: 500; color: #6B6B72; }
+.eo-kpi-lbl { font-size: 11.5px; font-weight: 500; color: #8892a4; }
 .eo-kpi-ic {
   width: 28px; height: 28px; border-radius: 8px;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .eo-kpi-num {
   font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 30px; font-weight: 400; color: #0A0A0B; letter-spacing: -0.5px; line-height: 1;
+  font-size: 30px; font-weight: 400; color: #e2e8f0; letter-spacing: -0.5px; line-height: 1;
 }
 .eo-kpi-num--sm { font-size: 20px; letter-spacing: -0.3px; }
 .eo-kpi-sub {
-  font-size: 11px; color: #B5B5BB; display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: #4f617a; display: flex; align-items: center; gap: 5px;
 }
 
 /* Segmented bar (guests) */
@@ -303,12 +303,12 @@ watch(() => props.event, loadStats)
 }
 .eo-seg { border-radius: 3px; min-width: 2px; }
 .eo-seg--confirmed { background: #34C759; }
-.eo-seg--pending   { background: #E5E5EA; }
+.eo-seg--pending   { background: #2a3a52; }
 .eo-seg--declined  { background: #FF3B30; }
 
 /* Linear bar (checkins, contributions) */
 .eo-kpi-bar-track {
-  height: 4px; background: #F0F0F2; border-radius: 3px; overflow: hidden; margin: 2px 0;
+  height: 4px; background: #1e2d44; border-radius: 3px; overflow: hidden; margin: 2px 0;
 }
 .eo-kpi-bar-fill {
   height: 100%; border-radius: 3px; transition: width 600ms ease; min-width: 2px;
@@ -317,7 +317,7 @@ watch(() => props.event, loadStats)
 /* Status dots */
 .eo-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .eo-dot--confirmed { background: #34C759; }
-.eo-dot--pending   { background: #B5B5BB; }
+.eo-dot--pending   { background: #4f617a; }
 .eo-dot--declined  { background: #FF3B30; }
 .eo-dot--checkin   { background: #007AFF; }
 
@@ -331,17 +331,17 @@ watch(() => props.event, loadStats)
 /* ══ Mid row ══ */
 .eo-mid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .eo-panel {
-  background: #fff; border: 1px solid #ECECEF; border-radius: 16px; padding: 22px 22px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 6px 14px -2px rgba(0,0,0,0.07), 0 16px 32px -12px rgba(0,0,0,0.10);
+  background: #111827; border: 1px solid #1e2d44; border-radius: 16px; padding: 22px 22px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.18), 0 6px 14px -2px rgba(0,0,0,0.24), 0 16px 32px -12px rgba(0,0,0,0.32);
 }
 .eo-panel-hd {
   display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;
 }
 .eo-panel-title {
-  font-size: 13.5px; font-weight: 700; color: #0A0A0B;
+  font-size: 13.5px; font-weight: 700; color: #e2e8f0;
 }
 .eo-panel-mono {
-  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6B6B72;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8892a4;
 }
 
 /* Goal arc */
@@ -350,21 +350,21 @@ watch(() => props.event, loadStats)
 .eo-arc-svg { width: 100%; display: block; }
 .eo-goal-stats { flex: 1; display: flex; flex-direction: column; gap: 0; }
 .eo-gstat { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; }
-.eo-gstat-lbl { font-size: 11.5px; color: #6B6B72; }
-.eo-gstat-val { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: #0A0A0B; }
-.eo-gstat-val--gold { color: #B8924D; }
-.eo-gstat-divider { height: 1px; background: #F0F0F2; }
+.eo-gstat-lbl { font-size: 11.5px; color: #8892a4; }
+.eo-gstat-val { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: #e2e8f0; }
+.eo-gstat-val--gold { color: #C9A84C; }
+.eo-gstat-divider { height: 1px; background: #1e2d44; }
 
 /* RSVP panel */
 .eo-rsvp-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
 .eo-rsvp-row { display: flex; align-items: center; gap: 9px; }
-.eo-rsvp-lbl { font-size: 12px; color: #6B6B72; width: 76px; flex-shrink: 0; }
+.eo-rsvp-lbl { font-size: 12px; color: #8892a4; width: 76px; flex-shrink: 0; }
 .eo-rsvp-track {
-  flex: 1; height: 5px; background: #F0F0F2; border-radius: 3px; overflow: hidden;
+  flex: 1; height: 5px; background: #1e2d44; border-radius: 3px; overflow: hidden;
 }
 .eo-rsvp-fill { height: 100%; border-radius: 3px; transition: width 600ms ease; min-width: 2px; }
-.eo-rsvp-n { font-size: 12px; font-weight: 600; color: #0A0A0B; width: 28px; text-align: right; flex-shrink: 0; }
-.eo-rsvp-divider { height: 1px; background: #F0F0F2; margin: 4px 0; }
+.eo-rsvp-n { font-size: 12px; font-weight: 600; color: #e2e8f0; width: 28px; text-align: right; flex-shrink: 0; }
+.eo-rsvp-divider { height: 1px; background: #1e2d44; margin: 4px 0; }
 
 .eo-stack-bar {
   display: flex; height: 7px; border-radius: 5px; overflow: hidden; gap: 2px;
@@ -375,22 +375,22 @@ watch(() => props.event, loadStats)
 .eo-nav-hd { display: flex; align-items: center; gap: 12px; }
 .eo-nav-title {
   font-family: 'Instrument Serif', Georgia, serif; font-style: italic;
-  font-size: 15px; color: #0A0A0B; white-space: nowrap;
+  font-size: 15px; color: #e2e8f0; white-space: nowrap;
 }
-.eo-nav-line { flex: 1; height: 1px; background: linear-gradient(90deg, #DCDCE0, transparent); }
+.eo-nav-line { flex: 1; height: 1px; background: linear-gradient(90deg, #2a3a52, transparent); }
 
 .eo-nav-grid {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
 }
 .eo-nav-card {
   display: flex; align-items: center; gap: 12px; padding: 13px 15px;
-  background: #fff; border: 1px solid #ECECEF; border-radius: 12px;
+  background: #111827; border: 1px solid #1e2d44; border-radius: 12px;
   cursor: pointer; text-align: left; font-family: inherit;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 3px 8px -2px rgba(0,0,0,0.05), 0 8px 16px -8px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.16), 0 3px 8px -2px rgba(0,0,0,0.20), 0 8px 16px -8px rgba(0,0,0,0.28);
   transition: box-shadow 150ms, transform 150ms;
 }
 .eo-nav-card:hover {
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05), 0 8px 20px -2px rgba(0,0,0,0.09), 0 20px 36px -12px rgba(0,0,0,0.12);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.22), 0 8px 20px -2px rgba(0,0,0,0.28), 0 20px 36px -12px rgba(0,0,0,0.36);
   transform: translateY(-1px);
 }
 .eo-nav-ic {
@@ -398,10 +398,10 @@ watch(() => props.event, loadStats)
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .eo-nav-info { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.eo-nav-lbl { font-size: 13px; font-weight: 600; color: #0A0A0B; }
-.eo-nav-desc { font-size: 11px; color: #B5B5BB; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.eo-nav-arrow { color: #DCDCE0; flex-shrink: 0; transition: color 150ms; }
-.eo-nav-card:hover .eo-nav-arrow { color: #6B6B72; }
+.eo-nav-lbl { font-size: 13px; font-weight: 600; color: #e2e8f0; }
+.eo-nav-desc { font-size: 11px; color: #4f617a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.eo-nav-arrow { color: #2a3a52; flex-shrink: 0; transition: color 150ms; }
+.eo-nav-card:hover .eo-nav-arrow { color: #8892a4; }
 
 /* ══ Responsive ══ */
 @media (max-width: 860px) {
