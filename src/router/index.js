@@ -26,6 +26,8 @@ import EventTeam from '../views/event/EventTeam.vue'
 import EventPayments from '../views/event/EventPayments.vue'
 import EditEvent from '../views/EditEvent.vue'
 import MessagingView from '../views/MessagingView.vue'
+import PackagesView from '../views/PackagesView.vue'
+import ContactsView from '../views/ContactsView.vue'
 
 // Resolves once Firebase has restored the persisted session (or confirmed no user)
 let authResolved = false
@@ -37,7 +39,7 @@ const waitForAuth = new Promise(resolve => {
     })
 })
 
-const PROTECTED_EXACT = ['/', '/users', '/messaging']
+const PROTECTED_EXACT = ['/', '/users', '/messaging', '/packages', '/contacts']
 const PROTECTED = ['/create-event', '/edit-event', '/event/', '/dashboard', '/user-events/']
 
 const routes = [
@@ -80,6 +82,18 @@ const routes = [
         name: 'Messaging',
         component: MessagingView,
         meta: { title: 'Messaging' },
+    },
+    {
+        path: '/packages',
+        name: 'Packages',
+        component: PackagesView,
+        meta: { title: 'Packages' },
+    },
+    {
+        path: '/contacts',
+        name: 'Contacts',
+        component: ContactsView,
+        meta: { title: 'Contacts' },
     },
     // {
     //     path: '/dashboard',

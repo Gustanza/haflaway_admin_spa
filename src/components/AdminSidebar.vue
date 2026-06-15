@@ -52,6 +52,29 @@
         </span>
         <span class="as-item-label">Messaging</span>
       </router-link>
+
+      <router-link to="/packages" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/packages') }" :title="collapsed ? 'Packages' : ''">
+        <span class="as-item-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+        </span>
+        <span class="as-item-label">Packages</span>
+      </router-link>
+
+      <router-link to="/contacts" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/contacts') }" :title="collapsed ? 'Contacts' : ''">
+        <span class="as-item-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3z"/>
+            <path d="M8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3z"/>
+            <path d="M8 13c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            <path d="M16 13c-.29 0-.62.02-.97.05C16.19 13.89 17 15.02 17 17v2h7v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+        </span>
+        <span class="as-item-label">Contacts</span>
+      </router-link>
     </nav>
 
     <!-- Spacer -->
