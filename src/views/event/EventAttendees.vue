@@ -393,6 +393,25 @@
                   <span v-if="phoneObj && !phoneObj.valid && form.phone" class="ea-field-error">
                     Enter a valid phone number with country code
                   </span>
+                  <!-- Duplicate warning -->
+                  <div v-if="addFormDuplicate" class="ea-add-dup-warn">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span class="ea-add-dup-warn-text">Phone already in this event</span>
+                    <div class="ea-imp-dup-compare">
+                      <span class="ea-imp-dup-compare-label">In DB:</span>
+                      <span class="ea-imp-dup-compare-name">{{ addFormDuplicate.fullName }}</span>
+                      <span class="ea-imp-dup-compare-sep">·</span>
+                      <span class="ea-imp-dup-compare-phone">{{ addFormDuplicate.phone }}</span>
+                      <span class="ea-imp-dup-compare-sep">·</span>
+                      <span
+                        class="ea-imp-dup-compare-status"
+                        :class="{
+                          'ea-imp-dup-status--confirmed': addFormDuplicate.attendanceStatus === 'Confirmed',
+                          'ea-imp-dup-status--declined':  addFormDuplicate.attendanceStatus === 'Declined',
+                        }"
+                      >{{ addFormDuplicate.attendanceStatus }}</span>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Type -->
@@ -785,13 +804,45 @@
                 <button class="ea-empty-cta" @click="closeImport">Close</button>
               </div>
 
+              <!-- Duplicate warning banner -->
+              <div v-if="importDuplicateCount > 0" class="ea-imp-dup-banner">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span>{{ importDuplicateCount }} entr{{ importDuplicateCount === 1 ? 'y' : 'ies' }} already exist{{ importDuplicateCount === 1 ? 's' : '' }} in this event</span>
+                <button class="ea-imp-dup-remove-all" @click="importPreviewList = importPreviewList.filter(r => !r._isDuplicate)">
+                  Remove all
+                </button>
+              </div>
+
               <!-- Attendee list -->
-              <div v-else class="ea-imp-preview-list">
-                <div v-for="(att, idx) in importPreviewList" :key="att._id" class="ea-imp-preview-row">
+              <div v-if="importPreviewList.length" class="ea-imp-preview-list">
+                <div
+                  v-for="(att, idx) in importPreviewList"
+                  :key="att._id"
+                  class="ea-imp-preview-row"
+                  :class="{ 'ea-imp-preview-row--dup': att._isDuplicate }"
+                >
                   <span class="ea-imp-row-num">{{ idx + 1 }}</span>
                   <div class="ea-imp-row-info">
-                    <span class="ea-imp-row-name">{{ att.fullName }}</span>
+                    <div class="ea-imp-row-name-line">
+                      <span class="ea-imp-row-name">{{ att.fullName }}</span>
+                      <span v-if="att._isDuplicate" class="ea-imp-dup-badge">DUPLICATE</span>
+                    </div>
                     <span class="ea-imp-row-phone">{{ att.phone || '—' }}</span>
+                    <!-- existing record compare panel -->
+                    <div v-if="att._isDuplicate" class="ea-imp-dup-compare">
+                      <span class="ea-imp-dup-compare-label">In DB:</span>
+                      <span class="ea-imp-dup-compare-name">{{ att._existingAttendee.fullName }}</span>
+                      <span class="ea-imp-dup-compare-sep">·</span>
+                      <span class="ea-imp-dup-compare-phone">{{ att._existingAttendee.phone }}</span>
+                      <span class="ea-imp-dup-compare-sep">·</span>
+                      <span
+                        class="ea-imp-dup-compare-status"
+                        :class="{
+                          'ea-imp-dup-status--confirmed':  att._existingAttendee.attendanceStatus === 'Confirmed',
+                          'ea-imp-dup-status--declined':   att._existingAttendee.attendanceStatus === 'Declined',
+                        }"
+                      >{{ att._existingAttendee.attendanceStatus }}</span>
+                    </div>
                     <!-- pledge / contribution for contribution & contact -->
                     <div v-if="importKardType === 'contribution' || importKardType === 'contact'" class="ea-imp-row-amounts">
                       <span v-if="att.pledgedAmount != null" class="ea-imp-amount ea-imp-amount--pledge">
@@ -1703,6 +1754,14 @@ const form = ref({ name: '', phone: '', kardType: 'invitation', templateCardId: 
 const formErr = ref({ name: '', templateCardId: '' })
 const phoneObj = ref(null)   // populated by vue-tel-input @validate
 
+const addFormDuplicate = computed(() => {
+  if (editingAtt.value) return null
+  if (!phoneObj.value?.valid) return null
+  const phone = (phoneObj.value.number ?? '').replace(/^\+/, '')
+  if (!phone) return null
+  return attendees.value.find(a => a.phone === phone) ?? null
+})
+
 function onPhoneValidate(obj) { phoneObj.value = obj }
 
 function validateForm() {
@@ -1985,6 +2044,7 @@ const importMapAhadi       = ref(true)
 const importMapMchango     = ref(true)
 const importSelectedLabels = ref([])
 const importPreviewList    = ref([])
+const importDuplicateCount = computed(() => importPreviewList.value.filter(r => r._isDuplicate).length)
 const importProcessing     = ref(false)
 const importFileError      = ref('')
 const importing            = ref(false)
@@ -2164,6 +2224,8 @@ function cleanNumeric(raw) {
 
 function buildPreviewList() {
   const isContrib = importKardType.value === 'contribution' || importKardType.value === 'contact'
+  const phoneIndex = new Map(attendees.value.map(a => [a.phone, a]))
+
   return importRows.value
     .map(row => {
       const rawName  = String(row[importMapping.name]  ?? '').trim()
@@ -2177,6 +2239,8 @@ function buildPreviewList() {
       const paidAmount    = (isContrib && importMapMchango.value && importMapping.mchango !== null)
         ? cleanNumeric(row[importMapping.mchango]) : null
 
+      const existing = phone ? phoneIndex.get(phone) : null
+
       return {
         _id:           crypto.randomUUID(),
         fullName:      rawName.toUpperCase(),
@@ -2185,6 +2249,14 @@ function buildPreviewList() {
         pledgedAmount,
         paidAmount,
         labelIds:      [...importSelectedLabels.value],
+        ...(existing ? {
+          _isDuplicate:      true,
+          _existingAttendee: {
+            fullName:         existing.fullName,
+            phone:            existing.phone,
+            attendanceStatus: existing.attendanceStatus,
+          },
+        } : {}),
       }
     })
     .filter(Boolean)
@@ -3992,6 +4064,99 @@ function setImportPayment(attendeeId, amount) {
   padding: 0;
 }
 .ea-imp-row-remove:hover { background: rgba(255,69,58,0.08); color: #FF453A; }
+
+/* ── Duplicate detection ── */
+.ea-imp-dup-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px 4px;
+  padding: 10px 14px;
+  background: rgba(255,69,58,0.08);
+  border: 1px solid rgba(255,69,58,0.25);
+  border-radius: 10px;
+  font-size: 12px;
+  color: #FF6B6B;
+  flex-shrink: 0;
+}
+.ea-imp-dup-banner svg { flex-shrink: 0; opacity: 0.85; }
+.ea-imp-dup-banner span { flex: 1; }
+.ea-imp-dup-remove-all {
+  background: rgba(255,69,58,0.12);
+  border: 1px solid rgba(255,69,58,0.30);
+  border-radius: 7px;
+  color: #FF453A;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms;
+}
+.ea-imp-dup-remove-all:hover { background: rgba(255,69,58,0.22); }
+
+.ea-imp-preview-row--dup {
+  border-color: rgba(255,69,58,0.35);
+  background: rgba(255,69,58,0.05);
+}
+.ea-imp-preview-row--dup:hover { background: rgba(255,69,58,0.09); }
+
+.ea-imp-row-name-line {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.ea-imp-dup-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(255,69,58,0.15);
+  color: #FF453A;
+  flex-shrink: 0;
+}
+.ea-imp-dup-compare {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 5px 9px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,69,58,0.15);
+  border-radius: 7px;
+  font-size: 10.5px;
+}
+.ea-imp-dup-compare-label {
+  color: #FF6B6B;
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.ea-imp-dup-compare-name  { color: #c8d0df; font-weight: 600; }
+.ea-imp-dup-compare-phone { color: #8892a4; }
+.ea-imp-dup-compare-sep   { color: #3a4358; }
+.ea-imp-dup-compare-status { font-weight: 600; color: #8892a4; }
+.ea-imp-dup-status--confirmed { color: #30D158; }
+.ea-imp-dup-status--declined  { color: #FF453A; }
+
+/* ── Single-add duplicate warning ── */
+.ea-add-dup-warn {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 9px 12px;
+  background: rgba(255,69,58,0.07);
+  border: 1px solid rgba(255,69,58,0.25);
+  border-radius: 9px;
+  color: #FF6B6B;
+}
+.ea-add-dup-warn > svg { flex-shrink: 0; opacity: 0.85; align-self: flex-start; margin-top: 1px; }
+.ea-add-dup-warn-text { font-size: 11.5px; font-weight: 600; color: #FF6B6B; }
+.ea-add-dup-warn .ea-imp-dup-compare { margin-top: 2px; }
 
 /* ── Empty import state ── */
 .ea-imp-empty {
