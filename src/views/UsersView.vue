@@ -33,6 +33,13 @@
           <span class="uv-stat-num uv-stat-num--red">{{ inactiveCount }}</span>
           <span class="uv-stat-label">Inactive</span>
         </div>
+        <div class="uv-stat-div" />
+        <button class="uv-stat uv-stat--credit" @click="showOutstandingModal = true">
+          <span :class="['uv-stat-num', totalOutstanding > 0 ? 'uv-stat-num--orange' : 'uv-stat-num--dim']">
+            {{ totalOutstanding > 0 ? formatBalance(totalOutstanding) : '—' }}
+          </span>
+          <span class="uv-stat-label">Outstanding</span>
+        </button>
       </div>
 
       <!-- Filter bar -->
@@ -237,8 +244,8 @@
               <span class="uv-bal-current-val">{{ formatBalance(balanceUser.balance) }}</span>
             </div>
             <div class="uv-bal-mode-row">
-              <button :class="['uv-bal-mode-btn', balanceMode === 'set' && 'uv-bal-mode-btn--on']" @click="balanceMode = 'set'">Set to value</button>
               <button :class="['uv-bal-mode-btn', balanceMode === 'add' && 'uv-bal-mode-btn--on']" @click="balanceMode = 'add'">Add / Deduct</button>
+              <button :class="['uv-bal-mode-btn', balanceMode === 'set' && 'uv-bal-mode-btn--on']" @click="balanceMode = 'set'">Set to value</button>
             </div>
             <div class="uv-field">
               <label class="uv-field-label">{{ balanceMode === 'set' ? 'New Balance (TZS)' : 'Amount (TZS)' }}</label>
@@ -247,6 +254,13 @@
             <div class="uv-bal-preview">
               <span class="uv-bal-preview-label">Result</span>
               <span class="uv-bal-preview-val" :class="previewBalance < 0 && 'uv-bal-preview-val--neg'">{{ formatBalance(previewBalance) }}</span>
+            </div>
+            <div v-if="isTopUp" class="uv-bal-paid-row">
+              <div class="uv-bal-paid-text">
+                <span class="uv-bal-paid-label">Payment Received?</span>
+                <span class="uv-bal-paid-sub">Turn off if this is on credit</span>
+              </div>
+              <button :class="['uv-toggle', balancePaid && 'uv-toggle--on']" @click="balancePaid = !balancePaid" />
             </div>
             <p v-if="balanceError" class="uv-error-msg">{{ balanceError }}</p>
             <button class="uv-submit-btn" :disabled="savingBalance || balanceInput === null || balanceInput === ''" @click="doAdjustBalance">
@@ -276,18 +290,16 @@
             <!-- Stats strip -->
             <div class="uv-hist-stats">
               <div class="uv-hist-stat">
-                <span class="uv-hist-stat-val">{{ formatBalance(lifetimeTopUps) }}</span>
-                <span class="uv-hist-stat-label">Lifetime Topped Up</span>
+                <span class="uv-hist-stat-label">Lifetime</span>
+                <span class="uv-hist-stat-val uv-hist-stat-val--gold">{{ formatBalance(lifetimeTopUps) }}</span>
               </div>
-              <div class="uv-hist-stat-div" />
               <div class="uv-hist-stat">
+                <span class="uv-hist-stat-label">Entries</span>
                 <span class="uv-hist-stat-val">{{ historyRecords.length }}</span>
-                <span class="uv-hist-stat-label">Adjustments</span>
               </div>
-              <div class="uv-hist-stat-div" />
               <div class="uv-hist-stat">
-                <span class="uv-hist-stat-val">{{ formatBalance(historyUser.balance) }}</span>
-                <span class="uv-hist-stat-label">Current Balance</span>
+                <span class="uv-hist-stat-label">Balance</span>
+                <span class="uv-hist-stat-val uv-hist-stat-val--gold">{{ formatBalance(historyUser.balance) }}</span>
               </div>
             </div>
 
@@ -296,6 +308,9 @@
               <div class="uv-hist-skel" v-for="i in 4" :key="i" />
             </div>
 
+            <!-- Error -->
+            <div v-else-if="historyError" class="uv-error-msg" style="margin: 0 20px 20px;">{{ historyError }}</div>
+
             <!-- Empty -->
             <div v-else-if="historyRecords.length === 0" class="uv-hist-empty">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink-dim)"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -303,23 +318,37 @@
               <p class="uv-hist-empty-sub">Adjustments made from now on will appear here.</p>
             </div>
 
-            <!-- Timeline -->
+            <!-- Transactions -->
             <div v-else class="uv-hist-list">
-              <div v-for="(rec, i) in historyRecords" :key="rec.id" class="uv-hist-row">
-                <div class="uv-hist-dot-col">
-                  <div :class="['uv-hist-dot', rec.delta >= 0 ? 'uv-hist-dot--up' : 'uv-hist-dot--down']" />
-                  <div v-if="i < historyRecords.length - 1" class="uv-hist-line" />
+              <div
+                v-for="rec in historyRecords"
+                :key="rec.id"
+                :class="['uv-txn', rec.delta >= 0 ? 'uv-txn--cr' : 'uv-txn--dr']"
+              >
+                <div class="uv-txn-icon">
+                  <svg v-if="rec.delta >= 0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+                  </svg>
+                  <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
+                  </svg>
                 </div>
-                <div class="uv-hist-content">
-                  <div class="uv-hist-row-top">
-                    <span :class="['uv-hist-delta', rec.delta >= 0 ? 'uv-hist-delta--up' : 'uv-hist-delta--down']">
-                      {{ rec.delta >= 0 ? '+' : '' }}{{ formatBalance(rec.delta) }}
-                    </span>
-                    <span class="uv-hist-time">{{ formatHistoryDate(rec.timestamp) }}</span>
+                <div class="uv-txn-body">
+                  <div class="uv-txn-top">
+                    <div class="uv-txn-left">
+                      <span class="uv-txn-amount">{{ formatBalance(Math.abs(rec.delta)) }}</span>
+                      <span class="uv-txn-type">{{ rec.delta >= 0 ? 'Top Up' : 'Deduction' }}</span>
+                    </div>
+                    <span class="uv-txn-date">{{ formatHistoryDate(rec.timestamp) }}</span>
                   </div>
-                  <div class="uv-hist-row-bot">
-                    <span class="uv-hist-after">Balance after: <strong>{{ formatBalance(rec.newBalance) }}</strong></span>
-                    <span v-if="rec.adjustedBy" class="uv-hist-by">by {{ rec.adjustedBy.slice(0, 8) }}…</span>
+                  <div class="uv-txn-foot">
+                    <span class="uv-txn-after">After: <strong>{{ formatBalance(rec.newBalance) }}</strong></span>
+                    <div class="uv-txn-foot-right">
+                      <span v-if="rec.delta > 0" :class="['uv-txn-paid-badge', rec.paid !== false ? 'uv-txn-paid-badge--yes' : 'uv-txn-paid-badge--no']">
+                        {{ rec.paid !== false ? 'Paid' : 'Credit' }}
+                      </span>
+                      <span v-if="rec.adjustedBy" class="uv-txn-by">{{ rec.adjustedBy.slice(0, 8) }}…</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -427,6 +456,60 @@
             >
               {{ saving ? 'Saving…' : editingUser ? 'Save Changes' : 'Add User' }}
             </button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- ── Outstanding Credit modal ── -->
+    <Teleport to="body">
+      <Transition name="uv-fade">
+        <div v-if="showOutstandingModal" class="uv-backdrop" @click.self="showOutstandingModal = false">
+          <div class="uv-out-modal">
+
+            <div class="uv-bm-header">
+              <div>
+                <span class="uv-bm-title">Outstanding Credit</span>
+                <p class="uv-out-sub">{{ usersWithCredit.length }} user{{ usersWithCredit.length !== 1 ? 's' : '' }} with unpaid balance</p>
+              </div>
+              <button class="uv-close-btn" @click="showOutstandingModal = false">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <!-- Total strip -->
+            <div class="uv-out-total">
+              <span class="uv-out-total-label">Total Outstanding</span>
+              <span class="uv-out-total-val">{{ totalOutstanding > 0 ? formatBalance(totalOutstanding) : '—' }}</span>
+            </div>
+
+            <!-- Empty -->
+            <div v-if="usersWithCredit.length === 0" class="uv-out-empty">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--emerald)"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <p class="uv-out-empty-title">All settled</p>
+              <p class="uv-out-empty-sub">No outstanding credit at the moment.</p>
+            </div>
+
+            <!-- List -->
+            <div v-else class="uv-out-list">
+              <div v-for="u in usersWithCredit" :key="u.id" class="uv-out-row">
+                <div class="uv-avatar" :style="avatarBg(u)">
+                  <img v-if="u.profileImage" :src="u.profileImage" class="uv-avatar-img" @error="e => e.target.style.display = 'none'" />
+                  <span class="uv-avatar-letters">{{ initials(u) }}</span>
+                </div>
+                <div class="uv-out-user">
+                  <span class="uv-out-name">{{ fullName(u) }}</span>
+                  <span class="uv-out-email">{{ u.email || u.phoneNumber || '—' }}</span>
+                </div>
+                <span class="uv-out-amount">{{ formatBalance(u.outstandingCredit) }}</span>
+                <button
+                  class="uv-out-pay-btn"
+                  :disabled="markingPaid === u.id"
+                  @click="markCreditPaid(u)"
+                >{{ markingPaid === u.id ? '…' : 'Mark Paid' }}</button>
+              </div>
+            </div>
+
           </div>
         </div>
       </Transition>
@@ -655,6 +738,7 @@ const balanceMode   = ref('set')
 const balanceInput  = ref(null)
 const savingBalance = ref(false)
 const balanceError  = ref('')
+const balancePaid   = ref(true)
 
 const previewBalance = computed(() => {
   const current = balanceUser.value?.balance ?? 0
@@ -662,11 +746,16 @@ const previewBalance = computed(() => {
   return balanceMode.value === 'set' ? input : current + input
 })
 
+const isTopUp = computed(() =>
+  !!balanceUser.value && previewBalance.value > (balanceUser.value.balance ?? 0)
+)
+
 function openBalanceModal(u) {
   balanceUser.value  = u
-  balanceMode.value  = 'set'
-  balanceInput.value = u.balance ?? 0
+  balanceMode.value  = 'add'
+  balanceInput.value = null
   balanceError.value = ''
+  balancePaid.value  = true
 }
 
 async function doAdjustBalance() {
@@ -675,8 +764,11 @@ async function doAdjustBalance() {
   try {
     const newBalance = previewBalance.value
     const adjustBalance = httpsCallable(functions, 'adjustUserBalance')
-    await adjustBalance({ userId: balanceUser.value.id, newBalance })
+    const result = await adjustBalance({ userId: balanceUser.value.id, newBalance, paid: balancePaid.value })
     balanceUser.value.balance = newBalance
+    if (result.data?.outstandingCredit !== undefined) {
+      balanceUser.value.outstandingCredit = result.data.outstandingCredit
+    }
     balanceUser.value = null
   } catch {
     balanceError.value = 'Failed to update balance. Try again.'
@@ -685,10 +777,37 @@ async function doAdjustBalance() {
   }
 }
 
+// ── Outstanding credit ─────────────────────────────────────────────────────
+const showOutstandingModal = ref(false)
+const markingPaid          = ref(null)
+
+const totalOutstanding = computed(() =>
+  users.value.reduce((sum, u) => sum + (u.outstandingCredit ?? 0), 0)
+)
+
+const usersWithCredit = computed(() =>
+  users.value
+    .filter(u => (u.outstandingCredit ?? 0) > 0)
+    .sort((a, b) => (b.outstandingCredit ?? 0) - (a.outstandingCredit ?? 0))
+)
+
+async function markCreditPaid(u) {
+  markingPaid.value = u.id
+  try {
+    await updateDoc(doc(db, 'users', u.id), { outstandingCredit: 0 })
+    u.outstandingCredit = 0
+  } catch (e) {
+    console.error('markCreditPaid error:', e)
+  } finally {
+    markingPaid.value = null
+  }
+}
+
 // ── Balance history ────────────────────────────────────────────────────────
 const historyUser    = ref(null)
 const historyRecords = ref([])
 const historyLoading = ref(false)
+const historyError   = ref('')
 
 const lifetimeTopUps = computed(() =>
   historyRecords.value.filter(r => r.delta > 0).reduce((sum, r) => sum + r.delta, 0)
@@ -697,12 +816,16 @@ const lifetimeTopUps = computed(() =>
 async function openHistoryModal(u) {
   historyUser.value    = u
   historyRecords.value = []
+  historyError.value   = ''
   historyLoading.value = true
   try {
     const snap = await getDocs(
       query(collection(db, 'users', u.id, 'balanceHistory'), orderBy('timestamp', 'desc'))
     )
     historyRecords.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  } catch (e) {
+    console.error('balanceHistory fetch error:', e)
+    historyError.value = e?.message || 'Failed to load history.'
   } finally {
     historyLoading.value = false
   }
@@ -883,7 +1006,7 @@ onMounted(fetchUsers)
 /* ── Stats ── */
 .uv-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 14px;
 }
 .uv-stat {
@@ -895,14 +1018,23 @@ onMounted(fetchUsers)
   flex-direction: column;
   gap: 5px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  text-align: left;
 }
+.uv-stat--credit {
+  cursor: pointer; transition: border-color 150ms, background 150ms;
+  border: 1px solid rgba(255,159,10,.2);
+  background: rgba(255,159,10,.04);
+}
+.uv-stat--credit:hover { border-color: rgba(255,159,10,.4); background: rgba(255,159,10,.07); }
 .uv-stat-div { display: none; }
 .uv-stat-num {
   font-size: 32px; font-weight: 700; color: var(--ink);
   letter-spacing: -0.5px; line-height: 1;
 }
-.uv-stat-num--green { color: var(--emerald); }
-.uv-stat-num--red   { color: #FF453A; }
+.uv-stat-num--green  { color: var(--emerald); }
+.uv-stat-num--red    { color: #FF453A; }
+.uv-stat-num--orange { color: #FF9F0A; font-size: 20px; }
+.uv-stat-num--dim    { color: var(--ink-dim); }
 .uv-stat-label {
   font-size: 11px; font-weight: 600; letter-spacing: 0.6px;
   text-transform: uppercase; color: var(--ink-dim);
@@ -1281,15 +1413,24 @@ onMounted(fetchUsers)
 .uv-toggle-label { font-size: 14px; font-weight: 500; color: var(--ink); }
 .uv-toggle-sub   { font-size: 12px; color: var(--ink-muted); }
 .uv-toggle {
-  width: 42px; height: 26px; border-radius: 13px; border: none; background: var(--line-strong);
-  cursor: pointer; position: relative; transition: background 200ms; flex-shrink: 0; padding: 0; box-sizing: border-box;
+  width: 52px; height: 30px; border-radius: 15px;
+  border: 1.5px solid #404040;
+  background: #2a2a2a;
+  cursor: pointer; position: relative;
+  transition: background 220ms, border-color 220ms;
+  flex-shrink: 0; padding: 0; box-sizing: border-box;
 }
 .uv-toggle::after {
-  content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
-  border-radius: 50%; background: rgba(240,240,236,0.75); transition: transform 200ms;
+  content: ''; position: absolute;
+  top: 3px; left: 3px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #666;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  transition: transform 220ms cubic-bezier(.4,0,.2,1), background 220ms;
 }
-.uv-toggle--on { background: var(--gold-text); }
-.uv-toggle--on::after { transform: translateX(16px); }
+.uv-toggle--on { background: var(--gold-text); border-color: var(--gold-text); }
+.uv-toggle--on::after { transform: translateX(22px); background: #fff; }
 
 /* Error / Submit */
 .uv-error-msg {
@@ -1334,21 +1475,21 @@ onMounted(fetchUsers)
 
 /* Stats strip */
 .uv-hist-stats {
-  display: flex; align-items: center;
-  background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.3);
-  border-radius: 14px; padding: 14px 18px; gap: 0;
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
 }
-.uv-hist-stat { display: flex; flex-direction: column; gap: 3px; flex: 1; }
-.uv-hist-stat-div { width: 1px; height: 36px; background: rgba(201,168,76,0.3); flex-shrink: 0; margin: 0 14px; }
+.uv-hist-stat {
+  background: #111; border: 1px solid #242424; border-radius: 12px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 5px;
+}
+.uv-hist-stat-label {
+  font-size: 10px; font-weight: 600; color: var(--ink-dim);
+  text-transform: uppercase; letter-spacing: 0.8px;
+}
 .uv-hist-stat-val {
   font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 19px; font-weight: 400; color: var(--ink); letter-spacing: -0.5px; line-height: 1;
+  font-size: 17px; font-weight: 400; color: var(--ink); letter-spacing: -0.4px; line-height: 1.2;
 }
-.uv-hist-stat:first-child .uv-hist-stat-val { color: var(--gold-text); }
-.uv-hist-stat-label {
-  font-size: 9.5px; font-weight: 700; color: rgba(201,168,76,0.6);
-  text-transform: uppercase; letter-spacing: 1px;
-}
+.uv-hist-stat-val--gold { color: var(--gold-text); }
 
 /* Skeletons */
 .uv-hist-skeletons { display: flex; flex-direction: column; gap: 8px; }
@@ -1361,55 +1502,130 @@ onMounted(fetchUsers)
 /* Empty */
 .uv-hist-empty {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
-  padding: 40px 20px; border: 1px dashed rgba(201,168,76,0.25); border-radius: 14px;
-  background: rgba(201,168,76,0.05);
+  padding: 40px 20px; border: 1px dashed rgba(201,168,76,0.2); border-radius: 14px;
+  background: rgba(201,168,76,0.04);
 }
 .uv-hist-empty-text { font-size: 15px; font-weight: 600; color: var(--ink); margin: 0; }
 .uv-hist-empty-sub  { font-size: 12px; color: var(--ink-muted); margin: 0; text-align: center; }
 
-/* Timeline list */
-.uv-hist-list { display: flex; flex-direction: column; overflow-y: auto; }
-.uv-hist-row  { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
-.uv-hist-row:last-child { margin-bottom: 0; }
+/* Transaction list */
+.uv-hist-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; padding-bottom: 4px; }
 
-.uv-hist-dot-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; padding-top: 14px; }
-.uv-hist-dot {
-  width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; border: none;
+.uv-txn {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 14px; border-radius: 12px;
+  border: 1px solid transparent; background: #111;
+  transition: border-color 150ms, background 150ms;
 }
-.uv-hist-dot--up   { background: var(--emerald); box-shadow: 0 0 0 4px rgba(48,209,88,0.15); }
-.uv-hist-dot--down { background: #FF453A; box-shadow: 0 0 0 4px rgba(255,69,58,0.12); }
-.uv-hist-line { width: 2px; flex: 1; min-height: 14px; background: var(--line-strong); margin: 6px 0 0; border-radius: 1px; }
+.uv-txn--cr { border-color: rgba(48,209,88,.14); }
+.uv-txn--cr:hover { border-color: rgba(48,209,88,.30); background: rgba(48,209,88,.025); }
+.uv-txn--dr { border-color: rgba(255,69,58,.12); }
+.uv-txn--dr:hover { border-color: rgba(255,69,58,.28); background: rgba(255,69,58,.025); }
 
-.uv-hist-content {
-  flex: 1; display: flex; flex-direction: column; gap: 5px;
-  background: #161616; border: 0.8px solid #2a2a2a;
-  border-radius: 13px; padding: 11px 14px;
+.uv-txn-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
+.uv-txn--cr .uv-txn-icon { background: rgba(48,209,88,.12); color: var(--emerald); }
+.uv-txn--dr .uv-txn-icon { background: rgba(255,69,58,.10); color: #FF453A; }
 
-.uv-hist-row-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.uv-hist-row-bot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.uv-txn-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.uv-txn-top  { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.uv-txn-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.uv-txn-left { display: flex; flex-direction: column; gap: 2px; }
 
-.uv-hist-delta {
-  display: inline-flex; align-items: center;
-  padding: 3px 10px; border-radius: 20px;
-  font-size: 13.5px; font-weight: 700; line-height: 1.4;
+.uv-txn-amount { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; line-height: 1.2; }
+.uv-txn--cr .uv-txn-amount { color: var(--emerald); }
+.uv-txn--dr .uv-txn-amount { color: #FF453A; }
+
+.uv-txn-type {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+  text-transform: uppercase; color: var(--ink-dim);
 }
-.uv-hist-delta--up   { background: var(--emerald-soft); color: var(--emerald); }
-.uv-hist-delta--down { background: rgba(255,69,58,.10); color: #FF453A; }
+.uv-txn-date  { font-size: 11.5px; color: var(--ink-dim); white-space: nowrap; flex-shrink: 0; }
+.uv-txn-after { font-size: 12px; color: var(--ink-muted); }
+.uv-txn-after strong { color: var(--ink-soft); font-weight: 600; }
+.uv-txn-by    { font-size: 10.5px; color: var(--ink-dim); font-family: 'SF Mono', 'Fira Code', monospace; }
 
-.uv-hist-time   { font-size: 11.5px; color: var(--ink-dim); white-space: nowrap; }
-.uv-hist-after  { font-size: 12px; color: var(--ink-muted); }
-.uv-hist-after strong { color: var(--ink); font-weight: 600; }
-.uv-hist-by     { font-size: 11px; color: var(--ink-dim); font-family: 'SF Mono', 'Fira Code', monospace; }
+/* ── Received toggle row (balance modal) ── */
+.uv-bal-paid-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 12px 14px; background: #111; border: 0.8px solid #2a2a2a; border-radius: 12px;
+}
+.uv-bal-paid-text  { display: flex; flex-direction: column; gap: 2px; }
+.uv-bal-paid-label { font-size: 13.5px; font-weight: 500; color: var(--ink); }
+.uv-bal-paid-sub   { font-size: 11.5px; color: var(--ink-muted); }
+
+/* ── Paid / Credit badge (history) ── */
+.uv-txn-foot-right { display: flex; align-items: center; gap: 8px; }
+.uv-txn-paid-badge {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+  text-transform: uppercase; padding: 2px 8px; border-radius: 20px;
+}
+.uv-txn-paid-badge--yes { background: rgba(48,209,88,.10); color: var(--emerald); }
+.uv-txn-paid-badge--no  { background: rgba(255,159,10,.12); color: #FF9F0A; }
+
+/* ── Outstanding Credit modal ── */
+.uv-out-modal {
+  width: 100%; max-width: 480px; max-height: 88vh;
+  background: #161616; border: 1px solid #2a2a2a;
+  border-top: 3px solid #FF9F0A;
+  border-radius: 16px; padding: 24px 24px 20px;
+  display: flex; flex-direction: column; gap: 16px;
+  box-sizing: border-box; box-shadow: 4px 8px 0 rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+.uv-out-sub { font-size: 12.5px; color: var(--ink-muted); margin: 3px 0 0; }
+
+.uv-out-total {
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(255,159,10,.07); border: 1px solid rgba(255,159,10,.25);
+  border-radius: 12px; padding: 14px 16px;
+}
+.uv-out-total-label { font-size: 12px; font-weight: 600; color: rgba(255,159,10,.7); text-transform: uppercase; letter-spacing: 0.6px; }
+.uv-out-total-val   { font-size: 20px; font-weight: 700; color: #FF9F0A; letter-spacing: -0.5px; }
+
+.uv-out-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 36px 20px; border: 1px dashed rgba(48,209,88,.2); border-radius: 14px;
+  background: rgba(48,209,88,.03);
+}
+.uv-out-empty-title { font-size: 15px; font-weight: 600; color: var(--ink); margin: 0; }
+.uv-out-empty-sub   { font-size: 12px; color: var(--ink-muted); margin: 0; }
+
+.uv-out-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+.uv-out-row  {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 12px;
+  background: #111; border: 1px solid #242424;
+}
+.uv-out-user  { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.uv-out-name  { font-size: 13px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.uv-out-email { font-size: 11.5px; color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.uv-out-amount {
+  font-size: 14px; font-weight: 700; color: #FF9F0A;
+  letter-spacing: -0.3px; flex-shrink: 0;
+}
+.uv-out-pay-btn {
+  padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(48,209,88,.25);
+  background: rgba(48,209,88,.08); color: var(--emerald);
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: opacity 150ms; white-space: nowrap; flex-shrink: 0;
+}
+.uv-out-pay-btn:hover:not(:disabled) { opacity: 0.8; }
+.uv-out-pay-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── Transitions ── */
 .uv-fade-enter-active, .uv-fade-leave-active { transition: opacity 180ms; }
 .uv-fade-enter-from,   .uv-fade-leave-to     { opacity: 0; }
 
 /* ── Responsive ── */
+@media (max-width: 1024px) {
+  .uv-stats { grid-template-columns: repeat(2, 1fr); }
+}
 @media (max-width: 860px) {
   .uv-page { padding: 20px 20px 40px; }
-  .uv-stats { grid-template-columns: 1fr; }
+  .uv-stats { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 600px) {
   .uv-topbar-inner { padding: 12px 16px; }
