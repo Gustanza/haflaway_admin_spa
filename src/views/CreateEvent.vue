@@ -11,7 +11,7 @@
           </div>
           <div class="ce-breadcrumb">
             <span class="ce-sep">/</span>
-            <span class="ce-crumb" @click="$router.push('/my-events')">My Events</span>
+            <span class="ce-crumb" @click="$router.push('/my-events')">All Events</span>
             <span class="ce-sep">/</span>
             <span class="ce-crumb ce-crumb--page">Create Event</span>
           </div>
@@ -403,22 +403,38 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* ── Design tokens ── */
 .ce-root {
+  --ink: #f0f0ec;
+  --ink-soft: #d8d4cd;
+  --ink-muted: #888;
+  --ink-dim: #555;
+  --line: #2a2a2a;
+  --line-strong: #2a2a2a;
+  --paper: #161616;
+  --gold: #C9A84C;
+  --emerald: #30D158;
   min-height: 100vh;
-  background: #F8F8F6;
+  background: #0a0a0b;
+  color: var(--ink);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* ── Nav ── */
 .ce-nav {
-  background: #FFFFFF;
-  border-bottom: 0.8px solid #EBEBEA;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(10,10,11,0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid #2a2a2a;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.3);
 }
 .ce-nav-inner {
-  max-width: 860px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 28px 36px;
+  padding: 14px 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -439,76 +455,77 @@ onMounted(async () => {
   height: 10px;
   border-radius: 50%;
   background: #C9A84C;
+  font-size: 16px;
+  color: #C9A84C;
 }
 .ce-brand-name {
-  font-size: 22px;
-  font-weight: 800;
-  color: #1C1A18;
-  letter-spacing: -0.5px;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 18px;
+  color: var(--ink);
 }
 .ce-breadcrumb {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 13px;
+  color: var(--ink-muted);
 }
 .ce-sep {
-  font-size: 16px;
-  color: #D0CEC9;
-  font-weight: 300;
+  color: var(--ink-dim);
 }
 .ce-crumb {
-  font-size: 15px;
-  font-weight: 500;
-  color: #8A8580;
   cursor: pointer;
-  transition: color 130ms;
+  transition: color 120ms;
 }
-.ce-crumb:hover { color: #C9A84C; }
+.ce-crumb:hover { color: var(--ink); }
 .ce-crumb--page {
-  font-weight: 600;
-  color: #1C1A18;
+  color: var(--ink);
   cursor: default;
 }
-.ce-crumb--page:hover { color: #1C1A18; }
+.ce-crumb--page:hover { color: var(--ink); }
 .ce-avatar-pill {
+  background: rgba(201,168,76,0.08);
+  border: 1px solid rgba(201,168,76,0.18);
+  border-radius: 20px;
+  padding: 4px 12px;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
-  border-radius: 20px;
-  border: 0.8px solid #EBEBEA;
 }
 .ce-avatar-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #C9A84C;
+  background: var(--gold);
 }
 .ce-avatar-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: #6B6A68;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--gold);
 }
 
 /* ── Form body ── */
 .ce-body {
-  max-width: 860px;
+  max-width: 760px;
   margin: 0 auto;
-  padding: 36px 36px 80px;
+  padding: 32px 32px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 .ce-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 /* ── Section ── */
 .ce-section {
-  background: #FFFFFF;
-  border: 0.8px solid #EBEBEA;
+  background: #161616;
+  border: 1px solid #2a2a2a;
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -516,9 +533,9 @@ onMounted(async () => {
 .ce-section-label {
   font-size: 13px;
   font-weight: 700;
-  color: #6B6A68;
-  letter-spacing: 0.2px;
   text-transform: uppercase;
+  letter-spacing: 0.2px;
+  color: #888888;
 }
 
 /* ── Fields grid ── */
@@ -536,32 +553,33 @@ onMounted(async () => {
 .ce-label {
   font-size: 12px;
   font-weight: 600;
-  color: #6B6A68;
+  color: #888888;
 }
 .ce-req { color: #C9A84C; }
-.ce-optional { color: #B5B0A8; font-weight: 400; }
+.ce-optional { color: #555555; font-weight: 400; }
 
 .ce-input,
 .ce-textarea {
   padding: 10px 13px;
-  border: 0.8px solid #EBEBEA;
+  border: 0.8px solid #2a2a2a;
   border-radius: 10px;
-  background: #FAFAF8;
+  background: #161616;
   font-size: 14px;
-  color: #1C1A18;
+  color: var(--ink);
   outline: none;
   font-family: inherit;
   transition: border-color 140ms, box-shadow 140ms;
   box-sizing: border-box;
   width: 100%;
+  color-scheme: dark;
 }
 .ce-input::placeholder,
-.ce-textarea::placeholder { color: #B5B0A8; }
+.ce-textarea::placeholder { color: #555555; }
 .ce-input:focus,
 .ce-textarea:focus {
   border-color: rgba(201,168,76,0.5);
-  box-shadow: 0 0 0 3px rgba(201,168,76,0.09);
-  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.10);
+  background: #111111;
 }
 .ce-textarea { resize: vertical; min-height: 100px; }
 .ce-field--error .ce-input,
@@ -580,18 +598,18 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   padding: 10px 13px;
-  border: 0.8px solid #EBEBEA;
+  border: 0.8px solid #2a2a2a;
   border-radius: 10px;
-  background: #FAFAF8;
+  background: #161616;
   font-size: 14px;
-  color: #1C1A18;
+  color: var(--ink);
   cursor: pointer;
   font-family: inherit;
   transition: border-color 140ms;
   text-align: left;
   width: 100%;
 }
-.ce-select-btn--empty { color: #B5B0A8; }
+.ce-select-btn--empty { color: #555555; }
 .ce-select-btn:hover { border-color: rgba(201,168,76,0.45); }
 
 /* Language radio row */
@@ -603,17 +621,17 @@ onMounted(async () => {
   flex: 1;
   text-align: center;
   padding: 9px 12px;
-  border: 0.8px solid #EBEBEA;
+  border: 0.8px solid #2a2a2a;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 500;
-  color: #6B6A68;
+  color: #888888;
   cursor: pointer;
   transition: all 130ms;
-  background: #FAFAF8;
+  background: #161616;
 }
 .ce-radio-opt--active {
-  background: #FFF8EC;
+  background: rgba(201,168,76,0.08);
   border-color: rgba(201,168,76,0.4);
   color: #C9A84C;
   font-weight: 600;
@@ -621,7 +639,7 @@ onMounted(async () => {
 
 /* ── Thumbnail drop zone ── */
 .ce-thumb-drop {
-  border: 1.5px dashed #EBEBEA;
+  border: 1.5px dashed #2a2a2a;
   border-radius: 14px;
   min-height: 180px;
   display: flex;
@@ -631,10 +649,10 @@ onMounted(async () => {
   overflow: hidden;
   transition: border-color 150ms;
   position: relative;
-  background: #FAFAF8;
+  background: #161616;
 }
 .ce-thumb-drop:hover { border-color: rgba(201,168,76,0.5); }
-.ce-thumb-drop--has { border-style: solid; border-color: #EBEBEA; }
+.ce-thumb-drop--has { border-style: solid; border-color: #2a2a2a; }
 .ce-thumb-preview {
   width: 100%;
   height: 100%;
@@ -652,12 +670,12 @@ onMounted(async () => {
 .ce-thumb-hint {
   font-size: 14px;
   font-weight: 600;
-  color: #6B6A68;
+  color: #888888;
   margin: 0;
 }
 .ce-thumb-sub {
   font-size: 12px;
-  color: #B5B0A8;
+  color: #555555;
   margin: 0;
 }
 .ce-hidden { display: none; }
@@ -672,7 +690,7 @@ onMounted(async () => {
   border-radius: 10px;
   padding: 12px 16px;
   font-size: 13px;
-  color: #D93025;
+  color: #FF453A;
 }
 
 /* ── Actions ── */
@@ -683,17 +701,17 @@ onMounted(async () => {
 }
 .ce-cancel-btn {
   padding: 11px 24px;
-  border: 0.8px solid #EBEBEA;
+  border: 1px solid #2a2a2a;
   border-radius: 10px;
-  background: #FFFFFF;
+  background: transparent;
   font-size: 14px;
   font-weight: 600;
-  color: #6B6A68;
+  color: #888888;
   cursor: pointer;
   font-family: inherit;
   transition: background 130ms;
 }
-.ce-cancel-btn:hover { background: #F2F2F0; }
+.ce-cancel-btn:hover { background: #1e1e1e; color: var(--ink); }
 .ce-submit-btn {
   padding: 11px 28px;
   border: none;
@@ -701,7 +719,7 @@ onMounted(async () => {
   background: #C9A84C;
   font-size: 14px;
   font-weight: 700;
-  color: #FFFFFF;
+  color: #070707;
   cursor: pointer;
   font-family: inherit;
   transition: opacity 140ms;
@@ -716,8 +734,8 @@ onMounted(async () => {
 .ce-spinner {
   width: 15px;
   height: 15px;
-  border: 2px solid rgba(255,255,255,0.35);
-  border-top-color: #FFFFFF;
+  border: 2px solid rgba(0,0,0,0.25);
+  border-top-color: #070707;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -727,7 +745,8 @@ onMounted(async () => {
 .ce-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(28,26,24,0.4);
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -735,14 +754,15 @@ onMounted(async () => {
   padding: 24px;
 }
 .ce-modal {
-  background: #FFFFFF;
+  background: #161616;
+  border: 1px solid #2a2a2a;
   border-radius: 18px;
   width: 100%;
   max-width: 400px;
   max-height: 70vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.16);
+  box-shadow: 4px 8px 0 rgba(0,0,0,0.4);
   overflow: hidden;
 }
 .ce-modal-head {
@@ -750,19 +770,19 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   padding: 18px 20px;
-  border-bottom: 0.8px solid #EBEBEA;
+  border-bottom: 0.8px solid #2a2a2a;
   flex-shrink: 0;
 }
 .ce-modal-title {
   font-size: 15px;
   font-weight: 700;
-  color: #1C1A18;
+  color: var(--ink);
 }
 .ce-modal-close {
   background: none;
   border: none;
   cursor: pointer;
-  color: #8A8580;
+  color: #888888;
   display: flex;
   align-items: center;
   padding: 4px;
@@ -777,7 +797,7 @@ onMounted(async () => {
 .ce-modal-loading {
   padding: 20px;
   text-align: center;
-  color: #8A8580;
+  color: #888888;
   font-size: 13px;
 }
 .ce-modal-item {
@@ -789,15 +809,15 @@ onMounted(async () => {
   background: none;
   font-size: 14px;
   font-weight: 500;
-  color: #1C1A18;
+  color: var(--ink);
   cursor: pointer;
   text-align: left;
   font-family: inherit;
   transition: background 120ms;
 }
-.ce-modal-item:hover { background: #F2F2F0; }
+.ce-modal-item:hover { background: #1e1e1e; }
 .ce-modal-item--active {
-  background: #FFF8EC;
+  background: rgba(201,168,76,0.08);
   color: #C9A84C;
   font-weight: 600;
 }
@@ -808,9 +828,8 @@ onMounted(async () => {
 
 /* ── Responsive ── */
 @media (max-width: 600px) {
-  .ce-nav-inner { padding: 20px 16px; }
-  .ce-brand-name { font-size: 18px; }
-  .ce-body { padding: 20px 16px 60px; }
+  .ce-nav-inner { padding: 12px 16px; }
+  .ce-body { padding: 20px 16px 48px; }
   .ce-fields { grid-template-columns: 1fr; }
   .ce-field--full { grid-column: 1; }
   .ce-actions { flex-direction: column-reverse; }

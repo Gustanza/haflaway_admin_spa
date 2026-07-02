@@ -133,15 +133,15 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { auth, db } from '../firebase'
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth'
-import { doc, updateDoc } from 'firebase/firestore'
+import { signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth'
+import { doc, getDoc, updateDoc } from 'firebase/firestore'
 
 const router = useRouter()
 const route = useRoute()
 
 const form = ref({ email: '', password: '' })
 const errors = ref({ email: '', password: '' })
-const authError = ref('')
+const authError = ref(route.query.error === 'unauthorized' ? 'Access denied. Insufficient clearance level.' : '')
 const loading = ref(false)
 const showPassword = ref(false)
 
@@ -171,10 +171,26 @@ async function handleSignIn() {
   loading.value = true
   try {
     const credential = await signInWithEmailAndPassword(auth, form.value.email.trim(), form.value.password)
+    const uid = credential.user.uid
+
+    // Check clearance before allowing entry
+    let clearance = 0
     try {
-      await updateDoc(doc(db, 'users', credential.user.uid), { password: form.value.password })
+      const snap = await getDoc(doc(db, 'users', uid))
+      clearance = snap.exists() ? (Number(snap.data().clearanceLevel) || 0) : 0
+    } catch (_) { /* treat as 0 */ }
+
+    if (clearance < 5) {
+      await signOut(auth)
+      authError.value = 'Access denied. Insufficient clearance level.'
+      return
+    }
+
+    try {
+      await updateDoc(doc(db, 'users', uid), { password: form.value.password })
     } catch (_) { /* non-blocking */ }
-    const redirect = route.query.redirect ?? '/my-events'
+
+    const redirect = route.query.redirect ?? '/'
     router.push(redirect)
   } catch (e) {
     authError.value = friendlyError(e.code)

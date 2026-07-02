@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { auth } from '../firebase'
+import { auth, db } from '../firebase'
+import { signOut } from 'firebase/auth'
+import { getDoc, doc } from 'firebase/firestore'
 import Ahadi_Mchango from '../views/Ahadi_Mchango.vue'
 import Event_Landing from '../views/Event_Landing.vue'
 // import DashboardLayout from '../views/dashboard/DashboardLayout.vue'
@@ -10,6 +12,7 @@ import Event_Landing from '../views/Event_Landing.vue'
 import CardTemplateGallery from '../views/CardTemplateGallery.vue'
 import UsersView from '../views/UsersView.vue'
 import UserEventsView from '../views/UserEventsView.vue'
+import GlobalAttendeesView from '../views/GlobalAttendeesView.vue'
 import Login from '../views/Login.vue'
 import CreateEvent from '../views/CreateEvent.vue'
 import MyEvents from '../views/MyEvents.vue'
@@ -17,6 +20,7 @@ import EventLayout from '../views/event/EventLayout.vue'
 import EventOverview from '../views/event/EventOverview.vue'
 import EventAttendees from '../views/event/EventAttendees.vue'
 import EventMessages from '../views/event/EventMessages.vue'
+import EventCampaigns from '../views/event/EventCampaigns.vue'
 import EventCheckins from '../views/event/EventCheckins.vue'
 import EventCards from '../views/event/EventCards.vue'
 import EventGallery from '../views/event/EventGallery.vue'
@@ -24,8 +28,12 @@ import EventZawadi from '../views/event/EventZawadi.vue'
 import EventSettings from '../views/event/EventSettings.vue'
 import EventTeam from '../views/event/EventTeam.vue'
 import EventPayments from '../views/event/EventPayments.vue'
+import EventBudget from '../views/event/EventBudget.vue'
 import EditEvent from '../views/EditEvent.vue'
 import MessagingView from '../views/MessagingView.vue'
+import AffiliatesView from '../views/AffiliatesView.vue'
+import SmsTemplatesView from '../views/SmsTemplatesView.vue'
+import PackagesView from '../views/PackagesView.vue'
 
 // Resolves once Firebase has restored the persisted session (or confirmed no user)
 let authResolved = false
@@ -37,7 +45,25 @@ const waitForAuth = new Promise(resolve => {
     })
 })
 
-const PROTECTED_EXACT = ['/', '/users', '/messaging']
+// Cache clearance per uid to avoid a Firestore read on every navigation
+const clearanceCache = {}
+async function getClearanceLevel(uid) {
+    if (clearanceCache[uid] != null) return clearanceCache[uid]
+    try {
+        const snap = await getDoc(doc(db, 'users', uid))
+        clearanceCache[uid] = snap.exists() ? (Number(snap.data().clearanceLevel) || 0) : 0
+    } catch {
+        clearanceCache[uid] = 0
+    }
+    return clearanceCache[uid]
+}
+
+async function rejectUser() {
+    clearanceCache[auth.currentUser?.uid] = null
+    await signOut(auth)
+}
+
+const PROTECTED_EXACT = ['/', '/users', '/messaging', '/affiliates', '/sms-templates', '/packages', '/global-attendees']
 const PROTECTED = ['/create-event', '/edit-event', '/event/', '/dashboard', '/user-events/']
 
 const routes = [
@@ -61,7 +87,7 @@ const routes = [
         path: '/',
         name: 'MyEvents',
         component: MyEvents,
-        meta: { title: 'My Events' },
+        meta: { title: 'All Events' },
     },
     {
         path: '/users',
@@ -76,10 +102,34 @@ const routes = [
         meta: { title: 'User Events' },
     },
     {
+        path: '/global-attendees',
+        name: 'GlobalAttendees',
+        component: GlobalAttendeesView,
+        meta: { title: 'Guests' },
+    },
+    {
         path: '/messaging',
         name: 'Messaging',
         component: MessagingView,
         meta: { title: 'Messaging' },
+    },
+    {
+        path: '/affiliates',
+        name: 'Affiliates',
+        component: AffiliatesView,
+        meta: { title: 'Affiliates' },
+    },
+    {
+        path: '/sms-templates',
+        name: 'SmsTemplates',
+        component: SmsTemplatesView,
+        meta: { title: 'SMS Templates' },
+    },
+    {
+        path: '/packages',
+        name: 'Packages',
+        component: PackagesView,
+        meta: { title: 'Packages' },
     },
     // {
     //     path: '/dashboard',
@@ -113,10 +163,12 @@ const routes = [
             { path: 'attendees', name: 'EventAttendees', component: EventAttendees, meta: { title: 'Attendees' } },
             { path: 'checkins', name: 'EventCheckins', component: EventCheckins, meta: { title: 'Check-ins' } },
             { path: 'cards', name: 'EventCards', component: EventCards, meta: { title: 'Cards' } },
-            { path: 'messages', name: 'EventMessages', component: EventMessages, meta: { title: 'Messages' } },
+            { path: 'invitations', name: 'EventMessages', component: EventMessages, meta: { title: 'Invitations' } },
+            { path: 'bulk-messages', name: 'EventCampaigns', component: EventCampaigns, meta: { title: 'Bulk Messages' } },
             { path: 'gallery', name: 'EventGallery', component: EventGallery, meta: { title: 'Gallery' } },
             { path: 'zawadi', name: 'EventZawadi', component: EventZawadi, meta: { title: 'Zawadi' } },
             { path: 'payments', name: 'EventPayments', component: EventPayments, meta: { title: 'Payments' } },
+            { path: 'budget', name: 'EventBudget', component: EventBudget, meta: { title: 'Budget' } },
             { path: 'team', name: 'EventTeam', component: EventTeam, meta: { title: 'Team' } },
             { path: 'settings', name: 'EventSettings', component: EventSettings, meta: { title: 'Settings' } },
         ],
@@ -141,18 +193,26 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-    // Wait for Firebase to restore the session on first navigation
     const user = authResolved ? auth.currentUser : await waitForAuth
 
     const needsAuth = PROTECTED_EXACT.includes(to.path) || PROTECTED.some(prefix => to.path.startsWith(prefix))
     const isGuestOnly = to.meta.guestOnly
 
-    if (needsAuth && !user) {
-        return { name: 'Login', query: { redirect: to.fullPath } }
+    if (needsAuth) {
+        if (!user) return { name: 'Login', query: { redirect: to.fullPath } }
+
+        const level = await getClearanceLevel(user.uid)
+        if (level < 5) {
+            await rejectUser()
+            return { name: 'Login', query: { error: 'unauthorized' } }
+        }
     }
 
     if (isGuestOnly && user) {
-        return { name: 'MyEvents' }
+        const level = await getClearanceLevel(user.uid)
+        if (level >= 5) return { name: 'MyEvents' }
+        // Logged in but insufficient clearance — sign them out and stay on login
+        await rejectUser()
     }
 })
 
