@@ -4,9 +4,9 @@
     <!-- ── Topbar ── -->
     <nav class="me-topbar">
       <div class="me-topbar-inner">
-        <span class="me-page-title">My Events</span>
+        <span class="me-page-title">All Events</span>
         <button class="me-create-btn" @click="$router.push('/create-event')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
           Create event
@@ -17,10 +17,47 @@
     <!-- ── Page shell ── -->
     <div class="me-page">
 
-      <!-- Filter bar -->
+      <!-- Greeting + stats -->
+      <div class="me-header">
+        <div class="me-header-left">
+          <h1 class="me-greeting">{{ greeting }}</h1>
+          <p class="me-subline">{{ events.length }} event{{ events.length !== 1 ? 's' : '' }} in your workspace.</p>
+        </div>
+        <div class="me-header-stats">
+          <div class="me-stat-block">
+            <span class="me-stat-value">{{ events.length }}</span>
+            <span class="me-stat-label">Total</span>
+          </div>
+          <div class="me-stat-divider" />
+          <div class="me-stat-block">
+            <span class="me-stat-value me-stat-value--gold">{{ upcomingCount }}</span>
+            <span class="me-stat-label">Upcoming</span>
+          </div>
+          <div class="me-stat-divider" />
+          <div class="me-stat-block">
+            <span class="me-stat-value me-stat-value--emerald">{{ liveCount }}</span>
+            <span class="me-stat-label">Live Now</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter bar: tabs → search → sort -->
       <div class="me-filterbar">
+        <div class="me-tabs">
+          <button
+            v-for="f in statusFilters"
+            :key="f.value"
+            class="me-tab"
+            :class="{ 'me-tab--active': activeFilter === f.value }"
+            @click="activeFilter = f.value; clearSearch()"
+          >
+            {{ f.label }}
+            <span class="me-tab-count" :class="{ 'me-tab-count--active': activeFilter === f.value }">{{ f.count }}</span>
+          </button>
+        </div>
+        <div class="me-fb-divider" />
         <div class="me-search-wrap">
-          <svg class="me-search-icon-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="me-search-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
           <input
@@ -37,24 +74,60 @@
           </button>
         </div>
         <div class="me-fb-divider" />
-        <div class="me-status-chips">
-          <button
-            v-for="f in statusFilters"
-            :key="f.value"
-            class="me-status-chip"
-            :class="{ 'me-status-chip--active': activeFilter === f.value }"
-            @click="activeFilter = f.value; clearSearch()"
-          >
-            {{ f.label }}
-            <span class="me-chip-count" :class="{ 'me-chip-count--active': activeFilter === f.value }">{{ f.count }}</span>
-          </button>
-        </div>
-        <div class="me-fb-divider" />
         <select v-model="activeSort" class="me-fb-select">
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
           <option value="az">A → Z</option>
         </select>
+        <div class="me-fb-divider" />
+        <!-- Owner filter -->
+        <div class="me-owner-wrap">
+          <button
+            class="me-owner-btn"
+            :class="{ 'me-owner-btn--active': activeOwner }"
+            @click="showOwnerDrop = !showOwnerDrop; ownerSearch = ''"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span>{{ activeOwner ? (ownerNames[activeOwner] || 'Owner') : 'All owners' }}</span>
+            <button v-if="activeOwner" class="me-owner-clear" @click.stop="activeOwner = null; currentPage = 1">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+            <svg v-else width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <!-- Backdrop -->
+          <div v-if="showOwnerDrop" class="me-owner-backdrop" @click="showOwnerDrop = false" />
+          <!-- Dropdown -->
+          <div v-if="showOwnerDrop" class="me-owner-drop">
+            <div class="me-owner-search-wrap">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:10px;color:var(--ink-dim);pointer-events:none">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input v-model="ownerSearch" class="me-owner-search" placeholder="Search owners…" autofocus />
+            </div>
+            <div class="me-owner-list">
+              <button
+                v-for="o in ownerList"
+                :key="o.id"
+                class="me-owner-opt"
+                :class="{ 'me-owner-opt--active': activeOwner === o.id }"
+                @click="activeOwner = o.id; showOwnerDrop = false; ownerSearch = ''; currentPage = 1"
+              >
+                <span class="me-owner-avatar">{{ o.name[0]?.toUpperCase() }}</span>
+                <span class="me-owner-opt-name">{{ o.name }}</span>
+                <svg v-if="activeOwner === o.id" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;color:var(--gold);flex-shrink:0">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </button>
+              <p v-if="!ownerList.length" class="me-owner-empty">No owners found</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Loading -->
@@ -67,7 +140,7 @@
         <span class="me-empty-glyph">✦</span>
         <p class="me-empty-title">{{ searchQuery ? `No results for "${searchQuery}"` : 'No events yet. Create your first.' }}</p>
         <button v-if="!searchQuery" class="me-create-btn me-create-btn--lg" @click="$router.push('/create-event')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
           Create event
@@ -76,8 +149,10 @@
 
       <template v-else>
 
-        <!-- Events count heading -->
+        <!-- Section heading + tiles grouped so spacing matches tile gap -->
+        <div class="me-list-wrap">
         <div class="me-section-head">
+          <span class="me-section-sparkle">✦</span>
           <span class="me-section-line" />
           <span class="me-section-meta">
             {{ sourceEvents.length }} event{{ sourceEvents.length !== 1 ? 's' : '' }}
@@ -91,12 +166,10 @@
             v-for="(event, idx) in displayedEvents"
             :key="event.id"
             class="me-row"
-            :style="{ '--rot': rotations[idx % rotations.length] + 'deg' }"
+            :class="`me-row--${statusClass(event)}`"
+            :style="{ '--theme': rowThemeColor(event) }"
             @click="goToEvent(event.id)"
           >
-            <!-- Pin tack -->
-            <div class="me-pin" />
-            <div class="me-pin-shadow" />
 
             <!-- Left: invitation thumbnail -->
             <div class="me-row-thumb-col">
@@ -104,7 +177,11 @@
             </div>
 
             <!-- Middle: content -->
-            <div class="me-row-content">
+            <div class="me-row-body">
+              <div class="me-row-eyebrow">
+                <span class="me-row-eyebrow-spark">✦</span>
+                <span class="me-row-eyebrow-line" />
+              </div>
               <div class="me-row-chips">
                 <span class="me-status-pill" :class="`me-status-pill--${statusClass(event)}`">
                   <span class="me-status-dot" />{{ statusLabel(event) }}
@@ -112,24 +189,39 @@
                 <span class="me-role-badge" :class="event.authorId === uid ? 'me-role-badge--owner' : 'me-role-badge--admin'">
                   {{ event.authorId === uid ? 'OWNER' : 'ADMIN' }}
                 </span>
-                <span class="me-code-chip">{{ event.code || event.id?.slice(0,8) }}</span>
+                <span class="me-code-chip">{{ event.code || event.id?.slice(0, 8) }}</span>
+                <template v-if="ownerFirstName(event.authorId)">
+                  <span class="me-chip-sep">·</span>
+                  <button
+                    class="me-owner-credit"
+                    :class="{ 'me-owner-credit--open': swapEvent?.id === event.id }"
+                    @click.stop="openSwap(event, $event)"
+                    title="Reassign owner"
+                  >
+                    <span class="me-owner-credit-av" :style="ownerAvatarStyle(event.authorId)">{{ ownerInitials(event.authorId) }}</span>
+                    {{ ownerFirstName(event.authorId) }}
+                    <svg class="me-owner-credit-icon" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/>
+                    </svg>
+                  </button>
+                </template>
               </div>
               <h3 class="me-row-title">{{ event.title }}</h3>
               <div class="me-row-meta">
                 <div class="me-row-meta-item">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                   </svg>
                   <span>{{ formatFullDate(event.startDate) }}<template v-if="event.endDate"> – {{ formatFullDate(event.endDate) }}</template></span>
                 </div>
                 <div v-if="event.location" class="me-row-meta-item">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
                   </svg>
                   <span>{{ event.location }}</span>
                 </div>
                 <div class="me-row-meta-item">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                   </svg>
@@ -143,14 +235,12 @@
               </div>
             </div>
 
-            <!-- Right: date + days pill + manage -->
-            <div class="me-row-right">
-              <div class="me-row-date">
-                <span class="me-row-date-eyebrow">{{ formatMonth(event.startDate) }}</span>
-                <span class="me-row-date-day">{{ formatDay(event.startDate) }}</span>
-                <span class="me-row-date-year">{{ event.startDate ? new Date(event.startDate).getFullYear() : '' }}</span>
-              </div>
-              <div class="me-row-days-pill" :class="daysAwayClass(event)">
+            <!-- Right: date countdown -->
+            <div class="me-row-cd">
+              <span class="me-row-cd-month">{{ formatMonth(event.startDate) }}</span>
+              <span class="me-row-cd-day">{{ formatDay(event.startDate) }}</span>
+              <span class="me-row-cd-year">{{ event.startDate ? new Date(event.startDate).getFullYear() : '' }}</span>
+              <div class="me-row-cd-ticket" :class="daysAwayClass(event)">
                 <template v-if="statusClass(event) === 'ongoing'">
                   <span class="me-live-dot" />LIVE NOW
                 </template>
@@ -161,14 +251,13 @@
                   {{ Math.round(Math.abs(daysAway(event.startDate) ?? 0) / 30) }}mo ago
                 </template>
               </div>
-              <button class="me-row-manage-btn" @click.stop="goToEvent(event.id)">
-                Manage →
-              </button>
+              <button class="me-row-manage-btn" @click.stop="goToEvent(event.id)">Manage →</button>
             </div>
           </article>
         </div>
+        </div><!-- /me-list-wrap -->
 
-        <!-- Pagination (hidden if < 10 total) -->
+        <!-- Pagination -->
         <div v-if="!loading && totalPages > 1 && sourceEvents.length >= PAGE_SIZE" class="me-pagination">
           <span class="me-pagination-info">
             Showing {{ (currentPage - 1) * PAGE_SIZE + 1 }}–{{ Math.min(currentPage * PAGE_SIZE, sourceEvents.length) }} of {{ sourceEvents.length }}
@@ -190,42 +279,128 @@
       </template>
     </div>
   </div>
+
+  <!-- ── Owner swap panel ── -->
+  <Teleport to="body">
+    <div v-if="swapEvent" class="me-swap-backdrop" @click="closeSwap" />
+    <Transition name="me-swap">
+      <div
+        v-if="swapEvent"
+        class="me-swap-panel"
+        :style="{ top: swapPos.top + 'px', left: swapPos.left + 'px' }"
+        @click.stop
+      >
+        <div class="me-swap-header">
+          <div class="me-swap-header-left">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--gold);flex-shrink:0">
+              <path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/>
+            </svg>
+            <span>Reassign owner</span>
+          </div>
+          <button class="me-swap-close" @click="closeSwap">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="me-swap-current" v-if="ownerFirstName(swapEvent.authorId)">
+          <span class="me-swap-current-label">Current</span>
+          <span class="me-swap-current-val">
+            <span class="me-swap-current-av" :style="ownerAvatarStyle(swapEvent.authorId)">{{ ownerInitials(swapEvent.authorId) }}</span>
+            {{ ownerNames[swapEvent.authorId] || ownerFirstName(swapEvent.authorId) }}
+          </span>
+        </div>
+
+        <div class="me-swap-search-wrap">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--ink-dim);pointer-events:none">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input v-model="swapSearch" class="me-swap-search" placeholder="Search users…" autofocus />
+        </div>
+
+        <div class="me-swap-list">
+          <div v-if="!allUsersReady" class="me-swap-loading">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-swap-spinner"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+            Loading users…
+          </div>
+          <template v-else>
+            <button
+              v-for="u in swapFiltered"
+              :key="u.id"
+              class="me-swap-opt"
+              :class="{ 'me-swap-opt--current': u.id === swapEvent.authorId, 'me-swap-opt--saving': swapSaving }"
+              :disabled="swapSaving || u.id === swapEvent.authorId"
+              @click="doSwap(u)"
+            >
+              <span class="me-swap-opt-av" :style="ownerAvatarStyle(u.id)">
+                {{ (u.name[0] || '?').toUpperCase() }}{{ (u.name.split(' ')[1]?.[0] || '').toUpperCase() }}
+              </span>
+              <span class="me-swap-opt-info">
+                <span class="me-swap-opt-name">{{ u.name }}</span>
+                <span class="me-swap-opt-email">{{ u.email }}</span>
+              </span>
+              <svg v-if="u.id === swapEvent.authorId" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;flex-shrink:0;color:var(--gold)">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </button>
+            <p v-if="swapFiltered.length === 0" class="me-swap-empty">No users match "{{ swapSearch }}"</p>
+          </template>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { db, auth } from '../firebase'
-import {
-  collection, collectionGroup, query, where, orderBy, getDocs, limit,
-} from 'firebase/firestore'
+import { collection, query, where, orderBy, getDocs, getDoc, doc, updateDoc } from 'firebase/firestore'
 
 const PAGE_SIZE = 10
 const router = useRouter()
 const route = useRoute()
 const uid = auth.currentUser?.uid ?? null
 
-// ── State (unchanged) ──────────────────────────────────────────────────────
+// ── State ──────────────────────────────────────────────────────────────────
 const events = ref([])
-const searchResults = ref([])
 const loading = ref(true)
 const currentPage = ref(1)
 const activeFilter = ref('all')
 const activeSort = ref('newest')
+const activeOwner = ref(null)
+const ownerNames = ref({})
+const ownerSearch = ref('')
+const showOwnerDrop = ref(false)
 const searchQuery = ref('')
-let searchTimer = null
 
 const rotations = [-0.35, 0.45, -0.25, 0.5, -0.4, 0.3]
 
-// ── Firestore (unchanged) ──────────────────────────────────────────────────
+// ── Greeting ───────────────────────────────────────────────────────────────
+const displayName = computed(() => {
+  const u = auth.currentUser
+  if (!u) return 'Admin'
+  return u.displayName || u.email?.split('@')[0] || 'Admin'
+})
+
+const greeting = computed(() => {
+  const h = new Date().getHours()
+  const part = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'
+  return `Good ${part}, ${displayName.value}.`
+})
+
+const upcomingCount = computed(() => events.value.filter(e => statusClass(e) === 'upcoming').length)
+const liveCount = computed(() => events.value.filter(e => statusClass(e) === 'ongoing').length)
+
+// ── Firestore ──────────────────────────────────────────────────────────────
 async function loadEvents() {
   loading.value = true
   try {
-    const snap = await getDocs(query(
-      collection(db, 'events'),
-      orderBy('startDate', 'desc'),
-    ))
+    const snap = await getDocs(query(collection(db, 'events'), orderBy('startDate', 'desc')))
     events.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    fetchOwnerNames()
   } catch (e) {
     console.error('loadEvents:', e)
   } finally {
@@ -233,23 +408,39 @@ async function loadEvents() {
   }
 }
 
-async function performSearch(key) {
-  if (!key) { searchResults.value = []; return }
-  const k = key.toLowerCase()
-  try {
-    const snap = await getDocs(query(
-      collection(db, 'events'),
-      where('titleLower', '>=', k),
-      where('titleLower', '<=', k + ''),
-      limit(20),
-    ))
-    searchResults.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-  } catch (e) {
-    console.error('performSearch:', e)
-  }
+async function fetchOwnerNames() {
+  const ids = [...new Set(events.value.map(e => e.authorId).filter(Boolean))]
+  const map = {}
+  await Promise.all(ids.map(async id => {
+    try {
+      const d = await getDoc(doc(db, 'users', id))
+      const data = d.exists() ? d.data() : {}
+      const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ')
+      map[id] = fullName || data.email?.split('@')[0] || id.slice(0, 8)
+    } catch { map[id] = id.slice(0, 8) }
+  }))
+  ownerNames.value = map
 }
 
-// ── Status (unchanged) ─────────────────────────────────────────────────────
+function fuzzyScore(event, q) {
+  const title    = (event.title    || '').toLowerCase()
+  const location = (event.location || '').toLowerCase()
+  const code     = (event.code     || '').toLowerCase()
+  const needle   = q.toLowerCase().trim()
+  if (!needle) return 0
+  if (title.includes(needle))                        return 4  // exact substring in title
+  if (location.includes(needle) || code.includes(needle)) return 3  // exact match in location / code
+  const words = needle.split(/\s+/)
+  if (words.every(w => title.includes(w)))           return 2  // all words present in title
+  let ti = 0, qi = 0
+  while (ti < title.length && qi < needle.length) {
+    if (title[ti] === needle[qi]) qi++
+    ti++
+  }
+  return qi === needle.length ? 1 : 0                          // character subsequence match
+}
+
+// ── Status ─────────────────────────────────────────────────────────────────
 function statusClass(event) {
   const now = new Date()
   const start = event.startDate ? new Date(event.startDate) : null
@@ -266,7 +457,7 @@ function statusLabel(event) {
   return { upcoming: 'Upcoming', ongoing: 'Live', completed: 'Completed' }[statusClass(event)]
 }
 
-// ── Filters (unchanged + activeSort) ──────────────────────────────────────
+// ── Filters ────────────────────────────────────────────────────────────────
 const statusFilters = computed(() => [
   { label: 'All',       value: 'all',       count: events.value.length },
   { label: 'Upcoming',  value: 'upcoming',  count: events.value.filter(e => statusClass(e) === 'upcoming').length },
@@ -274,17 +465,32 @@ const statusFilters = computed(() => [
   { label: 'Completed', value: 'completed', count: events.value.filter(e => statusClass(e) === 'completed').length },
 ])
 
+const ownerList = computed(() => {
+  const ids = [...new Set(events.value.map(e => e.authorId).filter(Boolean))]
+  return ids
+    .map(id => ({ id, name: ownerNames.value[id] || id.slice(0, 8) }))
+    .filter(o => !ownerSearch.value || o.name.toLowerCase().includes(ownerSearch.value.toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name))
+})
+
 const filteredEvents = computed(() => {
   let list = events.value
   if (activeFilter.value !== 'all') list = list.filter(e => statusClass(e) === activeFilter.value)
+  if (activeOwner.value) list = list.filter(e => e.authorId === activeOwner.value)
   if (activeSort.value === 'oldest') list = [...list].sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
   else if (activeSort.value === 'az') list = [...list].sort((a, b) => (a.title || '').localeCompare(b.title || ''))
   return list
 })
 
-const sourceEvents = computed(() =>
-  searchQuery.value ? searchResults.value : filteredEvents.value
-)
+const sourceEvents = computed(() => {
+  const q = searchQuery.value.trim()
+  if (!q) return filteredEvents.value
+  return filteredEvents.value
+    .map(e => ({ e, score: fuzzyScore(e, q) }))
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(({ e }) => e)
+})
 
 const totalPages = computed(() => Math.ceil(sourceEvents.value.length / PAGE_SIZE))
 
@@ -306,6 +512,70 @@ const pageRange = computed(() => {
   return pages
 })
 
+// ── Owner swap ─────────────────────────────────────────────────────────────
+const swapEvent     = ref(null)
+const swapPos       = ref({ top: 0, left: 0 })
+const swapSearch    = ref('')
+const swapSaving    = ref(false)
+const allUsers      = ref([])
+const allUsersReady = ref(false)
+
+async function fetchAllUsers() {
+  if (allUsersReady.value) return
+  try {
+    const snap = await getDocs(collection(db, 'users'))
+    allUsers.value = snap.docs.map(d => {
+      const data = d.data()
+      const name = [data.firstName, data.lastName].filter(Boolean).join(' ') || data.email?.split('@')[0] || d.id.slice(0, 8)
+      return { id: d.id, name, email: data.email || '', firstName: data.firstName || '' }
+    }).sort((a, b) => a.name.localeCompare(b.name))
+    allUsersReady.value = true
+  } catch (e) { console.error('fetchAllUsers:', e) }
+}
+
+function openSwap(event, e) {
+  e.stopPropagation()
+  if (swapEvent.value?.id === event.id) { swapEvent.value = null; return }
+  const rect = e.currentTarget.getBoundingClientRect()
+  swapPos.value = { top: rect.bottom + 6, left: Math.max(8, rect.left) }
+  swapEvent.value = event
+  swapSearch.value = ''
+  fetchAllUsers()
+}
+function closeSwap() { swapEvent.value = null; swapSearch.value = '' }
+
+async function doSwap(user) {
+  if (!swapEvent.value || swapSaving.value) return
+  swapSaving.value = true
+  try {
+    await updateDoc(doc(db, 'events', swapEvent.value.id), { authorId: user.id })
+    swapEvent.value.authorId = user.id
+    if (!ownerNames.value[user.id]) ownerNames.value[user.id] = user.name
+    closeSwap()
+  } catch (e) { console.error('doSwap:', e) } finally { swapSaving.value = false }
+}
+
+const swapFiltered = computed(() => {
+  const q = swapSearch.value.trim().toLowerCase()
+  if (!q) return allUsers.value
+  return allUsers.value.filter(u =>
+    u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+  )
+})
+
+// ── Owner credit helpers ───────────────────────────────────────────────────
+const OWNER_PALETTE = ['#C9A84C', '#30D158', '#0A84FF', '#FF9F0A', '#BF5AF2', '#64D2FF']
+function ownerAvatarStyle(id) {
+  const color = OWNER_PALETTE[(id || '0').charCodeAt(0) % OWNER_PALETTE.length]
+  return { background: color + '22', color, border: `1px solid ${color}55` }
+}
+function ownerInitials(id) {
+  return (ownerNames.value[id] || '').split(' ').map(w => w[0]?.toUpperCase()).filter(Boolean).slice(0, 2).join('')
+}
+function ownerFirstName(id) {
+  return (ownerNames.value[id] || '').split(' ')[0] || ''
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 function daysAway(iso) {
   if (!iso) return null
@@ -314,10 +584,10 @@ function daysAway(iso) {
 
 function daysAwayClass(event) {
   const sc = statusClass(event)
-  if (sc === 'ongoing') return 'me-row-days-pill--live'
+  if (sc === 'ongoing') return 'me-row-cd-ticket--live'
   const d = daysAway(event.startDate)
-  if (d !== null && d > 0 && d < 30) return 'me-row-days-pill--soon'
-  if (d !== null && d <= 0) return 'me-row-days-pill--past'
+  if (d !== null && d > 0 && d < 30) return 'me-row-cd-ticket--soon'
+  if (d !== null && d <= 0) return 'me-row-cd-ticket--past'
   return ''
 }
 
@@ -328,6 +598,19 @@ function coverType(event) {
     ? [...event.id].reduce((a, c) => a + c.charCodeAt(0), 0) % styles.length
     : 0
   return styles[hash]
+}
+
+const COVER_COLORS = {
+  goldfloral: 'rgba(201,168,76,',
+  bridal:     'rgba(200,160,180,',
+  minimal:    'rgba(170,170,170,',
+  pearl:      'rgba(176,168,152,',
+  rose:       'rgba(200,120,120,',
+  navy:       'rgba(42,58,106,',
+}
+
+function rowThemeColor(event) {
+  return COVER_COLORS[coverType(event)] ?? 'rgba(201,168,76,'
 }
 
 function invitationSvg(event) {
@@ -406,21 +689,17 @@ function invitationSvg(event) {
 </svg>`
 }
 
-// ── Interactions (unchanged) ───────────────────────────────────────────────
+// ── Interactions ───────────────────────────────────────────────────────────
 function onSearch() {
-  clearTimeout(searchTimer)
   currentPage.value = 1
-  if (!searchQuery.value.trim()) { searchResults.value = []; return }
-  searchTimer = setTimeout(() => performSearch(searchQuery.value.trim()), 300)
 }
 
 function clearSearch() {
   searchQuery.value = ''
-  searchResults.value = []
   currentPage.value = 1
 }
 
-// ── Date formatting (unchanged) ────────────────────────────────────────────
+// ── Date formatting ────────────────────────────────────────────────────────
 function formatMonth(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleDateString('en', { month: 'short' }).toUpperCase()
@@ -440,7 +719,6 @@ function goToEvent(id) {
   router.push(`/event/${id}`)
 }
 
-// Sync page to URL so browser back/forward and "All Events" button preserve position
 watch(currentPage, (n) => {
   router.replace({ query: n > 1 ? { page: n } : {} })
 })
@@ -457,20 +735,20 @@ onMounted(() => {
 <style scoped>
 /* ── Tokens ── */
 .me-root {
-  --ink: #e2e8f0;
-  --ink-soft: #cbd5e1;
-  --ink-muted: #8892a4;
-  --ink-dim: #4f617a;
-  --line: #1e2d44;
-  --line-soft: #1a2a3e;
-  --line-strong: #2a3a52;
-  --paper-soft: #111827;
+  --ink: #f0f0ec;
+  --ink-soft: #d8d4cd;
+  --ink-muted: #888;
+  --ink-dim: #555;
+  --line: #242424;
+  --line-soft: #1e1e1e;
+  --line-strong: #2a2a2a;
+  --paper-soft: #141414;
   --gold: #C9A84C;
-  --emerald: #34d399;
-  --emerald-soft: rgba(52,211,153,0.12);
+  --emerald: #30D158;
+  --emerald-soft: rgba(48,209,88,0.12);
   min-height: 100vh;
-  background: #0a0e1c;
-  font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Helvetica Neue', Arial, sans-serif;
+  background: #0a0a0b;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', sans-serif;
   color: var(--ink);
 }
 
@@ -479,7 +757,7 @@ onMounted(() => {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(10,14,28,0.88);
+  background: rgba(10,10,11,0.88);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--line);
@@ -488,7 +766,7 @@ onMounted(() => {
 .me-topbar-inner {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 28px 32px;
+  padding: 14px 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -501,83 +779,61 @@ onMounted(() => {
   letter-spacing: -0.3px;
 }
 
+/* ── Create button (gold) ── */
 .me-create-btn {
   display: flex;
   align-items: center;
   gap: 7px;
-  background: linear-gradient(180deg, #2e3a58 0%, #1e2d46 100%);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 2px 8px rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.10);
-  color: #e2e8f0;
+  background: #C9A84C;
+  color: #070707;
+  border: none;
   padding: 8px 18px;
   border-radius: 10px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   font-family: inherit;
-  transition: opacity 150ms, box-shadow 150ms;
+  transition: background 130ms;
   letter-spacing: 0.1px;
 }
-.me-create-btn:hover {
-  opacity: 0.90;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 16px rgba(0,0,0,0.4);
-}
-.me-create-btn--lg {
-  padding: 10px 24px;
-  font-size: 14px;
-  border-radius: 12px;
-}
+.me-create-btn:hover { background: #d4b560; }
+.me-create-btn--lg { padding: 10px 24px; font-size: 14px; border-radius: 12px; }
 
 /* ── Page shell ── */
 .me-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 28px 32px 80px;
+  padding: 24px 32px 32px;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-/* ── Intro ── */
-.me-intro {
+/* ── Greeting + stats ── */
+.me-header {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 32px;
   flex-wrap: wrap;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
 }
-.me-intro-left { display: flex; flex-direction: column; gap: 10px; }
-.me-eyebrow-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 1.6px;
-  text-transform: uppercase;
-  color: var(--ink-muted);
-  background: var(--paper-soft);
-  border: 1px solid var(--line);
-  padding: 4px 12px;
-  border-radius: 20px;
-  width: fit-content;
-}
-.me-eyebrow-sparkle { color: var(--gold); font-size: 11px; }
-.me-headline {
+.me-header-left { display: flex; flex-direction: column; gap: 5px; }
+.me-greeting {
   font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 64px;
+  font-size: 40px;
   font-weight: 400;
-  letter-spacing: -1.5px;
   color: var(--ink);
   margin: 0;
-  line-height: 1.0;
+  letter-spacing: -1px;
+  line-height: 1;
 }
-.me-subtitle { font-size: 15px; color: var(--ink-muted); margin: 0; }
+.me-subline { font-size: 13px; color: var(--ink-muted); margin: 0; }
 
-.me-intro-stats {
+.me-header-stats {
   display: flex;
   align-items: center;
-  gap: 0;
   flex-shrink: 0;
 }
 .me-stat-block {
@@ -595,6 +851,8 @@ onMounted(() => {
   line-height: 1;
   letter-spacing: -1px;
 }
+.me-stat-value--gold { color: var(--gold); }
+.me-stat-value--emerald { color: var(--emerald); }
 .me-stat-label {
   font-size: 10.5px;
   font-weight: 600;
@@ -602,8 +860,6 @@ onMounted(() => {
   text-transform: uppercase;
   color: var(--ink-muted);
 }
-.me-stat-block--emerald .me-stat-value { color: var(--emerald); }
-.me-stat-block--dim .me-stat-value { color: var(--ink-dim); }
 .me-stat-divider {
   width: 1px;
   height: 44px;
@@ -615,14 +871,47 @@ onMounted(() => {
 .me-filterbar {
   display: flex;
   align-items: center;
-  gap: 14px;
-  background: #111827;
-  border: 1px solid var(--line);
+  gap: 0;
+  background: #111;
+  border: 1px solid var(--line-strong);
   border-radius: 14px;
-  padding: 10px 16px;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.2);
+  padding: 8px 8px 8px 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   flex-wrap: wrap;
+  gap: 4px;
 }
+
+.me-tabs { display: flex; align-items: center; gap: 2px; }
+.me-tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 120ms, color 120ms;
+  white-space: nowrap;
+}
+.me-tab:hover { background: rgba(255,255,255,0.04); color: var(--ink-soft); }
+.me-tab--active { background: rgba(240,240,236,0.09); color: var(--ink); font-weight: 600; }
+.me-tab-count {
+  font-size: 10.5px;
+  font-weight: 600;
+  background: rgba(255,255,255,0.06);
+  color: var(--ink-dim);
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+.me-tab-count--active { background: rgba(240,240,236,0.10); color: var(--ink-muted); }
+
+.me-fb-divider { width: 1px; height: 26px; background: var(--line-strong); flex-shrink: 0; margin: 0 4px; }
+
 .me-search-wrap {
   position: relative;
   display: flex;
@@ -661,39 +950,7 @@ onMounted(() => {
   transition: color 130ms;
 }
 .me-search-clear:hover { color: var(--ink-muted); }
-.me-fb-divider { width: 1px; height: 28px; background: var(--line-strong); flex-shrink: 0; }
 
-.me-status-chips { display: flex; align-items: center; gap: 4px; }
-.me-status-chip {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: 20px;
-  border: none;
-  background: transparent;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-muted);
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 130ms, color 130ms;
-}
-.me-status-chip:hover { background: var(--paper-soft); color: var(--ink); }
-.me-status-chip--active {
-  background: rgba(226,232,240,0.12);
-  border: 1px solid rgba(226,232,240,0.16);
-  color: #e2e8f0;
-}
-.me-chip-count {
-  font-size: 10.5px;
-  font-weight: 600;
-  background: var(--paper-soft);
-  color: var(--ink-dim);
-  padding: 1px 6px;
-  border-radius: 8px;
-}
-.me-chip-count--active { background: rgba(226,232,240,0.10); color: rgba(226,232,240,0.7); }
 .me-fb-select {
   padding: 6px 10px;
   border: 1px solid var(--line);
@@ -709,12 +966,72 @@ onMounted(() => {
 }
 .me-fb-select:focus { border-color: var(--line-strong); }
 
+/* ── Owner filter ── */
+.me-owner-wrap { position: relative; flex-shrink: 0; }
+.me-owner-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--paper-soft);
+  font-size: 12.5px; font-weight: 500; color: var(--ink-muted);
+  cursor: pointer; font-family: inherit; white-space: nowrap;
+  transition: border-color 130ms, color 130ms;
+}
+.me-owner-btn:hover { border-color: var(--line-strong); color: var(--ink); }
+.me-owner-btn--active { border-color: rgba(201,168,76,0.4); color: var(--gold); background: rgba(201,168,76,0.06); }
+.me-owner-clear {
+  display: flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: rgba(255,255,255,0.08); border: none; cursor: pointer;
+  color: var(--ink-dim); padding: 0; transition: background 120ms;
+}
+.me-owner-clear:hover { background: rgba(255,255,255,0.14); color: var(--ink); }
+.me-owner-backdrop {
+  position: fixed; inset: 0; z-index: 99;
+}
+.me-owner-drop {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  width: 240px; z-index: 100;
+  background: #161616; border: 1px solid var(--line-strong);
+  border-radius: 14px; overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+}
+.me-owner-search-wrap {
+  position: relative; display: flex; align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+.me-owner-search {
+  width: 100%; padding: 10px 12px 10px 30px;
+  background: transparent; border: none; outline: none;
+  font-size: 13px; color: var(--ink); font-family: inherit;
+}
+.me-owner-search::placeholder { color: var(--ink-dim); }
+.me-owner-list {
+  max-height: 220px; overflow-y: auto; padding: 6px;
+}
+.me-owner-opt {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 8px 10px; border-radius: 9px; border: none;
+  background: transparent; font-size: 13px; color: var(--ink);
+  cursor: pointer; font-family: inherit; text-align: left;
+  transition: background 110ms;
+}
+.me-owner-opt:hover { background: rgba(255,255,255,0.05); }
+.me-owner-opt--active { background: rgba(201,168,76,0.07); }
+.me-owner-avatar {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.2);
+  color: var(--gold); font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.me-owner-opt-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.me-owner-empty { margin: 0; padding: 16px 10px; font-size: 12.5px; color: var(--ink-dim); text-align: center; }
+
 /* ── Loading skeletons ── */
-.me-skeleton-list { display: flex; flex-direction: column; gap: 20px; padding-top: 8px; }
+.me-skeleton-list { display: flex; flex-direction: column; gap: 8px; padding-top: 8px; }
 .me-skeleton {
   height: 160px;
   border-radius: 16px;
-  background: linear-gradient(90deg, #111827 25%, #1a2236 50%, #111827 75%);
+  background: linear-gradient(90deg, #141414 25%, #1a1a1a 50%, #141414 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
 }
@@ -749,19 +1066,16 @@ onMounted(() => {
   white-space: nowrap;
 }
 .me-status-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-.me-status-pill--upcoming  { background: rgba(255,255,255,0.05); color: var(--ink-muted); }
+.me-status-pill--upcoming  { background: var(--paper-soft); color: var(--ink-muted); }
 .me-status-pill--upcoming .me-status-dot { background: var(--ink-dim); }
-.me-status-pill--ongoing   { background: rgba(201,168,76,0.15); color: #C9A84C; }
+.me-status-pill--ongoing   { background: rgba(201,168,76,0.10); color: #C9A84C; }
 .me-status-pill--ongoing .me-status-dot { background: var(--gold); animation: pulse-dot 1.6s ease-in-out infinite; }
-.me-status-pill--completed { background: rgba(255,255,255,0.04); color: var(--ink-dim); }
+.me-status-pill--completed { background: var(--paper-soft); color: var(--ink-dim); }
 .me-status-pill--completed .me-status-dot { background: var(--ink-dim); }
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
   50%       { opacity: 0.5; transform: scale(0.7); }
 }
-/* draft status treated same as upcoming */
-.me-status-pill--draft { background: var(--line-soft); color: var(--ink-muted); }
-.me-status-pill--draft .me-status-dot { background: var(--ink-dim); }
 
 /* ── Role badge ── */
 .me-role-badge {
@@ -774,232 +1088,136 @@ onMounted(() => {
   padding: 2px 8px;
   border-radius: 6px;
 }
-.me-role-badge--owner { background: rgba(226,232,240,0.12); border: 1px solid rgba(226,232,240,0.16); color: #e2e8f0; }
+.me-role-badge--owner { background: rgba(240,240,236,0.12); border: 1px solid rgba(240,240,236,0.16); color: var(--ink); }
 .me-role-badge--admin { background: transparent; border: 1px solid var(--line-strong); color: var(--ink-muted); }
 
-/* ── Featured hero ── */
-.me-featured {
-  display: grid;
-  grid-template-columns: 220px 1fr 220px;
-  gap: 32px;
-  padding: 28px 28px 28px 24px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.03), 0 8px 24px -4px rgba(0,0,0,0.07), 0 24px 48px -16px rgba(0,0,0,0.1);
-  cursor: pointer;
-  transition: box-shadow 280ms ease, transform 280ms ease;
-  background: #fff;
-}
-.me-featured:hover {
-  box-shadow: 0 4px 8px rgba(0,0,0,0.05), 0 16px 40px -6px rgba(0,0,0,0.12), 0 40px 72px -24px rgba(0,0,0,0.14);
-  transform: translateY(-2px);
-}
-
-/* Featured thumb col */
-.me-feat-thumb-col {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.me-feat-thumb-outline {
-  position: absolute;
-  inset: 6px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  transform: rotate(-2deg);
-  pointer-events: none;
-}
-.me-feat-thumb {
-  width: 100%;
-  border-radius: 10px;
-  overflow: hidden;
-  transform: rotate(1deg);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-  line-height: 0;
-}
-.me-feat-thumb :deep(svg) { display: block; width: 100%; height: auto; }
-
-/* Featured content col */
-.me-feat-content { display: flex; flex-direction: column; gap: 12px; justify-content: center; }
-.me-feat-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.me-feat-eyebrow-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.6px;
-  text-transform: uppercase;
-  color: var(--ink-dim);
-}
-.me-feat-eyebrow-sparkle { color: var(--gold); font-size: 10px; }
-.me-feat-eyebrow-line { flex: 1; height: 1px; background: var(--line); }
-.me-feat-code {
+/* ── Code chip ── */
+.me-code-chip {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10.5px;
+  font-size: 10px;
   color: var(--ink-dim);
   padding: 2px 7px;
   border: 1px solid var(--line);
   border-radius: 5px;
+  letter-spacing: 0.3px;
 }
-.me-feat-title {
-  font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 40px;
-  font-weight: 400;
-  color: var(--ink);
-  margin: 0;
-  letter-spacing: -1px;
-  line-height: 1.05;
-}
-.me-feat-subtitle {
-  font-size: 14px;
-  color: var(--ink-muted);
-  margin: 0;
-  font-family: 'Instrument Serif', Georgia, serif;
-}
-.me-feat-meta { display: flex; gap: 20px; flex-wrap: wrap; }
-.me-feat-meta-item { display: flex; align-items: flex-start; gap: 7px; }
-.me-feat-meta-item svg { margin-top: 3px; color: var(--ink-dim); flex-shrink: 0; }
-.me-feat-meta-block { display: flex; flex-direction: column; gap: 1px; }
-.me-feat-meta-label {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  color: var(--ink-dim);
-}
-.me-feat-meta-val { font-size: 12.5px; color: var(--ink-soft); font-weight: 500; }
 
-.me-feat-progress { display: flex; flex-direction: column; gap: 5px; }
-.me-feat-progress-track {
-  height: 4px;
-  background: var(--line);
-  border-radius: 4px;
-  overflow: hidden;
+/* ── Owner credit ── */
+.me-chip-sep {
+  color: var(--ink-dim); opacity: 0.35; font-size: 12px; line-height: 1; user-select: none;
 }
-.me-feat-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--ink-soft), var(--ink));
-  border-radius: 4px;
-  transition: width 600ms ease;
+.me-owner-credit {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 500; color: var(--ink-dim);
+  background: none; border: none; cursor: pointer; font-family: inherit; padding: 2px 5px 2px 0;
+  border-radius: 6px; transition: color 120ms, background 120ms;
 }
-.me-feat-progress-label { font-size: 11px; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; }
+.me-owner-credit:hover, .me-owner-credit--open {
+  color: var(--ink-muted); background: rgba(255,255,255,0.04);
+}
+.me-owner-credit-av {
+  width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
+  font-size: 7px; font-weight: 800; letter-spacing: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.me-owner-credit-icon {
+  opacity: 0; transition: opacity 120ms; color: var(--ink-dim); flex-shrink: 0;
+}
+.me-owner-credit:hover .me-owner-credit-icon,
+.me-owner-credit--open .me-owner-credit-icon { opacity: 1; }
 
-.me-feat-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+/* ── Owner swap panel ── */
+.me-swap-backdrop { position: fixed; inset: 0; z-index: 9998; }
+.me-swap-panel {
+  position: fixed; z-index: 9999;
+  width: 272px;
+  background: #1a1a1a; border: 1px solid #303030;
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
 }
-.me-feat-actions-spacer { flex: 1; }
-.me-feat-open-btn {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  background: var(--ink);
-  color: #fff;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  transition: opacity 140ms;
+.me-swap-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 14px 10px;
+  border-bottom: 1px solid #252525;
 }
-.me-feat-open-btn:hover { opacity: 0.85; }
-.me-feat-edit-btn {
-  background: transparent;
-  border: 1px solid var(--line-strong);
-  color: var(--ink-muted);
-  padding: 8px 14px;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 130ms, color 130ms;
+.me-swap-header-left {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12.5px; font-weight: 600; color: var(--ink-soft);
 }
-.me-feat-edit-btn:hover { background: var(--paper-soft); color: var(--ink); }
+.me-swap-close {
+  width: 24px; height: 24px; border-radius: 7px;
+  border: 1px solid #2a2a2a; background: transparent; color: var(--ink-dim);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: color 120ms; padding: 0; flex-shrink: 0;
+}
+.me-swap-close:hover { color: var(--ink); }
 
-/* Featured countdown col */
-.me-feat-countdown {
+.me-swap-current {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px; background: rgba(201,168,76,0.05);
+  border-bottom: 1px solid #252525;
+}
+.me-swap-current-label { font-size: 10px; font-weight: 700; color: var(--gold); letter-spacing: 0.8px; text-transform: uppercase; }
+.me-swap-current-val { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-muted); }
+.me-swap-current-av {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+  font-size: 8px; font-weight: 800;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+
+.me-swap-search-wrap { position: relative; border-bottom: 1px solid #252525; }
+.me-swap-search {
+  width: 100%; padding: 10px 12px 10px 30px; box-sizing: border-box;
+  background: transparent; border: none; outline: none;
+  font-size: 13px; color: var(--ink); font-family: inherit;
+}
+.me-swap-search::placeholder { color: var(--ink-dim); }
+
+.me-swap-list { max-height: 240px; overflow-y: auto; padding: 6px; }
+.me-swap-opt {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 8px 10px; border-radius: 9px; border: none;
+  background: transparent; cursor: pointer; font-family: inherit;
+  text-align: left; transition: background 100ms;
+}
+.me-swap-opt:hover:not(:disabled):not(.me-swap-opt--current) { background: rgba(255,255,255,0.05); }
+.me-swap-opt--current { background: rgba(201,168,76,0.07); cursor: default; }
+.me-swap-opt--saving { opacity: 0.5; cursor: not-allowed; }
+.me-swap-opt-av {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  font-size: 9px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.me-swap-opt-info { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.me-swap-opt-name { font-size: 12.5px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.me-swap-opt-email { font-size: 10.5px; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.me-swap-empty { margin: 0; padding: 16px 10px; font-size: 12px; color: var(--ink-dim); text-align: center; }
+.me-swap-loading {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 20px 10px; font-size: 12.5px; color: var(--ink-dim);
+}
+@keyframes me-spin { to { transform: rotate(360deg); } }
+.me-swap-spinner { animation: me-spin 0.8s linear infinite; }
+
+.me-swap-enter-active { transition: opacity 130ms, transform 130ms; }
+.me-swap-leave-active { transition: opacity 100ms; }
+.me-swap-enter-from   { opacity: 0; transform: translateY(-5px) scale(0.97); }
+.me-swap-leave-to     { opacity: 0; }
+
+/* ── List wrapper (section head + tiles share same 8px gap) ── */
+.me-list-wrap {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 0;
-  padding-right: 4px;
-}
-.me-feat-cd-month {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--ink-dim);
-  line-height: 1;
-  margin-bottom: 2px;
-}
-.me-feat-cd-day {
-  font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 110px;
-  font-weight: 400;
-  color: var(--ink);
-  letter-spacing: -6px;
-  line-height: 0.85;
-  display: block;
-}
-.me-feat-cd-year {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  color: var(--ink-dim);
-  margin-top: 6px;
-  margin-bottom: 14px;
-}
-.me-feat-cd-ticket {
-  background: var(--ink);
-  color: #fff;
-  border-radius: 10px;
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.22);
-}
-.me-feat-cd-num {
-  font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 28px;
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: -0.5px;
-}
-.me-feat-cd-words {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.65);
-  white-space: pre-line;
-  line-height: 1.3;
+  gap: 8px;
 }
 
 /* ── Section heading ── */
 .me-section-head {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
-.me-section-title {
-  font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 24px;
-  font-style: italic;
-  font-weight: 400;
-  color: var(--ink);
-  white-space: nowrap;
-}
+.me-section-sparkle { font-size: 10px; color: var(--gold); flex-shrink: 0; }
 .me-section-line {
   flex: 1;
   height: 1px;
@@ -1011,74 +1229,52 @@ onMounted(() => {
 .me-hanging-list {
   display: flex;
   flex-direction: column;
-  gap: 36px;
+  gap: 8px;
 }
 
 .me-row {
   position: relative;
   display: grid;
-  grid-template-columns: 170px 1fr 170px;
-  gap: 28px;
-  padding: 24px 28px;
+  grid-template-columns: 118px 1fr 110px;
+  gap: 0;
   border-radius: 16px;
-  border: 1px solid var(--line);
-  background: #111827;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-left: 4px solid rgba(255,255,255,0.12);
+  background: linear-gradient(160deg, #181818 0%, #141414 100%);
   cursor: pointer;
-  transform: rotate(var(--rot, 0deg));
   box-shadow:
-    0 1px 1px rgba(0,0,0,0.2),
-    0 6px 14px -2px rgba(0,0,0,0.3),
-    0 20px 36px -12px rgba(0,0,0,0.4),
-    0 50px 90px -50px rgba(0,0,0,0.35);
-  transition: transform 0.35s cubic-bezier(.2,.7,.2,1), box-shadow 0.35s cubic-bezier(.2,.7,.2,1);
+    0 2px 8px rgba(0,0,0,0.3),
+    0 8px 24px -4px rgba(0,0,0,0.2);
+  transition: border-color 200ms, box-shadow 200ms, transform 200ms, filter 200ms;
+  min-height: 124px;
+  overflow: hidden;
 }
+.me-row--upcoming  { border-left-color: rgba(201,168,76,0.75); }
+.me-row--ongoing   { border-left-color: rgba(48,209,88,0.85); }
+.me-row--completed { border-left-color: rgba(255,255,255,0.10); }
 .me-row:hover {
-  transform: translateY(-4px) rotate(0deg) !important;
+  border-color: rgba(255,255,255,0.14);
   box-shadow:
-    0 2px 2px rgba(0,0,0,0.25),
-    0 10px 24px -2px rgba(0,0,0,0.4),
-    0 28px 56px -12px rgba(0,0,0,0.5),
-    0 64px 100px -50px rgba(0,0,0,0.4);
+    0 4px 20px rgba(0,0,0,0.5),
+    0 16px 40px -6px rgba(0,0,0,0.35);
+  transform: translateY(-2px);
+  filter: brightness(1.05);
 }
 
-/* Pin tack */
-.me-pin {
-  position: absolute;
-  top: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 38% 32%, #8c8c94, #1a1a1d 60%, #000);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.45);
-  z-index: 2;
-}
-.me-pin-shadow {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 14px;
-  height: 3.5px;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.18);
-  filter: blur(3px);
-  z-index: 1;
-}
 
-/* Row thumbnail col */
+/* Row thumb col */
 .me-row-thumb-col {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 14px 0 14px 14px;
 }
 .me-row-thumb {
   width: 100%;
-  border-radius: 8px;
+  border-radius: 7px;
   overflow: hidden;
   transform: rotate(-2deg);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.10);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.35);
   line-height: 0;
   transition: transform 0.35s cubic-bezier(.2,.7,.2,1), filter 0.35s cubic-bezier(.2,.7,.2,1);
   filter: brightness(0.72) saturate(0.85);
@@ -1086,122 +1282,120 @@ onMounted(() => {
 .me-row:hover .me-row-thumb { transform: rotate(-1deg); filter: brightness(0.82) saturate(0.9); }
 .me-row-thumb :deep(svg) { display: block; width: 100%; height: auto; }
 
-/* Row content col */
-.me-row-content {
+/* Row body col */
+.me-row-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
   justify-content: center;
   min-width: 0;
+  padding: 18px 22px;
 }
-.me-row-chips {
+.me-row-eyebrow {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
 }
-.me-code-chip {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  color: var(--ink-dim);
-  padding: 2px 7px;
-  border: 1px solid var(--line);
-  border-radius: 5px;
-  letter-spacing: 0.3px;
+.me-row-eyebrow-spark { font-size: 10px; color: var(--gold); flex-shrink: 0; }
+.me-row-eyebrow-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(201,168,76,0.25) 0%, rgba(255,255,255,0.04) 100%);
 }
+.me-row-chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
 .me-row-title {
   font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 400;
   color: var(--ink);
-  margin: 0;
+  margin: 0 0 10px;
   letter-spacing: -0.4px;
-  line-height: 1.15;
+  line-height: 1.2;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.me-row-meta { display: flex; flex-wrap: wrap; gap: 10px 16px; }
+.me-row-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; }
 .me-row-meta-item {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
-  color: var(--ink-muted);
+  font-size: 11.5px;
+  color: var(--ink-dim);
 }
-.me-row-meta-item svg { color: var(--ink-dim); flex-shrink: 0; }
-.me-row-progress { display: flex; flex-direction: column; gap: 4px; }
-.me-row-progress-track {
-  height: 3px;
-  background: var(--line);
-  border-radius: 3px;
-  overflow: hidden;
-}
-.me-row-progress-fill {
-  height: 100%;
-  background: var(--ink);
-  border-radius: 3px;
-}
+.me-row-meta-item svg { flex-shrink: 0; }
+.me-row-progress { margin-top: 10px; }
+.me-row-progress-track { height: 3px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.me-row-progress-fill { height: 100%; background: var(--ink-soft); border-radius: 3px; }
 
-/* Row right col */
-.me-row-right {
+/* Row countdown col */
+.me-row-cd {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  gap: 10px;
+  border-left: 1px solid rgba(255,255,255,0.05);
+  padding: 14px 10px;
+  gap: 0;
 }
-.me-row-date { display: flex; flex-direction: column; align-items: flex-end; gap: 0; }
-.me-row-date-eyebrow {
+.me-row-cd-month {
   font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--ink-dim);
   line-height: 1;
+  margin-bottom: 2px;
 }
-.me-row-date-day {
+.me-row-cd-day {
   font-family: 'Instrument Serif', Georgia, serif;
   font-size: 60px;
   font-weight: 400;
   color: var(--ink);
-  letter-spacing: -2px;
-  line-height: 0.9;
+  letter-spacing: -3px;
+  line-height: 0.85;
+  display: block;
 }
-.me-row-date-year {
+.me-row-cd-year {
   font-size: 9.5px;
   font-weight: 600;
   letter-spacing: 1.5px;
   color: var(--ink-dim);
-  margin-top: 3px;
+  margin-top: 4px;
+  margin-bottom: 10px;
 }
-.me-row-days-pill {
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: 20px;
+.me-row-cd-ticket {
+  background: transparent;
+  border: 1px dashed rgba(255,255,255,0.18);
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--ink-dim);
+  text-align: center;
+  line-height: 1.3;
   display: flex;
   align-items: center;
-  gap: 5px;
-  background: var(--paper-soft);
-  border: 1px solid var(--line);
-  color: var(--ink-muted);
-  letter-spacing: 0.1px;
+  gap: 4px;
+  white-space: nowrap;
+  margin-bottom: 10px;
+  width: max-content;
 }
-.me-row-days-pill--soon {
-  background: rgba(226,232,240,0.12);
-  border-color: rgba(226,232,240,0.16);
-  color: #e2e8f0;
-}
-.me-row-days-pill--live {
+.me-row-cd-ticket--live {
+  border-style: solid;
+  border-color: rgba(48,209,88,0.4);
   background: var(--emerald-soft);
-  border-color: rgba(10,156,95,0.3);
   color: var(--emerald);
 }
-.me-row-days-pill--past { color: var(--ink-dim); }
+.me-row-cd-ticket--soon {
+  border-color: rgba(201,168,76,0.35);
+  color: rgba(201,168,76,0.85);
+}
 .me-live-dot {
-  width: 6px; height: 6px;
+  width: 5px; height: 5px;
   border-radius: 50%;
   background: var(--emerald);
   animation: pulse-dot 1.6s ease-in-out infinite;
@@ -1211,19 +1405,19 @@ onMounted(() => {
   background: transparent;
   border: 1px solid var(--line-strong);
   color: var(--ink-muted);
-  padding: 7px 14px;
-  border-radius: 9px;
-  font-size: 12.5px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.35s cubic-bezier(.2,.7,.2,1), color 0.35s cubic-bezier(.2,.7,.2,1), border-color 0.35s cubic-bezier(.2,.7,.2,1);
+  transition: background 200ms, color 200ms, border-color 200ms;
   white-space: nowrap;
 }
 .me-row:hover .me-row-manage-btn {
-  background: rgba(226,232,240,0.12);
-  border-color: rgba(226,232,240,0.18);
-  color: #e2e8f0;
+  background: rgba(240,240,236,0.10);
+  border-color: rgba(240,240,236,0.16);
+  color: var(--ink);
 }
 
 /* ── Pagination ── */
@@ -1244,7 +1438,7 @@ onMounted(() => {
   justify-content: center;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #111827;
+  background: var(--paper-soft);
   font-size: 13px;
   font-weight: 500;
   color: var(--ink-muted);
@@ -1257,9 +1451,9 @@ onMounted(() => {
   color: var(--ink);
 }
 .me-page-btn--active {
-  background: rgba(226,232,240,0.12);
-  border-color: rgba(226,232,240,0.18);
-  color: #e2e8f0;
+  background: rgba(240,240,236,0.12);
+  border-color: rgba(240,240,236,0.18);
+  color: var(--ink);
   font-weight: 700;
 }
 .me-page-btn--nav { color: var(--ink-dim); }
@@ -1272,30 +1466,25 @@ onMounted(() => {
   user-select: none;
 }
 
-
 /* ── Responsive ── */
 @media (max-width: 1024px) {
-  .me-featured { grid-template-columns: 180px 1fr 180px; gap: 24px; }
-  .me-feat-cd-day { font-size: 80px; }
-  .me-row { grid-template-columns: 140px 1fr 150px; gap: 20px; padding: 20px 22px; }
+  .me-row { grid-template-columns: 100px 1fr 100px; }
+  .me-row-cd-day { font-size: 48px; }
 }
 @media (max-width: 860px) {
-  .me-page { padding: 20px 20px 60px; gap: 28px; }
-  .me-featured { grid-template-columns: 1fr; gap: 20px; }
-  .me-feat-thumb-col { display: none; }
-  .me-feat-countdown { flex-direction: row; align-items: center; justify-content: flex-start; }
-  .me-feat-cd-day { font-size: 60px; }
-  .me-row { grid-template-columns: 120px 1fr; gap: 16px; padding: 18px 18px 18px 14px; }
-  .me-row-right { display: none; }
+  .me-page { padding: 20px 20px 60px; }
+  .me-greeting { font-size: 30px; }
+  .me-row { grid-template-columns: 90px 1fr; }
+  .me-row-cd { display: none; }
 }
 @media (max-width: 600px) {
   .me-topbar-inner { padding: 12px 16px; }
-  .me-admin-pill { display: none; }
-  .me-page { padding: 16px 16px 48px; gap: 24px; }
-  .me-filterbar { padding: 8px 12px; gap: 8px; }
-  .me-status-chips { gap: 2px; }
-  .me-status-chip { padding: 4px 8px; font-size: 12px; }
-  .me-row { grid-template-columns: 100px 1fr; gap: 12px; }
-  .me-row-title { font-size: 20px; }
+  .me-page { padding: 16px 16px 48px; }
+  .me-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .me-filterbar { padding: 6px 8px; }
+  .me-tabs { gap: 0; }
+  .me-tab { padding: 6px 10px; font-size: 12px; }
+  .me-row { grid-template-columns: 80px 1fr; }
+  .me-row-title { font-size: 18px; }
 }
 </style>

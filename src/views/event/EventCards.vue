@@ -1,60 +1,98 @@
 ﻿<template>
   <div class="evc-root">
 
-    <!-- ══ Toolbar ══ -->
-    <div class="evc-toolbar">
-      <div class="evc-toolbar-left">
-        <!-- Search -->
-        <div class="evc-search-wrap">
-          <svg class="evc-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
-            stroke="#6B6B72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input v-model="searchQ" class="evc-search" placeholder="Search by type or purpose…" />
-          <button v-if="searchQ" class="evc-search-clear" @click="searchQ = ''">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2.5" stroke-linecap="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
+    <!-- ══ Stat Cards ══ -->
+    <div class="evc-stats">
+      <div class="evc-stat-card">
+        <div class="evc-stat-icon evc-stat-icon--gold">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
         </div>
-
-        <!-- Purpose chips -->
-        <div class="evc-filter-chips">
-          <button v-for="f in PURPOSE_FILTERS" :key="f.val"
-            class="evc-chip" :class="{ 'evc-chip--active': purposeFilter === f.val }"
-            @click="purposeFilter = f.val">
-            {{ f.label }}
-            <span class="evc-chip-cnt">{{ purposeCount(f.val) }}</span>
-          </button>
+        <div class="evc-stat-body">
+          <span class="evc-stat-lbl">Total</span>
+          <span class="evc-stat-val">{{ cards.length }}</span>
         </div>
       </div>
-
-      <div class="evc-toolbar-right">
-        <button class="evc-refresh-btn" @click="loadData" :disabled="loading" title="Refresh">
-          <svg :class="{ 'evc-spin': loading }" width="14" height="14" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-          </svg>
-        </button>
-        <a :href="designerCreateUrl" target="_blank" rel="noopener" class="evc-new-btn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2.5" stroke-linecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          New Template
-        </a>
+      <div class="evc-stat-card">
+        <div class="evc-stat-icon evc-stat-icon--amber">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <div class="evc-stat-body">
+          <span class="evc-stat-lbl">Invitations</span>
+          <span class="evc-stat-val">{{ purposeCount('invitation') }}</span>
+        </div>
+      </div>
+      <div class="evc-stat-card">
+        <div class="evc-stat-icon evc-stat-icon--green">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+        <div class="evc-stat-body">
+          <span class="evc-stat-lbl">Contributions</span>
+          <span class="evc-stat-val">{{ purposeCount('contribution') }}</span>
+        </div>
+      </div>
+      <div class="evc-stat-card">
+        <div class="evc-stat-icon evc-stat-icon--purple">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="evc-stat-body">
+          <span class="evc-stat-lbl">Save the Date</span>
+          <span class="evc-stat-val">{{ purposeCount('save_the_date') }}</span>
+        </div>
       </div>
     </div>
 
-    <!-- ══ Content ══ -->
-    <div class="evc-content">
+    <!-- ══ Panel ══ -->
+    <div class="evc-panel">
+      <div class="evc-panel-hd">
+        <h2 class="evc-panel-title">Cards</h2>
+        <div class="evc-hd-search">
+          <div class="evc-search-wrap">
+            <svg class="evc-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+              stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input v-model="searchQ" class="evc-search" placeholder="Search by type or purpose…" />
+            <button v-if="searchQ" class="evc-search-clear" @click="searchQ = ''">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2.5" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="evc-panel-acts">
+          <div class="evc-filter-chips">
+            <button v-for="f in PURPOSE_FILTERS" :key="f.val"
+              class="evc-chip" :class="{ 'evc-chip--active': purposeFilter === f.val }"
+              @click="purposeFilter = f.val">
+              {{ f.label }}
+              <span class="evc-chip-cnt">{{ purposeCount(f.val) }}</span>
+            </button>
+          </div>
+          <button class="evc-refresh-btn" @click="loadData" :disabled="loading" title="Refresh">
+            <svg :class="{ 'evc-spin': loading }" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          </button>
+          <a :href="designerCreateUrl" target="_blank" rel="noopener" class="evc-new-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5" stroke-linecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            New Template
+          </a>
+        </div>
+      </div>
+
+      <!-- ══ Content ══ -->
+      <div class="evc-content">
 
       <!-- Loading -->
       <div v-if="loading" class="evc-empty">
         <svg class="evc-spin" width="20" height="20" viewBox="0 0 24 24" fill="none"
-          stroke="#B8924D" stroke-width="2.2" stroke-linecap="round">
+          stroke="#C9A84C" stroke-width="2.2" stroke-linecap="round">
           <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
         </svg>
         <p>Loading templates…</p>
@@ -159,7 +197,8 @@
           </div>
         </div>
       </div>
-    </div>
+    </div><!-- /evc-content -->
+    </div><!-- /evc-panel -->
 
     <!-- ══ Detail Drawer ══ -->
     <Teleport to="body">
@@ -237,7 +276,7 @@
                   <p class="evc-block-lbl">Valid At Checkpoints</p>
                   <div class="evc-cp-list">
                     <div v-for="cpId in selectedCard.clearAt" :key="cpId" class="evc-cp-item">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#B8924D"
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C9A84C"
                         stroke-width="2" stroke-linecap="round">
                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                         <circle cx="12" cy="10" r="3"/>
@@ -314,17 +353,17 @@ const PURPOSE_LABELS = {
 }
 
 const PURPOSE_STYLES = {
-  invitation:    { bg: 'rgba(184,146,77,0.18)',  color: '#7A5A10' },
-  contribution:  { bg: 'rgba(48,209,88,0.18)',   color: '#136B2A' },
-  save_the_date: { bg: 'rgba(94,154,255,0.18)',  color: '#1A3A8A' },
-  contact:       { bg: 'rgba(138,133,128,0.15)', color: '#5A5550' },
+  invitation:    { bg: 'linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)', color: '#f0f0ec' },
+  contribution:  { bg: 'linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)', color: '#f0f0ec' },
+  save_the_date: { bg: 'linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)', color: '#f0f0ec' },
+  contact:       { bg: 'linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)', color: '#f0f0ec' },
 }
 
 const PURPOSE_GRADIENTS = {
-  invitation:    'linear-gradient(145deg, #F5EDD5 0%, #EDD89A 100%)',
-  contribution:  'linear-gradient(145deg, #D5F0DC 0%, #9ADAB0 100%)',
-  save_the_date: 'linear-gradient(145deg, #D5E5F8 0%, #9AC0EE 100%)',
-  contact:       'linear-gradient(145deg, #ECECEF 0%, #D0CBC4 100%)',
+  invitation:    'linear-gradient(145deg, #1c1a14 0%, #2a2418 100%)',
+  contribution:  'linear-gradient(145deg, #101a14 0%, #162418 100%)',
+  save_the_date: 'linear-gradient(145deg, #101620 0%, #16202e 100%)',
+  contact:       'linear-gradient(145deg, #141618 0%, #1e2228 100%)',
 }
 
 const PURPOSE_FILTERS = [
@@ -465,7 +504,7 @@ const filteredCards = computed(() => {
 
 const statsItems = computed(() => [
   { val: 'all',          label: 'Total',         count: cards.value.length,                              color: null        },
-  { val: 'invitation',   label: 'Invitation',    count: cards.value.filter(c => c.purpose === 'invitation').length,   color: '#B8924D'  },
+  { val: 'invitation',   label: 'Invitation',    count: cards.value.filter(c => c.purpose === 'invitation').length,   color: '#C9A84C'  },
   { val: 'contribution', label: 'Contribution',  count: cards.value.filter(c => c.purpose === 'contribution').length, color: '#30D158'  },
   { val: 'save_the_date',label: 'Save the Date', count: cards.value.filter(c => c.purpose === 'save_the_date').length,color: '#5E9AFF'  },
 ])
@@ -500,96 +539,129 @@ async function deleteCard(card) {
   flex-direction: column;
   gap: 16px;
   padding: 20px 24px 24px;
-  background: #0a0e1c;
 }
 
-/* ══ Toolbar ══ */
-.evc-toolbar {
+/* ══ Stat Cards ══ */
+.evc-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.evc-stat-card {
+  background: #191919;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 20px 20px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.evc-stat-icon {
+  width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0; margin-top: 2px;
+  display: flex; align-items: center; justify-content: center;
+}
+.evc-stat-icon--gold   { background: rgba(201,168,76,0.08);  color: #C9A84C; }
+.evc-stat-icon--amber  { background: rgba(255,159,10,0.08);  color: #FF9F0A; }
+.evc-stat-icon--green  { background: rgba(48,209,88,0.08);   color: #30D158; }
+.evc-stat-icon--purple { background: rgba(167,139,250,0.08); color: #a78bfa; }
+.evc-stat-body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.evc-stat-lbl  { font-size: 11px; color: #777; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; }
+.evc-stat-val  { font-size: 32px; font-weight: 700; color: #f0f0ec; line-height: 1; letter-spacing: -0.5px; }
+
+/* ══ Panel ══ */
+.evc-panel {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.evc-panel-hd {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #1e1e1e;
   gap: 10px;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-  padding: 0;
 }
-.evc-toolbar-left  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
-.evc-toolbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.evc-panel-title {
+  font-size: 19px; font-weight: 700; color: #f0f0ec;
+  margin: 0; letter-spacing: -0.3px; white-space: nowrap;
+}
+.evc-hd-search { margin-left: auto; min-width: 120px; max-width: 300px; }
+.evc-panel-acts { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
 /* Search */
 .evc-search-wrap {
   position: relative; display: flex; align-items: center;
-  min-width: 200px; max-width: 260px;
+  width: 100%;
 }
 .evc-search-icon { position: absolute; left: 10px; pointer-events: none; }
 .evc-search {
   width: 100%; padding: 8px 32px;
-  border: 1px solid #2a3a52; border-radius: 10px;
+  border: 1px solid #2a2a2a; border-radius: 10px;
   font-size: 13px; font-family: inherit; outline: none;
-  background: #0f1729; color: #e2e8f0;
+  background: #141414; color: #f0f0ec;
   transition: border-color 150ms, box-shadow 150ms;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.12), 0 4px 12px -2px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
-.evc-search:focus { border-color: #C9A84C; box-shadow: 0 0 0 3px rgba(201,168,76,0.10); background: #0f1729; }
+.evc-search:focus { border-color: #C9A84C; box-shadow: 0 0 0 3px rgba(184,146,77,0.10); background: #141414; }
 .evc-search-clear {
   position: absolute; right: 8px;
-  background: none; border: none; cursor: pointer; color: #8892a4; padding: 2px;
+  background: none; border: none; cursor: pointer; color: #888; padding: 2px;
   display: flex; align-items: center;
 }
-.evc-search-clear:hover { color: #e2e8f0; }
+.evc-search-clear:hover { color: #f0f0ec; }
 
 /* Filter chips */
 .evc-filter-chips { display: flex; gap: 4px; }
 .evc-chip {
   padding: 6px 12px; border-radius: 20px;
-  border: 1px solid #1e2d44; background: #111827;
-  font-size: 12px; font-weight: 500; color: #8892a4;
+  border: 1px solid #2a2a2a; background: #141414;
+  font-size: 12px; font-weight: 500; color: #888;
   cursor: pointer; transition: all 140ms; font-family: inherit;
 }
-.evc-chip:hover { background: #1a2236; color: #c8d4e0; }
-.evc-chip--active { background: rgba(226,232,240,0.12); border-color: rgba(226,232,240,0.18); color: #e2e8f0; font-weight: 600; }
+.evc-chip:hover { background: #1a1a1a; color: #888; }
+.evc-chip--active { background: rgba(226,232,240,0.12); border-color: rgba(226,232,240,0.2); color: #f0f0ec; font-weight: 600; }
 .evc-chip-cnt {
   display: inline-flex; min-width: 18px; padding: 1px 5px;
-  background: rgba(255,255,255,0.08); border-radius: 10px;
-  font-size: 11px; font-weight: 600; color: #4f617a; margin-left: 5px;
+  background: #1a1a1a; border-radius: 10px;
+  font-size: 11px; font-weight: 600; color: #888; margin-left: 5px;
 }
-.evc-chip--active .evc-chip-cnt { background: rgba(201,168,76,0.12); color: #C9A84C; }
+.evc-chip--active .evc-chip-cnt { background: rgba(201,168,76,0.08); color: #C9A84C; }
 
 /* Refresh + New Template */
 .evc-refresh-btn {
   width: 32px; height: 32px; border-radius: 8px;
-  border: 1px solid #1e2d44; background: #111827; color: #8892a4;
+  border: 1px solid #2a2a2a; background: #141414; color: #888;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: all 140ms; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  cursor: pointer; transition: all 140ms; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
-.evc-refresh-btn:hover:not(:disabled) { background: #1a2236; color: #e2e8f0; }
+.evc-refresh-btn:hover:not(:disabled) { background: #1a1a1a; color: #f0f0ec; }
 .evc-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .evc-new-btn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 16px; border-radius: 10px;
-  background: linear-gradient(180deg, #2e3a58 0%, #1e2d46 100%); color: #e2e8f0;
-  font-size: 13px; font-weight: 600; font-family: inherit;
+  background: #C9A84C; color: #0e0e0e; border: none;
+  font-size: 13px; font-weight: 700; font-family: inherit;
   text-decoration: none; cursor: pointer;
-  transition: opacity 140ms; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  transition: background 140ms;
 }
-.evc-new-btn:hover { opacity: 0.85; }
+.evc-new-btn:hover { background: #d4b560; }
 
-/* ══ Stats Bar ══ */
 /* ══ Content / Grid ══ */
-.evc-content { flex: 1; padding: 0; width: 100%; min-width: 0; }
+.evc-content { padding: 20px; }
 
 .evc-empty {
   display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: 10px; min-height: 300px; color: #4f617a;
+  justify-content: center; gap: 10px; min-height: 300px; color: #555;
 }
-.evc-empty-title { font-size: 15px; font-weight: 600; color: #8892a4; margin: 0; }
-.evc-empty-sub   { font-size: 13px; color: #4f617a; margin: 0; }
+.evc-empty-title { font-size: 15px; font-weight: 600; color: #888; margin: 0; }
+.evc-empty-sub   { font-size: 13px; color: #555; margin: 0; }
 .evc-empty-cta {
   margin-top: 6px; padding: 9px 20px; border-radius: 10px;
-  background: linear-gradient(180deg, #2e3a58 0%, #1e2d46 100%); color: #e2e8f0; font-size: 13px; font-weight: 600;
-  text-decoration: none; transition: opacity 140ms;
+  background: rgba(226,232,240,0.12); color: #f0f0ec; font-size: 13px; font-weight: 600;
+  text-decoration: none; transition: background 140ms;
 }
-.evc-empty-cta:hover { opacity: 0.85; }
+.evc-empty-cta:hover { background: #1e1e1e; }
 
 .evc-grid {
   display: grid;
@@ -600,16 +672,16 @@ async function deleteCard(card) {
 
 /* Card tile */
 .evc-card {
-  background: #111827;
-  border: 1px solid #1e2d44;
+  background: #141414;
+  border: 1px solid #2a2a2a;
   border-radius: 14px;
   overflow: hidden;
   cursor: pointer;
   transition: box-shadow 160ms, border-color 160ms, transform 160ms;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
-.evc-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.35); border-color: #2a3a52; transform: translateY(-1px); }
-.evc-card--selected { border-color: #C9A84C; box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
+.evc-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.10); border-color: #3a3a3a; transform: translateY(-1px); }
+.evc-card--selected { border-color: #C9A84C; box-shadow: 0 0 0 3px rgba(184,146,77,0.15); }
 
 .evc-card-thumb {
   width: 100%;
@@ -630,7 +702,7 @@ async function deleteCard(card) {
 .evc-thumb-placeholder {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  color: #4f617a;
+  color: #888;
 }
 .evc-thumb-badge {
   position: relative; z-index: 1;
@@ -642,91 +714,91 @@ async function deleteCard(card) {
 
 .evc-card-body { padding: 12px 14px 10px; display: flex; align-items: center; gap: 10px; }
 .evc-card-type {
-  font-size: 14px; font-weight: 700; color: #e2e8f0;
+  font-size: 14px; font-weight: 700; color: #f0f0ec;
   margin: 0; letter-spacing: -0.1px; white-space: nowrap;
 }
 .evc-card-meta { display: flex; align-items: center; gap: 10px; }
 .evc-meta-chip {
   display: inline-flex; align-items: center; gap: 4px;
-  font-size: 11px; color: #8892a4; font-weight: 500;
+  font-size: 11px; color: #888; font-weight: 500;
 }
 
 /* Card action row */
 .evc-card-actions {
   display: flex; align-items: center; gap: 6px;
   padding: 10px 14px;
-  border-top: 1px solid #1e2d44;
+  border-top: 1px solid #1a1a1a;
 }
-.evc-del-confirm-lbl { font-size: 12px; color: #FF3B30; font-weight: 600; flex: 1; }
+.evc-del-confirm-lbl { font-size: 12px; color: #FF453A; font-weight: 600; flex: 1; }
 .evc-action-btn {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 11px; border-radius: 7px;
   font-size: 12px; font-weight: 500; font-family: inherit;
-  border: 1px solid #1e2d44; background: rgba(255,255,255,0.04); color: #8892a4;
+  border: 1px solid #2a2a2a; background: #141414; color: #888;
   cursor: pointer; transition: all 130ms; text-decoration: none;
 }
-.evc-action-btn:hover { background: #1a2236; color: #e2e8f0; }
-.evc-action-btn--edit:hover { border-color: rgba(201,168,76,0.5); color: #C9A84C; background: rgba(201,168,76,0.06); }
-.evc-action-btn--del-ghost:hover { border-color: rgba(255,59,48,0.3); color: #FF3B30; background: rgba(255,59,48,0.05); }
-.evc-action-btn--danger { border-color: rgba(255,59,48,0.4); color: #FF3B30; background: rgba(255,59,48,0.06); }
+.evc-action-btn:hover { background: #1a1a1a; color: #f0f0ec; }
+.evc-action-btn--edit:hover { border-color: rgba(184,146,77,0.5); color: #C9A84C; background: #111111; }
+.evc-action-btn--del-ghost:hover { border-color: rgba(255,59,48,0.3); color: #FF453A; background: rgba(255,59,48,0.05); }
+.evc-action-btn--danger { border-color: rgba(255,59,48,0.4); color: #FF453A; background: rgba(255,59,48,0.06); }
 .evc-action-btn--danger:hover { background: rgba(255,59,48,0.12); }
 
 /* ══ Drawer ══ */
 .evc-overlay {
   position: fixed; inset: 0; z-index: 200;
-  background: rgba(28,26,24,0.35);
+  background: rgba(0,0,0,0.55);
   backdrop-filter: blur(1px);
 }
 .evc-drawer {
   position: fixed; right: 0; top: 0; bottom: 0;
-  width: 380px; background: #111827;
-  box-shadow: -2px 0 32px rgba(0,0,0,0.45);
+  width: 380px; background: #141414;
+  box-shadow: -4px 0 32px rgba(0,0,0,0.5);
   display: flex; flex-direction: column; overflow-y: auto; z-index: 201;
 }
 .evc-drawer-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 16px; border-bottom: 1px solid #1e2d44; flex-shrink: 0;
+  padding: 14px 16px; border-bottom: 1px solid #1a1a1a; flex-shrink: 0;
 }
 .evc-drawer-back {
   display: flex; align-items: center; gap: 5px;
   padding: 6px 10px; border-radius: 8px;
-  border: none; background: rgba(255,255,255,0.06); color: #8892a4;
+  border: none; background: #1a1a1a; color: #888;
   font-size: 13px; font-weight: 500; cursor: pointer;
   transition: all 130ms; font-family: inherit;
 }
-.evc-drawer-back:hover { background: rgba(255,255,255,0.10); color: #e2e8f0; }
+.evc-drawer-back:hover { background: #2a2a2a; color: #f0f0ec; }
 .evc-drawer-edit-btn {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 6px 12px; border-radius: 8px;
-  border: 1px solid #1e2d44; background: rgba(255,255,255,0.04); color: #8892a4;
+  border: 1px solid #2a2a2a; background: #141414; color: #888;
   font-size: 12px; font-weight: 500; font-family: inherit;
   text-decoration: none; cursor: pointer; transition: all 130ms;
 }
-.evc-drawer-edit-btn:hover { border-color: rgba(201,168,76,0.5); color: #C9A84C; background: rgba(201,168,76,0.06); }
+.evc-drawer-edit-btn:hover { border-color: rgba(184,146,77,0.5); color: #C9A84C; background: #111111; }
 
 /* Template preview */
-.evc-preview-wrap { padding: 16px 20px; background: #0f1729; border-bottom: 1px solid #1e2d44; flex-shrink: 0; }
+.evc-preview-wrap { padding: 16px 20px; background: #141414; border-bottom: 1px solid #2a2a2a; flex-shrink: 0; }
 .evc-preview-img {
   width: 100%; aspect-ratio: 3 / 2;
   background-size: contain; background-position: center; background-repeat: no-repeat;
-  border-radius: 10px; border: 1px solid #1e2d44; background-color: #0f1729;
+  border-radius: 10px; border: 1px solid #2a2a2a; background-color: #141414;
 }
 .evc-preview-placeholder {
   width: 100%; aspect-ratio: 3 / 2;
-  border-radius: 10px; border: 1px solid #1e2d44;
+  border-radius: 10px; border: 1px solid #2a2a2a;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 8px; color: #8892a4;
+  gap: 8px; color: #888;
 }
-.evc-preview-placeholder p { font-size: 12px; margin: 0; color: #4f617a; }
+.evc-preview-placeholder p { font-size: 12px; margin: 0; color: #555; }
 
 /* Drawer body */
 .evc-drawer-body { display: flex; flex-direction: column; padding: 0 0 24px; }
 
 .evc-detail-head {
   display: flex; align-items: flex-start; justify-content: space-between;
-  padding: 16px 20px 12px; border-bottom: 1px solid #1e2d44;
+  padding: 16px 20px 12px; border-bottom: 1px solid #1a1a1a;
 }
-.evc-detail-type { font-size: 18px; font-weight: 700; color: #e2e8f0; margin: 0 0 6px; }
+.evc-detail-type { font-size: 18px; font-weight: 700; color: #f0f0ec; margin: 0 0 6px; }
 .evc-purpose-badge {
   display: inline-block; padding: 3px 10px; border-radius: 20px;
   font-size: 11px; font-weight: 700;
@@ -734,33 +806,33 @@ async function deleteCard(card) {
 
 .evc-detail-stats {
   display: flex; align-items: center;
-  padding: 14px 20px; border-bottom: 1px solid #1e2d44;
+  padding: 14px 20px; border-bottom: 1px solid #1a1a1a;
 }
 .evc-detail-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; }
-.evc-detail-stat-n { font-size: 18px; font-weight: 700; color: #e2e8f0; line-height: 1; }
-.evc-detail-stat-lbl { font-size: 10px; font-weight: 600; color: #4f617a; text-transform: uppercase; letter-spacing: 0.4px; }
-.evc-detail-stat-sep { width: 0.8px; height: 28px; background: #1e2d44; flex-shrink: 0; }
+.evc-detail-stat-n { font-size: 18px; font-weight: 700; color: #f0f0ec; line-height: 1; }
+.evc-detail-stat-lbl { font-size: 10px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.4px; }
+.evc-detail-stat-sep { width: 0.8px; height: 28px; background: #2a2a2a; flex-shrink: 0; }
 
-.evc-drawer-block { padding: 14px 20px; border-bottom: 1px solid #1e2d44; }
+.evc-drawer-block { padding: 14px 20px; border-bottom: 1px solid #1a1a1a; }
 .evc-drawer-block:last-of-type { border-bottom: none; }
 .evc-block-lbl {
-  font-size: 10px; font-weight: 700; color: #4f617a;
+  font-size: 10px; font-weight: 700; color: #555;
   text-transform: uppercase; letter-spacing: 0.6px; margin: 0 0 10px;
 }
-.evc-detail-none { font-size: 13px; color: #4f617a; font-style: italic; }
+.evc-detail-none { font-size: 13px; color: #555; font-style: italic; }
 
 /* Checkpoints list */
 .evc-cp-list { display: flex; flex-direction: column; gap: 6px; }
 .evc-cp-item {
   display: flex; align-items: center; gap: 7px;
-  font-size: 13px; color: #e2e8f0; font-weight: 500;
+  font-size: 13px; color: #f0f0ec; font-weight: 500;
 }
 
 /* Attendees list */
 .evc-att-list { display: flex; flex-direction: column; gap: 0; }
 .evc-att-row {
   display: flex; align-items: center; gap: 10px;
-  padding: 8px 0; border-bottom: 1px solid #1e2d44;
+  padding: 8px 0; border-bottom: 1px solid #3a3a3a;
 }
 .evc-att-row:last-of-type { border-bottom: none; }
 .evc-att-avatar {
@@ -769,14 +841,14 @@ async function deleteCard(card) {
   font-size: 10px; font-weight: 700; flex-shrink: 0;
 }
 .evc-att-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.evc-att-name  { font-size: 12px; font-weight: 600; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.evc-att-phone { font-size: 11px; color: #8892a4; }
+.evc-att-name  { font-size: 12px; font-weight: 600; color: #f0f0ec; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.evc-att-phone { font-size: 11px; color: #888; }
 .evc-att-card-status { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; flex-shrink: 0; }
-.evc-att-ready   { background: rgba(48,209,88,0.12);  color: #34d399; }
-.evc-att-pending { background: rgba(201,168,76,0.12); color: #C9A84C; }
-.evc-att-more { font-size: 12px; color: #8892a4; margin: 8px 0 0; padding: 0; }
+.evc-att-ready   { background: rgba(52,211,153,0.12);  color: #34d399; }
+.evc-att-pending { background: rgba(255,159,10,0.12); color: #7A4500; }
+.evc-att-more { font-size: 12px; color: #888; margin: 8px 0 0; padding: 0; }
 
-.evc-drawer-added { font-size: 12px; color: #4f617a; margin: 0; padding: 4px 20px 0; }
+.evc-drawer-added { font-size: 12px; color: #555; margin: 0; padding: 4px 20px 0; }
 
 /* ══ Transitions ══ */
 .evc-fade-enter-active, .evc-fade-leave-active { transition: opacity 200ms ease; }
@@ -787,4 +859,52 @@ async function deleteCard(card) {
 /* Spin */
 .evc-spin { animation: evc-spin-anim 1.1s linear infinite; }
 @keyframes evc-spin-anim { to { transform: rotate(360deg); } }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  /* 4-column stat grid overflows at medium widths — switch to 2x2 */
+  .evc-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; min-width: 0; }
+  .evc-stat-card { min-width: 0; overflow: hidden; }
+  .evc-stat-lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Panel header: title + search on row 1, chips + buttons scroll on row 2 */
+  .evc-panel-hd { flex-wrap: wrap; gap: 8px; }
+  .evc-hd-search { flex: 1; min-width: 0; max-width: 320px; }
+  .evc-panel-acts { width: 100%; flex-wrap: nowrap; align-items: center; gap: 6px; }
+  .evc-filter-chips { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+  .evc-filter-chips::-webkit-scrollbar { display: none; }
+  .evc-chip { flex-shrink: 0; }
+  .evc-refresh-btn { flex-shrink: 0; }
+  .evc-new-btn { flex-shrink: 0; white-space: nowrap; }
+}
+
+@media (max-width: 640px) {
+  .evc-root { padding: 12px 14px 20px; gap: 12px; }
+
+  /* Stat cards: column layout so long labels don't get squished */
+  .evc-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; min-width: 0; }
+  .evc-stat-card { min-width: 0; overflow: hidden; padding: 12px; gap: 6px; flex-direction: column; align-items: flex-start; }
+  .evc-stat-icon { width: 32px; height: 32px; flex-shrink: 0; }
+  .evc-stat-val  { font-size: 22px; }
+  .evc-stat-body { gap: 2px; min-width: 0; width: 100%; }
+  .evc-stat-lbl  { font-size: 10px; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Panel header: title + search side by side, chips + buttons on next row */
+  .evc-panel-hd { flex-wrap: wrap; gap: 8px; padding: 10px 14px; }
+  .evc-panel-title { font-size: 17px; }
+  .evc-hd-search { margin-left: auto; flex: 1; min-width: 0; max-width: 100%; }
+  .evc-search-wrap { width: 100%; min-width: 0; }
+  .evc-search { min-width: 0; max-width: 100%; width: 100%; font-size: 13px; }
+
+  /* Chips + action buttons: single nowrap row — chips scroll, buttons stay anchored right */
+  .evc-panel-acts { flex-wrap: nowrap; gap: 6px; width: 100%; align-items: center; }
+  .evc-filter-chips { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+  .evc-filter-chips::-webkit-scrollbar { display: none; }
+  .evc-chip { flex-shrink: 0; }
+  .evc-refresh-btn { flex-shrink: 0; }
+  .evc-new-btn { flex-shrink: 0; white-space: nowrap; padding: 7px 12px; font-size: 12px; }
+
+  /* Card grid: 2 columns */
+  .evc-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+}
 </style>

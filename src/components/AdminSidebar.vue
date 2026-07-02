@@ -19,7 +19,7 @@
     <nav class="as-nav">
       <span class="as-nav-label">Workspace</span>
 
-      <router-link to="/" class="as-item" :class="{ 'as-item--active': route.path === '/' }" :title="collapsed ? 'My Events' : ''">
+      <router-link to="/" class="as-item" :class="{ 'as-item--active': route.path === '/' }" :title="collapsed ? 'All Events' : ''">
         <span class="as-item-icon">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="3"/>
@@ -28,7 +28,7 @@
             <line x1="3" y1="10" x2="21" y2="10"/>
           </svg>
         </span>
-        <span class="as-item-label">My Events</span>
+        <span class="as-item-label">All Events</span>
         <span v-if="!collapsed" class="as-item-badge">{{ eventCount }}</span>
       </router-link>
 
@@ -42,6 +42,18 @@
           </svg>
         </span>
         <span class="as-item-label">Users</span>
+      </router-link>
+
+      <router-link to="/global-attendees" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/global-attendees') }" :title="collapsed ? 'Guests' : ''">
+        <span class="as-item-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <polyline points="16 11 18 13 22 9"/>
+          </svg>
+        </span>
+        <span class="as-item-label">Guests</span>
+        <span v-if="!collapsed" class="as-item-badge">{{ attendeeCount }}</span>
       </router-link>
 
       <router-link to="/messaging" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/messaging') }" :title="collapsed ? 'Messaging' : ''">
@@ -64,16 +76,31 @@
         <span class="as-item-label">Packages</span>
       </router-link>
 
-      <router-link to="/contacts" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/contacts') }" :title="collapsed ? 'Contacts' : ''">
+      <router-link to="/sms-templates" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/sms-templates') }" :title="collapsed ? 'SMS Templates' : ''">
         <span class="as-item-icon">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3z"/>
-            <path d="M8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3z"/>
-            <path d="M8 13c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-            <path d="M16 13c-.29 0-.62.02-.97.05C16.19 13.89 17 15.02 17 17v2h7v-2c0-2.66-5.33-4-8-4z"/>
+            <rect x="3" y="3" width="18" height="14" rx="2"/>
+            <path d="M3 9h18"/>
+            <path d="M9 17v4"/>
+            <path d="M15 17v4"/>
+            <path d="M9 21h6"/>
           </svg>
         </span>
-        <span class="as-item-label">Contacts</span>
+        <span class="as-item-label">SMS Templates</span>
+      </router-link>
+
+      <router-link to="/affiliates" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/affiliates') }" :title="collapsed ? 'Affiliates' : ''">
+        <span class="as-item-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="3"/>
+            <path d="M6 20v-1a6 6 0 0 1 12 0v1"/>
+            <path d="M19 8a3 3 0 1 1 0-6"/>
+            <path d="M21 18v-1a4 4 0 0 0-3-3.87"/>
+            <path d="M5 8a3 3 0 1 0 0-6"/>
+            <path d="M3 18v-1a4 4 0 0 1 3-3.87"/>
+          </svg>
+        </span>
+        <span class="as-item-label">Affiliates</span>
       </router-link>
     </nav>
 
@@ -140,11 +167,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { auth, db } from '../firebase'
-import { signOut } from 'firebase/auth'
-import { collection, getDoc, getDocs, doc, query, orderBy } from 'firebase/firestore'
+import { signOut, onAuthStateChanged } from 'firebase/auth'
+import { collection, getDoc, getDocs, getCountFromServer, doc, query, orderBy } from 'firebase/firestore'
 
 const router = useRouter()
 const route  = useRoute()
@@ -160,6 +187,7 @@ function toggle() {
 const balance  = ref(null)
 const showLogout = ref(false)
 const eventCount = ref(0)
+const attendeeCount = ref(0)
 
 const displayName = computed(() => {
   const u = auth.currentUser
@@ -202,15 +230,31 @@ async function loadEventCount() {
   } catch { /* silent */ }
 }
 
+async function loadAttendeeCount() {
+  try {
+    const snap = await getCountFromServer(collection(db, 'attendeeProfiles'))
+    attendeeCount.value = snap.data().count
+  } catch { /* silent */ }
+}
+
 async function doLogout() {
   showLogout.value = false
   await signOut(auth)
   router.push('/login')
 }
 
+let unsubAuth = null
+
 onMounted(() => {
-  loadUserData()
+  unsubAuth = onAuthStateChanged(auth, (user) => {
+    if (user) loadUserData()
+  })
   loadEventCount()
+  loadAttendeeCount()
+})
+
+onUnmounted(() => {
+  if (unsubAuth) unsubAuth()
 })
 </script>
 
@@ -219,18 +263,18 @@ onMounted(() => {
 .as-root {
   --sb-w: 224px;
   --sb-icon-w: 60px;
-  --ink: #e2e8f0;
-  --ink-muted: #8892a4;
-  --ink-dim: #4f617a;
-  --line: #1e2d44;
-  --line-strong: #2a3a52;
-  --paper: #111827;
+  --ink: #f0f0ec;
+  --ink-muted: #888;
+  --ink-dim: #555;
+  --line: #242424;
+  --line-strong: #2a2a2a;
+  --paper: #1a1a1a;
   --gold: #C9A84C;
-  --emerald: #34d399;
+  --emerald: #30D158;
 
   width: var(--sb-w);
   min-height: 100vh;
-  background: #0d1326;
+  background: #111111;
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
@@ -551,8 +595,8 @@ onMounted(() => {
   display: flex; align-items: center; justify-content: center;
 }
 .as-modal {
-  background: #111827;
-  border: 1px solid #1e2d44;
+  background: #161616;
+  border: 1px solid #2a2a2a;
   border-radius: 16px;
   padding: 28px 28px 24px;
   width: 340px;
@@ -563,14 +607,14 @@ onMounted(() => {
   font-family: 'Instrument Serif', Georgia, serif;
   font-size: 22px; font-weight: 400; color: #e2e8f0; margin: 0; letter-spacing: -0.3px;
 }
-.as-modal-body { font-size: 13.5px; color: #8892a4; margin: 0 0 8px; line-height: 1.5; }
+.as-modal-body { font-size: 13.5px; color: #888888; margin: 0 0 8px; line-height: 1.5; }
 .as-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .as-modal-cancel {
-  background: transparent; border: 1px solid #2a3a52; color: #8892a4;
+  background: transparent; border: 1px solid #2a2a2a; color: #888888;
   padding: 8px 16px; border-radius: 9px; font-size: 13px; font-weight: 500;
   cursor: pointer; font-family: inherit; transition: background 130ms;
 }
-.as-modal-cancel:hover { background: #1a2236; }
+.as-modal-cancel:hover { background: #1e1e1e; }
 .as-modal-confirm {
   background: rgba(255,255,255,0.12); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.12);
   padding: 8px 18px; border-radius: 9px; font-size: 13px; font-weight: 600;

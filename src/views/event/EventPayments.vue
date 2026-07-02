@@ -1,141 +1,156 @@
-﻿<template>
+<template>
   <div class="ep-root">
 
-    <!-- Stat cards -->
-    <div class="ep-stats" v-if="!loading && !loadError">
+    <!-- ── Stat cards ── -->
+    <div class="ep-stats" v-if="!loading || transactions.length">
+      <!-- Total Charged -->
       <div class="ep-stat-card">
-        <div class="ep-stat-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="ep-stat-icon ep-stat-icon--gold">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
           </svg>
         </div>
         <div class="ep-stat-body">
-          <span class="ep-stat-val">TZS {{ formatMoney(Math.abs(totalAmount)) }}</span>
           <span class="ep-stat-lbl">Total Charged</span>
+          <span class="ep-stat-val ep-stat-val--money">TZS {{ formatMoney(Math.abs(totalAmount)) }}</span>
         </div>
       </div>
+      <!-- Transactions -->
       <div class="ep-stat-card">
-        <div class="ep-stat-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
+        <div class="ep-stat-icon ep-stat-icon--purple">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
           </svg>
         </div>
         <div class="ep-stat-body">
-          <span class="ep-stat-val">{{ filtered.length }}</span>
           <span class="ep-stat-lbl">{{ searchQ ? 'Matching' : 'Total' }} Transactions</span>
+          <span class="ep-stat-val">{{ filtered.length }}</span>
         </div>
       </div>
+      <!-- Debits (negative amounts = charges) -->
       <div class="ep-stat-card">
-        <div class="ep-stat-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="ep-stat-icon ep-stat-icon--teal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div class="ep-stat-body">
+          <span class="ep-stat-lbl">Debits</span>
+          <span class="ep-stat-val">{{ transactions.filter(t => (t.amount ?? 0) < 0).length }}</span>
+        </div>
+      </div>
+      <!-- Latest Activity -->
+      <div class="ep-stat-card">
+        <div class="ep-stat-icon ep-stat-icon--blue">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
           </svg>
         </div>
         <div class="ep-stat-body">
-          <span class="ep-stat-val">{{ latestDate }}</span>
           <span class="ep-stat-lbl">Latest Activity</span>
+          <span class="ep-stat-val ep-stat-val--date">{{ latestDate }}</span>
         </div>
       </div>
     </div>
 
-    <!-- Toolbar -->
-    <div class="ep-toolbar">
-      <div class="ep-search-wrap">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B6B72" stroke-width="2" stroke-linecap="round">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <input v-model="searchQ" class="ep-search" placeholder="Search transactions…" />
-        <button v-if="searchQ" class="ep-search-clear" @click="searchQ = ''">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-      <span class="ep-toolbar-count" v-if="!loading">{{ filtered.length }} record{{ filtered.length !== 1 ? 's' : '' }}</span>
-    </div>
+    <!-- ── Panel ── -->
+    <div class="ep-panel">
 
-    <!-- Loading -->
-    <div class="ep-table-wrap" v-if="loading">
-      <table class="ep-table">
-        <thead><tr>
-          <th class="ep-th">#</th>
-          <th class="ep-th">Description</th>
-          <th class="ep-th">Event</th>
-          <th class="ep-th ep-th--right">Amount (TZS)</th>
-          <th class="ep-th ep-th--right">Date</th>
-        </tr></thead>
-        <tbody>
-          <tr v-for="i in 6" :key="i" class="ep-tr"><td colspan="5"><div class="ep-skel"></div></td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Error -->
-    <div v-else-if="loadError" class="ep-empty">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#e55" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <p class="ep-empty-title">Something went wrong</p>
-      <p class="ep-empty-sub">{{ loadError }}</p>
-    </div>
-
-    <!-- Table -->
-    <div v-else class="ep-table-wrap">
-      <table class="ep-table">
-        <thead>
-          <tr>
-            <th class="ep-th ep-th--num">#</th>
-            <th class="ep-th">Description</th>
-            <th class="ep-th">Event ID</th>
-            <th class="ep-th ep-th--right">Amount (TZS)</th>
-            <th class="ep-th ep-th--right ep-th--sortable" @click="toggleSort">
-              Date
-              <svg class="ep-sort-icon" :class="{ 'ep-sort-icon--desc': sortDesc }"
-                width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="18 15 12 9 6 15"/>
+      <!-- Panel header -->
+      <div class="ep-panel-hd">
+        <h2 class="ep-panel-title">Payments</h2>
+        <div class="ep-panel-acts">
+          <!-- Search -->
+          <div class="ep-search-wrap">
+            <svg class="ep-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input v-model="searchQ" class="ep-search" placeholder="Search transactions…" />
+            <button v-if="searchQ" class="ep-search-clear" @click="searchQ = ''">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="!filtered.length">
-            <td colspan="5">
-              <div class="ep-empty">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                </svg>
-                <p class="ep-empty-title">{{ searchQ ? 'No matching transactions' : 'No transactions yet' }}</p>
-                <p class="ep-empty-sub">{{ searchQ ? 'Try a different search term' : 'Platform charges will appear here' }}</p>
-              </div>
-            </td>
-          </tr>
-          <tr v-for="(trn, i) in paginated" :key="trn.id" class="ep-tr">
-            <td class="ep-td ep-td--num">{{ (currentPage - 1) * PAGE_SIZE + i + 1 }}</td>
-            <td class="ep-td">
-              <div class="ep-desc-cell">
-                <div class="ep-receipt-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-                  </svg>
-                </div>
-                <span class="ep-reason">{{ trn.reason }}</span>
-              </div>
-            </td>
-            <td class="ep-td ep-td--mono">{{ trn.eventId ?? '—' }}</td>
-            <td class="ep-td ep-td--right">
-              <span class="ep-amount" :class="{ 'ep-amount--neg': (trn.amount ?? 0) < 0 }">
-                {{ formatMoney(trn.amount) }}
-              </span>
-            </td>
-            <td class="ep-td ep-td--right ep-td--date">{{ formatDate(trn.createdAt) }}</td>
-          </tr>
-        </tbody>
-      </table>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading state -->
+      <div v-if="loading" class="ep-list">
+        <div v-for="i in 6" :key="i" class="ep-card ep-card--sk">
+          <div class="ep-sk-circle"></div>
+          <div class="ep-card-info">
+            <div class="ep-sk-bar ep-sk-bar--lg"></div>
+            <div class="ep-sk-bar ep-sk-bar--sm" style="margin-top:6px"></div>
+          </div>
+          <div class="ep-sk-bar ep-sk-bar--sm" style="width:70px"></div>
+        </div>
+      </div>
+
+      <!-- Error state -->
+      <div v-else-if="loadError" class="ep-empty">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fc8181" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p class="ep-empty-title">Something went wrong</p>
+        <p class="ep-empty-sub">{{ loadError }}</p>
+      </div>
+
+      <!-- Card list -->
+      <div v-else class="ep-list">
+
+        <!-- Empty state -->
+        <div v-if="!filtered.length" class="ep-empty">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <p class="ep-empty-title">{{ searchQ ? 'No matching transactions' : 'No transactions yet' }}</p>
+          <p class="ep-empty-sub">{{ searchQ ? 'Try a different search term' : 'Platform charges will appear here' }}</p>
+        </div>
+
+        <!-- Transaction cards -->
+        <div
+          v-for="(trn, i) in paginated"
+          :key="trn.id"
+          class="ep-card"
+          :class="`ep-card--${statusClass(trn)}`"
+        >
+          <!-- Icon -->
+          <div class="ep-card-icon-wrap">
+            <div class="ep-card-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Identity -->
+          <div class="ep-card-info">
+            <span class="ep-card-name">{{ trn.reason }}</span>
+            <span class="ep-card-meta">{{ trn.eventId ?? '—' }}</span>
+          </div>
+
+          <!-- Amount -->
+          <span class="ep-card-amount" :class="{ 'ep-card-amount--neg': (trn.amount ?? 0) < 0 }">
+            TZS {{ formatMoney(trn.amount) }}
+          </span>
+
+          <!-- Badges + date -->
+          <div class="ep-card-badges">
+            <span class="ep-badge" :class="`ep-badge--${statusClass(trn)}`">
+              <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3.5" fill="currentColor"/></svg>
+              {{ statusLabel(trn) }}
+            </span>
+            <span class="ep-card-date">{{ formatDate(trn.createdAt) }}</span>
+          </div>
+        </div>
+
+      </div>
 
       <!-- Footer: range + paginator -->
-      <div class="ep-table-footer">
+      <div class="ep-table-footer" v-if="!loading && !loadError">
         <span class="ep-range-label">
           {{ filtered.length ? `${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, filtered.length)}` : '0' }}
           of {{ filtered.length }}
@@ -162,7 +177,8 @@
           </button>
         </div>
       </div>
-    </div>
+
+    </div><!-- /ep-panel -->
 
   </div>
 </template>
@@ -204,6 +220,20 @@ function formatDate(val) {
   const d = typeof val.toDate === 'function' ? val.toDate() : new Date(val)
   if (isNaN(d)) return '—'
   return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function statusClass(trn) {
+  const amt = trn.amount ?? 0
+  if (amt < 0) return 'completed'
+  if (trn.status === 'pending') return 'pending'
+  if (trn.status === 'failed') return 'failed'
+  if (trn.status === 'refunded') return 'refunded'
+  return 'completed'
+}
+
+function statusLabel(trn) {
+  const cls = statusClass(trn)
+  return cls.charAt(0).toUpperCase() + cls.slice(1)
 }
 
 // ── Computed ───────────────────────────────────────────────────────────────
@@ -296,120 +326,213 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.ep-root { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 16px; background: #0a0e1c; }
+.ep-root {
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
 
 /* ── Stat cards ── */
-.ep-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.ep-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .ep-stat-card {
-  background: #111827; border: 1px solid #1e2d44; border-radius: 12px;
-  padding: 16px 18px; display: flex; align-items: center; gap: 14px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  background: #111111; border: 1px solid #2a2a2a; border-radius: 12px;
+  padding: 20px 20px 18px; display: flex; align-items: flex-start; gap: 16px;
 }
 .ep-stat-icon {
-  width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
-  background: rgba(201,168,76,0.1); color: #C9A84C;
+  width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0; margin-top: 2px;
   display: flex; align-items: center; justify-content: center;
 }
-.ep-stat-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.ep-stat-val  { font-size: 17px; font-weight: 700; color: #e2e8f0; }
-.ep-stat-lbl  { font-size: 11px; color: #8892a4; font-weight: 500; }
+.ep-stat-icon--gold   { background: rgba(201,168,76,0.08);  color: #C9A84C; }
+.ep-stat-icon--purple { background: rgba(167,139,250,0.08); color: #a78bfa; }
+.ep-stat-icon--teal   { background: rgba(45,212,191,0.08);  color: #2dd4bf; }
+.ep-stat-icon--blue   { background: rgba(96,165,250,0.08);  color: #60a5fa; }
+.ep-stat-body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ep-stat-lbl  { font-size: 11px; color: #777; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ep-stat-val  { font-size: 32px; font-weight: 700; color: #f0f0ec; line-height: 1; letter-spacing: -0.5px; white-space: nowrap; }
+.ep-stat-val--money { font-size: 22px; }
+.ep-stat-val--date  { font-size: 20px; }
 
-/* ── Toolbar ── */
-.ep-toolbar { display: flex; align-items: center; gap: 12px; }
+/* ── Panel ── */
+.ep-panel {
+  display: flex;
+  flex-direction: column;
+  background: #0d0d0d;
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.ep-panel-hd {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #1e1e1e;
+  gap: 10px;
+}
+.ep-panel-title {
+  font-size: 19px; font-weight: 700; color: #f0ece6; margin: 0;
+  letter-spacing: -0.3px; white-space: nowrap;
+}
+.ep-panel-acts { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+/* Search */
 .ep-search-wrap {
-  display: flex; align-items: center; gap: 8px;
-  background: #0f1729; border: 1px solid #2a3a52; border-radius: 10px;
-  padding: 0 12px; height: 36px; flex: 1; max-width: 360px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 180px;
+  max-width: 300px;
+}
+.ep-search-icon { position: absolute; left: 10px; pointer-events: none; flex-shrink: 0; }
+.ep-search {
+  width: 100%; padding: 8px 32px;
+  border: 1px solid #2a2a2a; border-radius: 10px;
+  font-size: 13px; font-family: inherit; outline: none;
+  background: #111; color: #f0f0ec;
   transition: border-color 150ms;
 }
-.ep-search-wrap:focus-within { border-color: #C9A84C; background: #0f1729; }
-.ep-search { flex: 1; border: none; outline: none; font-size: 13px; color: #e2e8f0; background: transparent; }
-.ep-search::placeholder { color: #4f617a; }
-.ep-search-clear { background: none; border: none; cursor: pointer; color: #4f617a; display: flex; align-items: center; padding: 0; }
-.ep-search-clear:hover { color: #e2e8f0; }
-.ep-toolbar-count { font-size: 12px; color: #8892a4; margin-left: auto; }
-
-/* ── Table ── */
-.ep-table-wrap { background: #111827; border: 1px solid #1e2d44; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-.ep-table { width: 100%; border-collapse: collapse; }
-
-.ep-th {
-  padding: 11px 16px; text-align: left;
-  font-size: 11px; font-weight: 700; color: #8892a4; letter-spacing: 0.4px; text-transform: uppercase;
-  background: #0f1729; border-bottom: 1px solid #1e2d44; white-space: nowrap;
-}
-.ep-th--right  { text-align: right; }
-.ep-th--num    { width: 48px; color: #4f617a; }
-.ep-th--sortable { cursor: pointer; user-select: none; }
-.ep-th--sortable:hover { color: #e2e8f0; }
-
-.ep-sort-icon { margin-left: 4px; vertical-align: middle; transition: transform 0.15s; }
-.ep-sort-icon--desc { transform: rotate(180deg); }
-
-.ep-tr { border-bottom: 1px solid #1e2d44; transition: background 0.1s; }
-.ep-tr:last-child { border-bottom: none; }
-.ep-tr:hover { background: #1a2236; }
-
-.ep-td { padding: 13px 16px; font-size: 13px; color: #e2e8f0; vertical-align: middle; }
-.ep-td--num    { color: #4f617a; font-size: 12px; text-align: center; width: 48px; }
-.ep-td--right  { text-align: right; }
-.ep-td--date   { color: #8892a4; white-space: nowrap; }
-.ep-td--mono   { font-family: monospace; font-size: 11px; color: #4f617a; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.ep-desc-cell  { display: flex; align-items: center; gap: 10px; }
-.ep-receipt-icon {
-  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
-  background: rgba(201,168,76,0.08); color: #C9A84C;
+.ep-search:focus { border-color: #C9A84C; }
+.ep-search::placeholder { color: #555; }
+.ep-search-clear {
+  position: absolute; right: 8px;
+  background: none; border: none; cursor: pointer; color: #888; padding: 2px;
   display: flex; align-items: center; justify-content: center;
 }
-.ep-reason { font-weight: 500; color: #e2e8f0; }
+.ep-search-clear:hover { color: #f0f0ec; }
 
-.ep-amount {
-  font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #e2e8f0; }
-.ep-amount--neg { color: #C9A84C; }
+/* ── Card list ── */
+.ep-list {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 12px 16px; background: #0d0d0d;
+}
+
+/* ── Card ── */
+.ep-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 16px;
+  background: #141414; border: 1px solid #202020; border-radius: 12px;
+  transition: background 150ms, border-color 150ms, box-shadow 150ms;
+}
+.ep-card:hover:not(.ep-card--sk) { background: #191919; border-color: #2c2c2c; box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
+.ep-card--sk { pointer-events: none; }
+
+/* Icon/Avatar zone */
+.ep-card-icon-wrap { position: relative; flex-shrink: 0; }
+.ep-card-icon {
+  width: 40px; height: 40px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(201,168,76,0.12); color: #C9A84C;
+}
+
+/* Identity */
+.ep-card-info { display: flex; flex-direction: column; gap: 3px; flex: 0 0 200px; min-width: 0; }
+.ep-card-name { font-size: 13px; font-weight: 600; color: #e8e4dd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ep-card-meta { font-size: 11px; color: #505050; }
+
+/* Amount */
+.ep-card-amount { font-size: 15px; font-weight: 700; color: #C9A84C; white-space: nowrap; flex-shrink: 0; }
+.ep-card-amount--neg { color: #C9A84C; }
+
+/* Badges zone */
+.ep-card-badges { flex: 1; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* Badge */
+.ep-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 9px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; white-space: nowrap;
+  border: 1px solid transparent;
+}
+.ep-badge--completed { background: rgba(48,209,88,0.10);   color: #1D7A38; border-color: rgba(48,209,88,0.20); }
+.ep-badge--pending   { background: rgba(255,159,10,0.10);  color: #B36800; border-color: rgba(255,159,10,0.20); }
+.ep-badge--failed    { background: rgba(255,69,58,0.10);   color: #C41E1E; border-color: rgba(255,69,58,0.20); }
+.ep-badge--refunded  { background: rgba(99,179,237,0.10);  color: #0060A8; border-color: rgba(99,179,237,0.20); }
+.ep-badge--default   { background: rgba(255,255,255,0.04); color: #555;    border-color: #222; }
+
+/* Left border stripe */
+.ep-card--completed { box-shadow: inset 3px 0 0 rgba(48,209,88,0.55); }
+.ep-card--pending   { box-shadow: inset 3px 0 0 rgba(255,159,10,0.55); }
+.ep-card--failed    { box-shadow: inset 3px 0 0 rgba(255,69,58,0.40); }
+.ep-card--refunded  { box-shadow: inset 3px 0 0 rgba(99,179,237,0.40); }
+
+/* Date */
+.ep-card-date { font-size: 11px; color: #3a3a3a; white-space: nowrap; flex-shrink: 0; text-align: right; }
 
 /* ── Footer + Paginator ── */
 .ep-table-footer {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px; border-top: 1px solid #1e2d44;
-  background: #111827; gap: 12px; flex-wrap: wrap; flex-shrink: 0;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 20px; background: #0d0d0d; border-top: 1px solid #1e1e1e;
+  gap: 12px; flex-wrap: wrap;
 }
-.ep-range-label { font-size: 12px; color: #8892a4; font-weight: 500; white-space: nowrap; }
+.ep-range-label { font-size: 12px; color: #888; font-weight: 500; white-space: nowrap; }
 .ep-paginator { display: flex; align-items: center; gap: 3px; }
 .ep-paginator--disabled { opacity: 0.38; pointer-events: none; }
 .ep-page-btn {
   min-width: 32px; height: 32px; padding: 0 6px;
-  border: 1px solid #1e2d44; border-radius: 8px; background: #111827;
-  font-size: 13px; font-weight: 500; color: #8892a4; cursor: pointer;
+  border: 1px solid #2a2a2a; border-radius: 8px; background: #0d0d0d;
+  font-size: 13px; font-weight: 500; color: #888; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all 140ms; font-family: inherit;
 }
 .ep-page-btn:hover:not(:disabled):not(.ep-page-btn--active) {
-  background: #1a2236; border-color: #2a3a52; color: #e2e8f0;
+  background: #1a2236; color: #f0f0ec;
 }
 .ep-page-btn--active {
-  background: rgba(226,232,240,0.12); border-color: rgba(226,232,240,0.18); color: #e2e8f0;
+  background: rgba(226,232,240,0.12); border-color: rgba(226,232,240,0.18); color: #f0f0ec;
   font-weight: 600; cursor: default;
 }
-.ep-page-btn--nav { color: #8892a4; }
+.ep-page-btn--nav { color: #888; }
 .ep-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .ep-page-ellipsis {
   min-width: 28px; height: 32px; display: flex; align-items: center; justify-content: center;
-  font-size: 13px; color: #4f617a; letter-spacing: 1px;
+  font-size: 13px; color: #555; letter-spacing: 1px;
 }
 
 /* ── Skeleton ── */
-.ep-skel {
-  height: 20px; border-radius: 6px; background: #1e2d44; margin: 8px 16px;
-  animation: ep-shimmer 1.4s ease-in-out infinite;
-}
-@keyframes ep-shimmer { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes ep-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.ep-sk-circle { width: 40px; height: 40px; border-radius: 11px; background: #2a2a2a; flex-shrink: 0; animation: ep-pulse 1.4s ease-in-out infinite; }
+.ep-sk-bar    { height: 12px; border-radius: 6px; background: #2a2a2a; animation: ep-pulse 1.4s ease-in-out infinite; }
+.ep-sk-bar--lg { width: 140px; }
+.ep-sk-bar--sm { width: 80px; }
 
 /* ── Empty ── */
 .ep-empty {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 60px 20px; gap: 8px;
 }
-.ep-empty-title { font-size: 14px; font-weight: 600; color: #8892a4; margin: 4px 0 0; }
-.ep-empty-sub   { font-size: 13px; color: #4f617a; margin: 0; }
+.ep-empty-title { font-size: 14px; font-weight: 600; color: #888; margin: 4px 0 0; }
+.ep-empty-sub   { font-size: 13px; color: #555; margin: 0; }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .ep-stats { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .ep-list { padding: 8px 10px; gap: 5px; }
+  .ep-card {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto auto;
+    grid-template-areas: "icon info amount" "icon badges badges";
+    align-items: start; gap: 3px 12px; padding: 12px 14px;
+  }
+  .ep-card-icon-wrap { grid-area: icon; align-self: start; padding-top: 2px; }
+  .ep-card-info      { grid-area: info; flex: unset; }
+  .ep-card-amount    { grid-area: amount; align-self: start; padding-top: 2px; }
+  .ep-card-badges    { grid-area: badges; justify-content: flex-start; flex: unset; margin-top: 6px; }
+}
+@media (max-width: 600px) {
+  .ep-root  { padding: 12px 14px 20px; gap: 12px; }
+  .ep-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; min-width: 0; }
+  .ep-stat-card { min-width: 0; overflow: hidden; padding: 14px 14px 12px; gap: 12px; }
+  .ep-stat-icon { width: 36px; height: 36px; flex-shrink: 0; }
+  .ep-stat-val  { font-size: 24px; }
+  .ep-stat-val--money { font-size: 18px; }
+  .ep-stat-val--date  { font-size: 16px; }
+  .ep-stat-body { gap: 6px; min-width: 0; }
+  .ep-stat-lbl  { font-size: 10px; letter-spacing: 0; }
+  .ep-search-wrap { min-width: 0; max-width: 100%; }
+}
+@media (max-width: 400px) { .ep-card-date { display: none; } }
 </style>
