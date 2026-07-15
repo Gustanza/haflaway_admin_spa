@@ -87,6 +87,10 @@
             <svg v-if="!loading" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <span>{{ loading ? 'Loading…' : 'Apply' }}</span>
           </button>
+          <button class="mv-export-btn" :disabled="!hasFetched || filtered.length === 0 || exporting" @click="exportExcel">
+            <svg v-if="!exporting" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>{{ exporting ? 'Building…' : 'Export' }}</span>
+          </button>
         </div>
 
       </div>
@@ -151,19 +155,19 @@
           <table class="mv-table">
             <thead>
               <tr>
-                <th class="mv-th">Time</th>
+                <th class="mv-th mv-th--ghost">Time</th>
                 <th class="mv-th">Channel</th>
-                <th class="mv-th">Campaign</th>
-                <th class="mv-th">Event</th>
+                <th class="mv-th mv-th--ghost">Campaign</th>
+                <th class="mv-th mv-th--loud">Event</th>
                 <th class="mv-th">Author</th>
-                <th class="mv-th">Dispatched By</th>
+                <th class="mv-th mv-th--ghost">Dispatched By</th>
                 <th class="mv-th mv-th--right">Charged</th>
-                <th class="mv-th">Status</th>
+                <th class="mv-th mv-th--loud">Status</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="log in paginated" :key="log.id" class="mv-row">
-                <td class="mv-td mv-td--date">{{ formatLogDate(log.timestamp) }}</td>
+              <tr v-for="log in paginated" :key="log.id" class="mv-row mv-row--clickable" @click="selectedLog = log">
+                <td class="mv-td mv-td--timestamp">{{ formatLogDate(log.timestamp) }}</td>
                 <td class="mv-td">
                   <span :class="['mv-channel-badge', `mv-channel-badge--${log.channel}`]">
                     {{ log.channel === 'sms'
@@ -171,12 +175,12 @@
                         : 'WhatsApp' }}
                   </span>
                 </td>
-                <td class="mv-td">
+                <td class="mv-td mv-td--ghost">
                   <span class="mv-campaign-label">{{ campaignLabel(log.type) }}</span>
                 </td>
                 <td class="mv-td mv-td--event" :title="log.eventId">{{ eventMap[log.eventId] ?? (log.eventId ? log.eventId.slice(0, 10) + '…' : '—') }}</td>
-                <td class="mv-td">{{ userLabel(log.authorId) }}</td>
-                <td class="mv-td mv-td--muted">{{ userLabel(log.dispatchedBy) }}</td>
+                <td class="mv-td mv-td--person">{{ userLabel(log.authorId) }}</td>
+                <td class="mv-td mv-td--ghost">{{ userLabel(log.dispatchedBy) }}</td>
                 <td class="mv-td mv-td--right">
                   <span v-if="log.chargeAmount > 0" class="mv-charge">{{ formatBalance(log.chargeAmount) }}</span>
                   <span v-else class="mv-charge mv-charge--free">Quota</span>
@@ -415,15 +419,91 @@
       </template>
 
     </div>
+
+    <!-- Message detail modal -->
+    <Teleport to="body">
+      <div v-if="selectedLog" class="mv-detail-backdrop" @click.self="selectedLog = null">
+        <div class="mv-detail-modal">
+
+          <div class="mv-detail-header">
+            <div class="mv-detail-header-left">
+              <span :class="['mv-channel-badge', `mv-channel-badge--${selectedLog.channel}`]">
+                {{ selectedLog.channel === 'sms'
+                    ? (resolveSegments(selectedLog) > 1 ? `SMS ×${resolveSegments(selectedLog)}` : 'SMS')
+                    : 'WhatsApp' }}
+              </span>
+              <span class="mv-detail-title">{{ campaignLabel(selectedLog.type) }}</span>
+            </div>
+            <button class="mv-detail-close" @click="selectedLog = null">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          <!-- Message body -->
+          <div class="mv-detail-section">
+            <span class="mv-detail-label">Message</span>
+            <div class="mv-detail-message">{{ selectedLog.message || '—' }}</div>
+          </div>
+
+          <!-- Meta grid -->
+          <div class="mv-detail-grid">
+            <div class="mv-detail-cell">
+              <span class="mv-detail-label">Recipient</span>
+              <span class="mv-detail-val">{{ selectedLog.to || '—' }}</span>
+            </div>
+            <div class="mv-detail-cell">
+              <span class="mv-detail-label">Time</span>
+              <span class="mv-detail-val">{{ formatLogDate(selectedLog.timestamp) }}</span>
+            </div>
+            <div class="mv-detail-cell">
+              <span class="mv-detail-label">Status</span>
+              <span :class="['mv-status-badge', `mv-status-badge--${selectedLog.status}`]">{{ selectedLog.status ?? '—' }}</span>
+            </div>
+            <div class="mv-detail-cell">
+              <span class="mv-detail-label">Charged</span>
+              <span class="mv-detail-val">
+                {{ selectedLog.chargeAmount > 0 ? formatBalance(selectedLog.chargeAmount) : 'Quota' }}
+              </span>
+            </div>
+            <div class="mv-detail-cell">
+              <span class="mv-detail-label">Event</span>
+              <span class="mv-detail-val">{{ eventMap[selectedLog.eventId] ?? selectedLog.eventId ?? '—' }}</span>
+            </div>
+            <div class="mv-detail-cell">
+              <span class="mv-detail-label">Author</span>
+              <span class="mv-detail-val">{{ userLabel(selectedLog.authorId) }}</span>
+            </div>
+            <div class="mv-detail-cell">
+              <span class="mv-detail-label">Dispatched By</span>
+              <span class="mv-detail-val">{{ userLabel(selectedLog.dispatchedBy) }}</span>
+            </div>
+            <div class="mv-detail-cell">
+              <span class="mv-detail-label">Provider</span>
+              <span class="mv-detail-val">{{ selectedLog.apiProvider ?? '—' }}</span>
+            </div>
+            <div v-if="selectedLog.channel === 'sms'" class="mv-detail-cell">
+              <span class="mv-detail-label">Segments</span>
+              <span class="mv-detail-val">{{ resolveSegments(selectedLog) }}</span>
+            </div>
+            <div v-if="selectedLog.channel === 'sms'" class="mv-detail-cell">
+              <span class="mv-detail-label">Base Charge / Segment</span>
+              <span class="mv-detail-val">{{ selectedLog.baseSMSCharge != null ? formatBalance(selectedLog.baseSMSCharge) : '—' }}</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </Teleport>
+
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { db } from '../firebase'
 import {
   collection, getDocs, query,
-  where, orderBy, limit, Timestamp, doc, getDoc,
+  where, orderBy, Timestamp, doc, getDoc,
 } from 'firebase/firestore'
 
 const PAGE_SIZE = 25
@@ -435,6 +515,7 @@ function toLocalDT(d) {
 }
 
 // ── State ─────────────────────────────────────────────────────────────────
+const selectedLog = ref(null)
 const logs        = ref([])
 const users       = ref([])
 const eventMap    = ref({})
@@ -522,6 +603,7 @@ function applyPreset(key) {
     fromDate.value = toLocalDT(s)
     toDate.value   = toLocalDT(n)
   }
+  fetchLogs()
 }
 
 // ── Fetch ─────────────────────────────────────────────────────────────────
@@ -536,8 +618,7 @@ async function fetchLogs() {
         collection(db, 'messageLogs'),
         where('timestamp', '>=', from),
         where('timestamp', '<=', to),
-        orderBy('timestamp', 'desc'),
-        limit(1000)
+        orderBy('timestamp', 'desc')
       )
     )
     logs.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
@@ -572,10 +653,13 @@ async function fetchUsers() {
   } catch { /* silent */ }
 }
 
+function onKeyDown(e) { if (e.key === 'Escape') selectedLog.value = null }
 onMounted(() => {
   fetchUsers()
   fetchLogs()
+  window.addEventListener('keydown', onKeyDown)
 })
+onUnmounted(() => { window.removeEventListener('keydown', onKeyDown) })
 
 // ── Computed ──────────────────────────────────────────────────────────────
 const filtered = computed(() => {
@@ -707,6 +791,164 @@ const pageNumbers = computed(() => {
   }
   return result
 })
+
+// ── Export ────────────────────────────────────────────────────────────────
+const exporting = ref(false)
+
+async function exportExcel() {
+  if (exporting.value) return
+  exporting.value = true
+  try {
+    const ExcelJS = (await import('exceljs')).default ?? (await import('exceljs'))
+    const wb = new ExcelJS.Workbook()
+    wb.creator = 'Haflaway'
+    wb.created = new Date()
+
+    const ws = wb.addWorksheet('Messages', {
+      views: [{ state: 'frozen', ySplit: 5 }],
+    })
+
+    const NCOLS = 12
+    const fill  = (argb) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } })
+    const SHEET_BG = 'FF0A0A0B'
+
+    ws.columns = [
+      { width: 22 }, { width: 11 }, { width: 8  }, { width: 14 },
+      { width: 30 }, { width: 18 }, { width: 18 }, { width: 18 },
+      { width: 13 }, { width: 14 }, { width: 13 }, { width: 62 },
+    ]
+
+    // Dark background across entire visible sheet width (200 cols covers any screen)
+    for (let ci = 1; ci <= 200; ci++) {
+      ws.getColumn(ci).style = {
+        fill: fill(SHEET_BG),
+        font: { name: 'Calibri', size: 10, color: { argb: 'FFD8D4CD' } },
+        alignment: { vertical: 'middle', horizontal: 'left', indent: 1 },
+      }
+    }
+    const from = fromDate.value.slice(0, 10)
+    const to   = toDate.value.slice(0, 10)
+
+    // ── Row 1: Brand ───────────────────────────────────────────────────────
+    ws.mergeCells(1, 1, 1, NCOLS)
+    ws.getRow(1).height = 46
+    const titleCell = ws.getCell('A1')
+    titleCell.value = 'HAFLAWAY'
+    titleCell.font  = { name: 'Calibri', size: 26, bold: true, color: { argb: 'FFC9A84C' } }
+    titleCell.fill  = fill('FF0A0A0B')
+    titleCell.alignment = { vertical: 'middle', horizontal: 'left', indent: 2 }
+
+    // ── Row 2: Period / meta ───────────────────────────────────────────────
+    ws.mergeCells(2, 1, 2, NCOLS)
+    ws.getRow(2).height = 18
+    const metaCell = ws.getCell('A2')
+    metaCell.value = `Message Report  ·  ${from}  to  ${to}  ·  Exported ${new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}  ·  ${filtered.value.length.toLocaleString()} records`
+    metaCell.font  = { name: 'Calibri', size: 10, color: { argb: 'FF555555' } }
+    metaCell.fill  = fill('FF0A0A0B')
+    metaCell.alignment = { vertical: 'middle', horizontal: 'left', indent: 2 }
+
+    // ── Row 3: Stats ───────────────────────────────────────────────────────
+    ws.getRow(3).height = 40
+    const statBlocks = [
+      [1,  3,  filtered.value.length.toLocaleString(), 'TOTAL MESSAGES'],
+      [4,  6,  smsCount.value.toLocaleString(),         'SMS SEGMENTS'],
+      [7,  9,  whatsappCount.value.toLocaleString(),    'WHATSAPP'],
+      [10, 12, 'TZS ' + formatAmount(totalRevenue.value), 'REVENUE'],
+    ]
+    for (const [c1, c2, val, label] of statBlocks) {
+      ws.mergeCells(3, c1, 3, c2)
+      const c = ws.getCell(3, c1)
+      c.value     = val + '\n' + label
+      c.font      = { name: 'Calibri', size: 13, bold: true, color: { argb: 'FFC9A84C' } }
+      c.fill      = fill('FF0E0E0E')
+      c.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+    }
+
+    // ── Row 4: Gold divider ────────────────────────────────────────────────
+    ws.mergeCells(4, 1, 4, NCOLS)
+    ws.getRow(4).height = 3
+    ws.getCell('A4').fill = fill('FFC9A84C')
+
+    // ── Row 5: Column headers ──────────────────────────────────────────────
+    ws.getRow(5).height = 24
+    const HEADERS = ['Time', 'Channel', 'Segs', 'Campaign', 'Event', 'Author', 'Dispatched By', 'Recipient', 'Status', 'Charged (TZS)', 'Provider', 'Message']
+    HEADERS.forEach((h, i) => {
+      const c = ws.getCell(5, i + 1)
+      c.value = h
+      c.font  = { name: 'Calibri', size: 9, bold: true, color: { argb: 'FF666666' } }
+      c.fill  = fill('FF141414')
+      c.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }
+    })
+    ws.autoFilter = { from: { row: 5, column: 1 }, to: { row: 5, column: NCOLS } }
+
+    // ── Rows 6+: Data ─────────────────────────────────────────────────────
+    const STATUS_COLORS = {
+      delivered: 'FF30D158', sent: 'FF30D158', submitted: 'FF30D158',
+      read: 'FF0A84FF',
+      failed: 'FFFF453A', undelivered: 'FFFF453A',
+      queued: 'FFFF9F0A',
+    }
+
+    filtered.value.forEach((log, idx) => {
+      const rn  = idx + 6
+      const row = ws.getRow(rn)
+      row.height = 32
+      const bg  = idx % 2 === 0 ? 'FF0F0F0F' : 'FF121212'
+
+      const values = [
+        formatLogDate(log.timestamp),
+        (log.channel ?? '').toUpperCase(),
+        log.channel === 'sms' ? resolveSegments(log) : 1,
+        campaignLabel(log.type),
+        eventMap.value[log.eventId] ?? log.eventId ?? '—',
+        userLabel(log.authorId),
+        userLabel(log.dispatchedBy),
+        log.to ? String(log.to) : '—',
+        log.status ?? '—',
+        log.chargeAmount > 0 ? log.chargeAmount : 'Quota',
+        log.apiProvider ?? '—',
+        (log.message ?? '').replace(/\r?\n/g, ' '),
+      ]
+
+      values.forEach((val, ci) => {
+        const c = ws.getCell(rn, ci + 1)
+        c.value = val
+        c.fill  = fill(bg)
+        c.font  = { name: 'Calibri', size: 10, color: { argb: 'FFD8D4CD' } }
+        c.alignment = ci === 11
+          ? { vertical: 'top', horizontal: 'left', indent: 1, wrapText: true }
+          : { vertical: 'middle', horizontal: 'left', indent: 1 }
+
+        if (ci === 9 && typeof val === 'number') {
+          c.numFmt = '#,##0'
+          c.alignment = { ...c.alignment, horizontal: 'right' }
+          c.font = { ...c.font, bold: true, color: { argb: 'FFF0F0EC' } }
+        }
+        if (ci === 8) {
+          const sc = STATUS_COLORS[String(val).toLowerCase()]
+          if (sc) c.font = { ...c.font, bold: true, color: { argb: sc } }
+        }
+        if (ci === 1) {
+          const chColor = val === 'SMS' ? 'FF0A84FF' : 'FF30D158'
+          c.font = { ...c.font, bold: true, color: { argb: chColor } }
+        }
+      })
+    })
+
+    const buffer = await wb.xlsx.writeBuffer()
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+    const url = URL.createObjectURL(blob)
+    const a   = document.createElement('a')
+    a.href     = url
+    a.download = `haflaway_messages_${from}_to_${to}.xlsx`
+    a.click()
+    URL.revokeObjectURL(url)
+  } finally {
+    exporting.value = false
+  }
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 const userMap = computed(() => {
@@ -889,6 +1131,17 @@ function campaignLabel(type) {
 .mv-apply-btn:hover:not(:disabled) { opacity: 0.88; }
 .mv-apply-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
+.mv-export-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: transparent; color: var(--ink-muted);
+  border: 1px solid #2a2a2a; padding: 8px 14px; border-radius: 10px;
+  font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+  transition: border-color 150ms, color 150ms; white-space: nowrap;
+  align-self: flex-end;
+}
+.mv-export-btn:hover:not(:disabled) { border-color: #444; color: var(--ink); }
+.mv-export-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
 /* ── Stats ── */
 .mv-stats {
   display: flex; align-items: center;
@@ -943,23 +1196,38 @@ function campaignLabel(type) {
 .mv-table { width: 100%; border-collapse: collapse; min-width: 900px; }
 .mv-th {
   padding: 10px 18px; text-align: left;
-  font-size: 11px; font-weight: 600; color: var(--ink-dim);
+  font-size: 10.5px; font-weight: 600; color: var(--ink-dim);
   letter-spacing: 0.8px; text-transform: uppercase;
   border-bottom: 1px solid #2a2a2a; background: #111;
   white-space: nowrap;
 }
+.mv-th--loud  { color: var(--ink-soft); }
+.mv-th--ghost { color: #3a3a3a; }
 .mv-th--right { text-align: right; }
+
 .mv-row { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 120ms; }
 .mv-row:last-child { border-bottom: none; }
 .mv-row:hover { background: rgba(255,255,255,0.025); }
+
 .mv-td {
-  padding: 14px 18px; font-size: 13px; color: var(--ink-muted);
+  padding: 13px 18px; font-size: 13px; color: var(--ink-muted);
   vertical-align: middle; white-space: nowrap;
 }
-.mv-td--date  { color: var(--ink-muted); font-size: 12px; min-width: 140px; }
-.mv-td--muted { color: var(--ink-muted); }
+
+/* Primary — eyes go here */
+.mv-td--event {
+  max-width: 240px; overflow: hidden; text-overflow: ellipsis;
+  color: var(--ink); font-weight: 600; font-size: 13px;
+}
+
+/* Secondary — supporting context */
+.mv-td--person { color: var(--ink-soft); font-size: 13px; }
+
+/* Tertiary — reference only */
+.mv-td--timestamp { color: #484848; font-size: 11.5px; min-width: 130px; letter-spacing: 0.1px; }
+.mv-td--ghost     { color: #3a3a3a; font-size: 12px; }
+
 .mv-td--mono  { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11.5px; }
-.mv-td--event { max-width: 180px; overflow: hidden; text-overflow: ellipsis; color: var(--ink); font-weight: 500; }
 .mv-td--right { text-align: right; }
 
 /* Channel badge */
@@ -980,10 +1248,10 @@ function campaignLabel(type) {
 
 /* Status badge */
 .mv-status-badge {
-  display: inline-flex; padding: 3px 10px; border-radius: 20px;
-  font-size: 11px; font-weight: 600;
+  display: inline-flex; padding: 4px 11px; border-radius: 20px;
+  font-size: 11.5px; font-weight: 700;
   background: var(--paper-soft); color: var(--ink-muted);
-  text-transform: capitalize;
+  text-transform: capitalize; letter-spacing: 0.2px;
 }
 .mv-status-badge--queued    { background: rgba(255,159,10,.08); color: #FF9F0A; }
 .mv-status-badge--sent,
@@ -1045,4 +1313,60 @@ function campaignLabel(type) {
   .mv-topbar-inner { padding: 12px 16px; }
   .mv-page { padding: 16px 16px 48px; }
 }
+
+/* ── Row clickable ── */
+.mv-row--clickable { cursor: pointer; }
+.mv-row--clickable:hover { background: rgba(255,255,255,0.04); }
+
+/* ── Detail modal ── */
+.mv-detail-backdrop {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.mv-detail-modal {
+  background: #141414; border: 1px solid #2a2a2a;
+  border-radius: 20px; width: 100%; max-width: 580px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  display: flex; flex-direction: column; gap: 0;
+  overflow: hidden;
+  max-height: 90vh; overflow-y: auto;
+}
+.mv-detail-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px; border-bottom: 1px solid #2a2a2a; gap: 12px;
+}
+.mv-detail-header-left { display: flex; align-items: center; gap: 10px; }
+.mv-detail-title { font-size: 15px; font-weight: 600; color: var(--ink); }
+.mv-detail-close {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 8px; border: 1px solid #2a2a2a;
+  background: transparent; color: var(--ink-muted); cursor: pointer;
+  transition: background 130ms, color 130ms; flex-shrink: 0;
+}
+.mv-detail-close:hover { background: rgba(255,255,255,0.06); color: var(--ink); }
+
+.mv-detail-section {
+  padding: 18px 22px; border-bottom: 1px solid #1e1e1e;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.mv-detail-label {
+  font-size: 10.5px; font-weight: 600; color: var(--ink-dim);
+  text-transform: uppercase; letter-spacing: 0.6px;
+}
+.mv-detail-message {
+  font-size: 13.5px; color: var(--ink-soft); line-height: 1.65;
+  white-space: pre-wrap; word-break: break-word;
+  background: #0f0f0f; border: 1px solid #222; border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.mv-detail-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  padding: 16px 22px; gap: 16px 24px;
+}
+.mv-detail-cell { display: flex; flex-direction: column; gap: 4px; }
+.mv-detail-val  { font-size: 13px; color: var(--ink); font-weight: 500; }
 </style>
