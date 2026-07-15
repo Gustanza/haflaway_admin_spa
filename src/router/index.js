@@ -33,6 +33,7 @@ import EditEvent from '../views/EditEvent.vue'
 import MessagingView from '../views/MessagingView.vue'
 import AffiliatesView from '../views/AffiliatesView.vue'
 import SmsTemplatesView from '../views/SmsTemplatesView.vue'
+import WhatsAppTemplatesView from '../views/WhatsAppTemplatesView.vue'
 import PackagesView from '../views/PackagesView.vue'
 
 // Resolves once Firebase has restored the persisted session (or confirmed no user)
@@ -63,7 +64,7 @@ async function rejectUser() {
     await signOut(auth)
 }
 
-const PROTECTED_EXACT = ['/', '/users', '/messaging', '/affiliates', '/sms-templates', '/packages', '/global-attendees']
+const PROTECTED_EXACT = ['/', '/users', '/messaging', '/affiliates', '/sms-templates', '/whatsapp-templates', '/packages', '/global-attendees']
 const PROTECTED = ['/create-event', '/edit-event', '/event/', '/dashboard', '/user-events/']
 
 const routes = [
@@ -124,6 +125,12 @@ const routes = [
         name: 'SmsTemplates',
         component: SmsTemplatesView,
         meta: { title: 'SMS Templates' },
+    },
+    {
+        path: '/whatsapp-templates',
+        name: 'WhatsAppTemplates',
+        component: WhatsAppTemplatesView,
+        meta: { title: 'WhatsApp Templates' },
     },
     {
         path: '/packages',
