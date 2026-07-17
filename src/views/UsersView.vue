@@ -86,6 +86,7 @@
             <tr>
               <th class="uv-th">User</th>
               <th class="uv-th">Phone</th>
+              <th class="uv-th">Organization</th>
               <th class="uv-th">Balance</th>
               <th class="uv-th">Status</th>
               <th class="uv-th">Clearance</th>
@@ -109,8 +110,12 @@
               </td>
               <td class="uv-td uv-td--muted">{{ u.phoneNumber || '—' }}</td>
               <td class="uv-td">
+                <span v-if="orgFor(u)" class="uv-org-name">{{ orgFor(u).name }}</span>
+                <span v-else class="uv-td--muted">No org</span>
+              </td>
+              <td class="uv-td">
                 <button class="uv-balance-btn" @click="openBalanceModal(u)">
-                  {{ formatBalance(u.balance) }}
+                  {{ formatBalance(orgFor(u) ? orgFor(u).balance : u.balance) }}
                 </button>
               </td>
               <td class="uv-td">
@@ -239,9 +244,11 @@
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
+            <p v-if="balanceOrg" class="uv-bal-target-note">Adjusting <strong>{{ balanceOrg.name }}</strong>'s organization balance — this user's own personal balance is separate and unused for billing.</p>
+            <p v-else class="uv-bal-target-note">Adjusting {{ fullName(balanceUser) }}'s personal balance — they don't own an organization yet.</p>
             <div class="uv-bal-current">
               <span class="uv-bal-current-label">Current Balance</span>
-              <span class="uv-bal-current-val">{{ formatBalance(balanceUser.balance) }}</span>
+              <span class="uv-bal-current-val">{{ formatBalance(balanceCurrent) }}</span>
             </div>
             <div class="uv-bal-mode-row">
               <button :class="['uv-bal-mode-btn', balanceMode === 'add' && 'uv-bal-mode-btn--on']" @click="balanceMode = 'add'">Add / Deduct</button>
@@ -255,7 +262,7 @@
               <span class="uv-bal-preview-label">Result</span>
               <span class="uv-bal-preview-val" :class="previewBalance < 0 && 'uv-bal-preview-val--neg'">{{ formatBalance(previewBalance) }}</span>
             </div>
-            <div v-if="isTopUp" class="uv-bal-paid-row">
+            <div v-if="isTopUp && !balanceOrg" class="uv-bal-paid-row">
               <div class="uv-bal-paid-text">
                 <span class="uv-bal-paid-label">Payment Received?</span>
                 <span class="uv-bal-paid-sub">Turn off if this is on credit</span>
@@ -298,8 +305,8 @@
                 <span class="uv-hist-stat-val">{{ historyRecords.length }}</span>
               </div>
               <div class="uv-hist-stat">
-                <span class="uv-hist-stat-label">Balance</span>
-                <span class="uv-hist-stat-val uv-hist-stat-val--gold">{{ formatBalance(historyUser.balance) }}</span>
+                <span class="uv-hist-stat-label">{{ historyOrg ? 'Org Balance' : 'Balance' }}</span>
+                <span class="uv-hist-stat-val uv-hist-stat-val--gold">{{ formatBalance(historyOrg ? historyOrg.balance : historyUser.balance) }}</span>
               </div>
             </div>
 
@@ -523,8 +530,13 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { db, firebaseApp } from '../firebase'
 import {
   collection, getDocs, setDoc, updateDoc,
-  deleteDoc, doc, orderBy, query,
+  deleteDoc, doc, orderBy, query, addDoc, serverTimestamp,
 } from 'firebase/firestore'
+
+// haflaway_admin_spa doesn't share a module tree with haflaway_spa, so these
+// mirror useOrg.js's defaults there rather than importing across projects.
+const DEFAULT_ORG_ACCENT = '#C9A84C'
+const DEFAULT_ORG_SECONDARY = '#3B82F6'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import { initializeApp, deleteApp } from 'firebase/app'
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'
@@ -541,6 +553,12 @@ function formatBalance(n) {
 // ── Users state ────────────────────────────────────────────────────────────
 const users        = ref([])
 const loading      = ref(true)
+// Balance now lives on an org once its owner has one, not on the user — this
+// maps ownerId -> that org, so the whole view can show/adjust the account
+// that's actually billed for that user's events instead of their (likely
+// vestigial) personal balance.
+const orgsByOwner   = ref({})
+function orgFor(u) { return orgsByOwner.value[u.id] ?? null }
 const searchQuery  = ref('')
 const statusFilter = ref('all')
 const currentPage  = ref(1)
@@ -732,6 +750,17 @@ async function fetchUsers() {
   }
 }
 
+async function fetchOrgs() {
+  try {
+    const snap = await getDocs(collection(db, 'organizations'))
+    const map = {}
+    snap.docs.forEach(d => { map[d.data().ownerId] = { id: d.id, ...d.data() } })
+    orgsByOwner.value = map
+  } catch (e) {
+    console.error('fetchOrgs error:', e)
+  }
+}
+
 // ── Balance ────────────────────────────────────────────────────────────────
 const balanceUser   = ref(null)
 const balanceMode   = ref('set')
@@ -740,14 +769,20 @@ const savingBalance = ref(false)
 const balanceError  = ref('')
 const balancePaid   = ref(true)
 
+// If the user being adjusted owns an org, every adjustment targets that org's
+// shared balance instead — org.balance is what's actually charged for their
+// events once those events carry an orgId.
+const balanceOrg = computed(() => balanceUser.value ? orgFor(balanceUser.value) : null)
+const balanceCurrent = computed(() => balanceOrg.value ? (balanceOrg.value.balance ?? 0) : (balanceUser.value?.balance ?? 0))
+
 const previewBalance = computed(() => {
-  const current = balanceUser.value?.balance ?? 0
+  const current = balanceCurrent.value
   const input   = balanceInput.value ?? 0
   return balanceMode.value === 'set' ? input : current + input
 })
 
 const isTopUp = computed(() =>
-  !!balanceUser.value && previewBalance.value > (balanceUser.value.balance ?? 0)
+  !!balanceUser.value && previewBalance.value > balanceCurrent.value
 )
 
 function openBalanceModal(u) {
@@ -763,11 +798,18 @@ async function doAdjustBalance() {
   balanceError.value  = ''
   try {
     const newBalance = previewBalance.value
-    const adjustBalance = httpsCallable(functions, 'adjustUserBalance')
-    const result = await adjustBalance({ userId: balanceUser.value.id, newBalance, paid: balancePaid.value })
-    balanceUser.value.balance = newBalance
-    if (result.data?.outstandingCredit !== undefined) {
-      balanceUser.value.outstandingCredit = result.data.outstandingCredit
+    if (balanceOrg.value) {
+      const adjustBalance = httpsCallable(functions, 'adjustOrgBalance')
+      await adjustBalance({ orgId: balanceOrg.value.id, newBalance })
+      balanceOrg.value.balance = newBalance
+      orgsByOwner.value = { ...orgsByOwner.value, [balanceUser.value.id]: balanceOrg.value }
+    } else {
+      const adjustBalance = httpsCallable(functions, 'adjustUserBalance')
+      const result = await adjustBalance({ userId: balanceUser.value.id, newBalance, paid: balancePaid.value })
+      balanceUser.value.balance = newBalance
+      if (result.data?.outstandingCredit !== undefined) {
+        balanceUser.value.outstandingCredit = result.data.outstandingCredit
+      }
     }
     balanceUser.value = null
   } catch {
@@ -812,6 +854,7 @@ const historyError   = ref('')
 const lifetimeTopUps = computed(() =>
   historyRecords.value.filter(r => r.delta > 0).reduce((sum, r) => sum + r.delta, 0)
 )
+const historyOrg = computed(() => historyUser.value ? orgFor(historyUser.value) : null)
 
 async function openHistoryModal(u) {
   historyUser.value    = u
@@ -819,8 +862,10 @@ async function openHistoryModal(u) {
   historyError.value   = ''
   historyLoading.value = true
   try {
+    const org = orgFor(u)
+    const path = org ? ['organizations', org.id, 'balanceHistory'] : ['users', u.id, 'balanceHistory']
     const snap = await getDocs(
-      query(collection(db, 'users', u.id, 'balanceHistory'), orderBy('timestamp', 'desc'))
+      query(collection(db, ...path), orderBy('timestamp', 'desc'))
     )
     historyRecords.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
   } catch (e) {
@@ -856,12 +901,29 @@ async function createUser() {
   const tempAuth = getAuth(tempApp)
   try {
     const { user } = await createUserWithEmailAndPassword(tempAuth, form.value.email.trim(), form.value.password)
+
+    // Balance lives on an org, not the user — give every staff-created account
+    // a default org too, same as self-service registration, and seed the
+    // requested "Initial Balance" onto it instead of the user doc.
+    const orgRef = await addDoc(collection(db, 'organizations'), {
+      name: `${form.value.firstName.trim()}'s Organization`,
+      logoUrl: '',
+      faviconUrl: '',
+      accentColor: DEFAULT_ORG_ACCENT,
+      secondaryColor: DEFAULT_ORG_SECONDARY,
+      balance: form.value.balance || 0,
+      ownerId: user.uid,
+      memberIds: [user.uid],
+      createdAt: serverTimestamp(),
+    })
+
     await setDoc(doc(db, 'users', user.uid), {
       firstName:        form.value.firstName.trim(),
       lastName:         form.value.lastName.trim(),
       email:            form.value.email.trim(),
       phoneNumber:      builtPhone(),
-      balance:          form.value.balance || 0,
+      balance:          0,
+      activeOrgId:      orgRef.id,
       isActive:         form.value.isActive,
       clearanceLevel:   form.value.clearanceLevel,
       searchName:       `${form.value.firstName} ${form.value.lastName}`.trim().toLowerCase(),
@@ -870,6 +932,7 @@ async function createUser() {
       lastLoginDate:    null,
     })
     await fetchUsers()
+    await fetchOrgs()
     resetModal()
   } catch (e) {
     const code = e?.code
@@ -953,7 +1016,7 @@ function resetModal() {
 
 function closeModal() { if (saving.value) return; resetModal() }
 
-onMounted(fetchUsers)
+onMounted(() => { fetchUsers(); fetchOrgs() })
 </script>
 
 <style scoped>
@@ -1169,6 +1232,7 @@ onMounted(fetchUsers)
   transition: border-color 150ms, color 150ms;
 }
 .uv-balance-btn:hover { color: #e0bc6e; border-bottom-color: rgba(201,168,76,0.7); }
+.uv-org-name { font-size: 13.5px; font-weight: 500; color: var(--ink); }
 
 /* Row actions */
 .uv-td--actions { width: 48px; text-align: right; }
@@ -1287,6 +1351,9 @@ onMounted(fetchUsers)
   border: 1px solid #2a2a2a; border-radius: 16px;
   padding: 28px 28px 24px; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box;
   box-shadow: 4px 8px 0 rgba(0,0,0,0.4);
+}
+.uv-bal-target-note {
+  font-size: 12px; color: var(--ink-muted); margin: -8px 0 0; line-height: 1.5;
 }
 .uv-bal-current {
   display: flex; align-items: center; justify-content: space-between;

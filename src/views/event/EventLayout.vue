@@ -57,11 +57,12 @@
           <span class="el-event-title">{{ event?.title ?? '…' }}</span>
         </div>
         <div class="el-topbar-right">
-          <div class="el-balance-pill" v-if="userBalance !== null">
+          <div class="el-balance-pill" v-if="billingBalance !== null">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>
             </svg>
-            {{ formatBalance(userBalance) }}
+            {{ formatBalance(billingBalance) }}
+            <span v-if="billingIsOrg" class="el-balance-org-tag">org</span>
           </div>
           <div class="el-status-pill" :class="`el-status-pill--${eventStatus}`">
             <span class="el-status-dot" />
@@ -81,7 +82,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { db, auth } from '../../firebase'
+import { db } from '../../firebase'
 import { doc, getDoc } from 'firebase/firestore'
 
 const route = useRoute()
@@ -89,24 +90,39 @@ const router = useRouter()
 const eventId = computed(() => route.params.eventId)
 const event = ref(null)
 const showMobileNav = ref(false)
-const userBalance = ref(null)
+const billingBalance = ref(null)
+const billingIsOrg = ref(false)
 
 function formatBalance(n) {
   if (n == null) return '—'
   return 'TZS ' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 })
 }
 
-async function loadUserBalance() {
-  const uid = auth.currentUser?.uid
-  if (!uid) return
+// Staff are viewing someone else's event here, so the balance shown must be
+// whichever account actually gets billed for it — the event's org if it has
+// one (event.orgId), otherwise the event author's personal balance. Never the
+// logged-in staff member's own balance.
+async function loadBillingBalance() {
+  const ev = event.value
+  if (!ev) return
   try {
-    const snap = await getDoc(doc(db, 'users', uid))
-    if (snap.exists()) {
-      const b = snap.data().balance
-      userBalance.value = b != null ? Number(b) : 0
+    if (ev.orgId) {
+      const orgSnap = await getDoc(doc(db, 'organizations', ev.orgId))
+      if (orgSnap.exists()) {
+        billingBalance.value = Number(orgSnap.data().balance ?? 0)
+        billingIsOrg.value = true
+        return
+      }
+    }
+    if (ev.authorId) {
+      const userSnap = await getDoc(doc(db, 'users', ev.authorId))
+      if (userSnap.exists()) {
+        billingBalance.value = Number(userSnap.data().balance ?? 0)
+        billingIsOrg.value = false
+      }
     }
   } catch (e) {
-    console.error('Failed to load user balance', e)
+    console.error('Failed to load billing balance', e)
   }
 }
 
@@ -242,7 +258,7 @@ onMounted(async () => {
   } catch (e) {
     console.error('Failed to load event', e)
   }
-  loadUserBalance()
+  loadBillingBalance()
 })
 </script>
 
@@ -427,6 +443,15 @@ onMounted(async () => {
   color: #C9A84C;
   letter-spacing: 0.1px;
   white-space: nowrap;
+}
+.el-balance-org-tag {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  background: rgba(201,168,76,0.18);
+  border-radius: 5px;
+  padding: 1px 5px;
 }
 
 /* Status pill */
