@@ -899,8 +899,10 @@ async function createUser() {
   saveError.value = ''
   const tempApp  = initializeApp(firebaseApp.options, `admin-create-${Date.now()}`)
   const tempAuth = getAuth(tempApp)
+  // Lowercase so it matches the exact-match "add member by email" lookups in haflaway_spa.
+  const email = form.value.email.trim().toLowerCase()
   try {
-    const { user } = await createUserWithEmailAndPassword(tempAuth, form.value.email.trim(), form.value.password)
+    const { user } = await createUserWithEmailAndPassword(tempAuth, email, form.value.password)
 
     // Balance lives on an org, not the user — give every staff-created account
     // a default org too, same as self-service registration, and seed the
@@ -920,7 +922,7 @@ async function createUser() {
     await setDoc(doc(db, 'users', user.uid), {
       firstName:        form.value.firstName.trim(),
       lastName:         form.value.lastName.trim(),
-      email:            form.value.email.trim(),
+      email,
       phoneNumber:      builtPhone(),
       balance:          0,
       activeOrgId:      orgRef.id,
