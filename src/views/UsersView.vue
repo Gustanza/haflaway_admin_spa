@@ -110,12 +110,15 @@
               </td>
               <td class="uv-td uv-td--muted">{{ u.phoneNumber || '—' }}</td>
               <td class="uv-td">
-                <span v-if="orgFor(u)" class="uv-org-name">{{ orgFor(u).name }}</span>
+                <span v-if="primaryOrgOf(u)" class="uv-org-name">
+                  {{ primaryOrgOf(u).name }}
+                  <span v-if="orgsOf(u).length > 1" class="uv-org-more" :title="orgsOf(u).map(o => o.name).join(', ')">+{{ orgsOf(u).length - 1 }}</span>
+                </span>
                 <span v-else class="uv-td--muted">No org</span>
               </td>
               <td class="uv-td">
                 <button class="uv-balance-btn" @click="openBalanceModal(u)">
-                  {{ formatBalance(orgFor(u) ? orgFor(u).balance : u.balance) }}
+                  {{ formatBalance(primaryOrgOf(u) ? primaryOrgOf(u).balance : u.balance) }}
                 </button>
               </td>
               <td class="uv-td">
@@ -244,6 +247,14 @@
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
+            <div v-if="balanceUserOrgs.length > 1" class="uv-field">
+              <label class="uv-field-label">Organization ({{ balanceUserOrgs.length }})</label>
+              <select v-model="selectedOrgId" class="uv-field-input">
+                <option v-for="o in balanceUserOrgs" :key="o.id" :value="o.id">
+                  {{ o.name }}{{ o.ownerId === balanceUser.id ? ' (Owner)' : ' (Member)' }} — {{ formatBalance(o.balance) }}
+                </option>
+              </select>
+            </div>
             <p v-if="balanceOrg" class="uv-bal-target-note">Adjusting <strong>{{ balanceOrg.name }}</strong>'s organization balance — this user's own personal balance is separate and unused for billing.</p>
             <p v-else class="uv-bal-target-note">Adjusting {{ fullName(balanceUser) }}'s personal balance — they don't own an organization yet.</p>
             <div class="uv-bal-current">
@@ -292,6 +303,15 @@
               <button class="uv-close-btn" @click="historyUser = null">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
+            </div>
+
+            <div v-if="historyUserOrgs.length > 1" class="uv-field">
+              <label class="uv-field-label">Organization ({{ historyUserOrgs.length }})</label>
+              <select v-model="historySelectedOrgId" class="uv-field-input">
+                <option v-for="o in historyUserOrgs" :key="o.id" :value="o.id">
+                  {{ o.name }}{{ o.ownerId === historyUser.id ? ' (Owner)' : ' (Member)' }}
+                </option>
+              </select>
             </div>
 
             <!-- Stats strip -->
@@ -553,12 +573,17 @@ function formatBalance(n) {
 // ── Users state ────────────────────────────────────────────────────────────
 const users        = ref([])
 const loading      = ref(true)
-// Balance now lives on an org once its owner has one, not on the user — this
-// maps ownerId -> that org, so the whole view can show/adjust the account
-// that's actually billed for that user's events instead of their (likely
-// vestigial) personal balance.
-const orgsByOwner   = ref({})
-function orgFor(u) { return orgsByOwner.value[u.id] ?? null }
+// Balance now lives on an org, not the user — this maps userId -> every org
+// they belong to (owner OR member, since a user can be a member of orgs they
+// don't own, and can belong to more than one org). "Primary" is the org they
+// own if they own one, else their first membership — used for the table's
+// summary column and as the balance modal's default selection.
+const orgsByUser = ref({})
+function orgsOf(u) { return orgsByUser.value[u?.id] ?? [] }
+function primaryOrgOf(u) {
+  const orgs = orgsOf(u)
+  return orgs.find(o => o.ownerId === u.id) ?? orgs[0] ?? null
+}
 const searchQuery  = ref('')
 const statusFilter = ref('all')
 const currentPage  = ref(1)
@@ -754,25 +779,36 @@ async function fetchOrgs() {
   try {
     const snap = await getDocs(collection(db, 'organizations'))
     const map = {}
-    snap.docs.forEach(d => { map[d.data().ownerId] = { id: d.id, ...d.data() } })
-    orgsByOwner.value = map
+    snap.docs.forEach(d => {
+      const org = { id: d.id, ...d.data() }
+      const memberIds = org.memberIds?.length ? org.memberIds : [org.ownerId].filter(Boolean)
+      for (const uid of memberIds) {
+        if (!map[uid]) map[uid] = []
+        map[uid].push(org)
+      }
+    })
+    orgsByUser.value = map
   } catch (e) {
     console.error('fetchOrgs error:', e)
   }
 }
 
 // ── Balance ────────────────────────────────────────────────────────────────
-const balanceUser   = ref(null)
-const balanceMode   = ref('set')
-const balanceInput  = ref(null)
-const savingBalance = ref(false)
-const balanceError  = ref('')
-const balancePaid   = ref(true)
+const balanceUser    = ref(null)
+const balanceMode    = ref('set')
+const balanceInput   = ref(null)
+const savingBalance  = ref(false)
+const balanceError   = ref('')
+const balancePaid    = ref(true)
+// Which of balanceUser's orgs is being adjusted — defaults to their primary
+// org, but a user with more than one org needs an explicit choice since
+// there's no longer a single "the" org to fall back to.
+const selectedOrgId  = ref(null)
 
-// If the user being adjusted owns an org, every adjustment targets that org's
-// shared balance instead — org.balance is what's actually charged for their
-// events once those events carry an orgId.
-const balanceOrg = computed(() => balanceUser.value ? orgFor(balanceUser.value) : null)
+const balanceUserOrgs = computed(() => orgsOf(balanceUser.value))
+const balanceOrg = computed(() =>
+  balanceUserOrgs.value.find(o => o.id === selectedOrgId.value) ?? null
+)
 const balanceCurrent = computed(() => balanceOrg.value ? (balanceOrg.value.balance ?? 0) : (balanceUser.value?.balance ?? 0))
 
 const previewBalance = computed(() => {
@@ -791,7 +827,12 @@ function openBalanceModal(u) {
   balanceInput.value = null
   balanceError.value = ''
   balancePaid.value  = true
+  selectedOrgId.value = primaryOrgOf(u)?.id ?? null
 }
+
+// Switching which org is targeted mid-edit would otherwise silently carry an
+// amount typed for one org's balance over to another's.
+watch(selectedOrgId, () => { balanceInput.value = null })
 
 async function doAdjustBalance() {
   savingBalance.value = true
@@ -801,8 +842,10 @@ async function doAdjustBalance() {
     if (balanceOrg.value) {
       const adjustBalance = httpsCallable(functions, 'adjustOrgBalance')
       await adjustBalance({ orgId: balanceOrg.value.id, newBalance })
+      // Every member's orgsByUser entry holds the same org object by
+      // reference (see fetchOrgs), so this one mutation is visible to all of
+      // them — including balanceUser's other row(s) if they share this org.
       balanceOrg.value.balance = newBalance
-      orgsByOwner.value = { ...orgsByOwner.value, [balanceUser.value.id]: balanceOrg.value }
     } else {
       const adjustBalance = httpsCallable(functions, 'adjustUserBalance')
       const result = await adjustBalance({ userId: balanceUser.value.id, newBalance, paid: balancePaid.value })
@@ -854,15 +897,17 @@ const historyError   = ref('')
 const lifetimeTopUps = computed(() =>
   historyRecords.value.filter(r => r.delta > 0).reduce((sum, r) => sum + r.delta, 0)
 )
-const historyOrg = computed(() => historyUser.value ? orgFor(historyUser.value) : null)
+const historyUserOrgs   = computed(() => orgsOf(historyUser.value))
+const historySelectedOrgId = ref(null)
+const historyOrg = computed(() =>
+  historyUserOrgs.value.find(o => o.id === historySelectedOrgId.value) ?? null
+)
 
-async function openHistoryModal(u) {
-  historyUser.value    = u
+async function loadHistoryFor(u, org) {
   historyRecords.value = []
   historyError.value   = ''
   historyLoading.value = true
   try {
-    const org = orgFor(u)
     const path = org ? ['organizations', org.id, 'balanceHistory'] : ['users', u.id, 'balanceHistory']
     const snap = await getDocs(
       query(collection(db, ...path), orderBy('timestamp', 'desc'))
@@ -875,6 +920,17 @@ async function openHistoryModal(u) {
     historyLoading.value = false
   }
 }
+
+function openHistoryModal(u) {
+  historyUser.value = u
+  historySelectedOrgId.value = primaryOrgOf(u)?.id ?? null
+  loadHistoryFor(u, primaryOrgOf(u))
+}
+
+watch(historySelectedOrgId, (id) => {
+  if (!historyUser.value) return
+  loadHistoryFor(historyUser.value, historyUserOrgs.value.find(o => o.id === id) ?? null)
+})
 
 function formatHistoryDate(ts) {
   if (!ts) return '—'
@@ -1233,6 +1289,11 @@ onMounted(() => { fetchUsers(); fetchOrgs() })
 }
 .uv-balance-btn:hover { color: #e0bc6e; border-bottom-color: rgba(201,168,76,0.7); }
 .uv-org-name { font-size: 13.5px; font-weight: 500; color: var(--ink); }
+.uv-org-more {
+  display: inline-block; margin-left: 5px; padding: 1px 6px;
+  font-size: 10.5px; font-weight: 700; color: var(--gold-text);
+  background: rgba(201,168,76,0.12); border-radius: 20px; vertical-align: middle;
+}
 
 /* Row actions */
 .uv-td--actions { width: 48px; text-align: right; }
@@ -1532,6 +1593,7 @@ onMounted(() => { fetchUsers(); fetchOrgs() })
   border-bottom: 1px solid #2a2a2a;
   flex-shrink: 0;
 }
+.uv-history-modal > .uv-field          { padding: 0 20px 14px; }
 .uv-history-modal > .uv-hist-stats     { margin: 16px 20px 16px; }
 .uv-history-modal > .uv-hist-skeletons { padding: 0 20px 20px; }
 .uv-history-modal > .uv-hist-empty     { margin: 0 20px 20px; }

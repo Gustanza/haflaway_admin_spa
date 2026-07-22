@@ -205,6 +205,19 @@
                     </svg>
                   </button>
                 </template>
+                <span class="me-chip-sep">·</span>
+                <button
+                  class="me-owner-credit"
+                  :class="{ 'me-owner-credit--open': swapOrgEvent?.id === event.id }"
+                  @click.stop="openOrgSwap(event, $event)"
+                  title="Reassign organization"
+                >
+                  <span class="me-owner-credit-av" :style="orgAvatarStyle(event.orgId)">{{ event.orgId ? orgInitials(event.orgId) : '?' }}</span>
+                  {{ event.orgId ? (orgNames[event.orgId] || 'Org') : 'No org' }}
+                  <svg class="me-owner-credit-icon" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/>
+                  </svg>
+                </button>
               </div>
               <h3 class="me-row-title">{{ event.title }}</h3>
               <div class="me-row-meta">
@@ -351,6 +364,75 @@
     </Transition>
   </Teleport>
 
+  <!-- ── Org swap panel ── -->
+  <Teleport to="body">
+    <div v-if="swapOrgEvent" class="me-swap-backdrop" @click="closeOrgSwap" />
+    <Transition name="me-swap">
+      <div
+        v-if="swapOrgEvent"
+        class="me-swap-panel"
+        :style="{ top: swapOrgPos.top + 'px', left: swapOrgPos.left + 'px' }"
+        @click.stop
+      >
+        <div class="me-swap-header">
+          <div class="me-swap-header-left">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--gold);flex-shrink:0">
+              <path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/>
+            </svg>
+            <span>Reassign organization</span>
+          </div>
+          <button class="me-swap-close" @click="closeOrgSwap">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="me-swap-current" v-if="swapOrgEvent.orgId">
+          <span class="me-swap-current-label">Current</span>
+          <span class="me-swap-current-val">
+            <span class="me-swap-current-av" :style="orgAvatarStyle(swapOrgEvent.orgId)">{{ orgInitials(swapOrgEvent.orgId) }}</span>
+            {{ orgNames[swapOrgEvent.orgId] || 'Org' }}
+          </span>
+        </div>
+
+        <div class="me-swap-search-wrap">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--ink-dim);pointer-events:none">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input v-model="swapOrgSearch" class="me-swap-search" placeholder="Search organizations…" autofocus />
+        </div>
+
+        <div class="me-swap-list">
+          <div v-if="!allOrgsReady" class="me-swap-loading">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-swap-spinner"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+            Loading organizations…
+          </div>
+          <template v-else>
+            <button
+              v-for="o in orgSwapFiltered"
+              :key="o.id"
+              class="me-swap-opt"
+              :class="{ 'me-swap-opt--current': o.id === swapOrgEvent.orgId, 'me-swap-opt--saving': swapOrgSaving }"
+              :disabled="swapOrgSaving || o.id === swapOrgEvent.orgId"
+              @click="doOrgSwap(o)"
+            >
+              <span class="me-swap-opt-av" :style="orgAvatarStyle(o.id)">{{ orgInitials(o.id) }}</span>
+              <span class="me-swap-opt-info">
+                <span class="me-swap-opt-name">{{ o.name }}</span>
+                <span class="me-swap-opt-email">{{ formatBalance(o.balance) }}</span>
+              </span>
+              <svg v-if="o.id === swapOrgEvent.orgId" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;flex-shrink:0;color:var(--gold)">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </button>
+            <p v-if="orgSwapFiltered.length === 0" class="me-swap-empty">No organizations match "{{ swapOrgSearch }}"</p>
+          </template>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
 </template>
 
 <script setup>
@@ -372,6 +454,7 @@ const activeFilter = ref('all')
 const activeSort = ref('newest')
 const activeOwner = ref(null)
 const ownerNames = ref({})
+const orgNames = ref({})
 const ownerSearch = ref('')
 const showOwnerDrop = ref(false)
 const searchQuery = ref('')
@@ -401,11 +484,24 @@ async function loadEvents() {
     const snap = await getDocs(query(collection(db, 'events'), orderBy('startDate', 'desc')))
     events.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
     fetchOwnerNames()
+    fetchOrgNames()
   } catch (e) {
     console.error('loadEvents:', e)
   } finally {
     loading.value = false
   }
+}
+
+async function fetchOrgNames() {
+  const ids = [...new Set(events.value.map(e => e.orgId).filter(Boolean))]
+  const map = {}
+  await Promise.all(ids.map(async id => {
+    try {
+      const d = await getDoc(doc(db, 'organizations', id))
+      map[id] = d.exists() ? (d.data().name || id.slice(0, 8)) : id.slice(0, 8)
+    } catch { map[id] = id.slice(0, 8) }
+  }))
+  orgNames.value = map
 }
 
 async function fetchOwnerNames() {
@@ -535,6 +631,7 @@ async function fetchAllUsers() {
 
 function openSwap(event, e) {
   e.stopPropagation()
+  closeOrgSwap()
   if (swapEvent.value?.id === event.id) { swapEvent.value = null; return }
   const rect = e.currentTarget.getBoundingClientRect()
   swapPos.value = { top: rect.bottom + 6, left: Math.max(8, rect.left) }
@@ -574,6 +671,70 @@ function ownerInitials(id) {
 }
 function ownerFirstName(id) {
   return (ownerNames.value[id] || '').split(' ')[0] || ''
+}
+
+// ── Org swap ───────────────────────────────────────────────────────────────
+// Lets staff manually move an event to a different organization — events are
+// billed against whichever org they carry as orgId, so this is the fix for
+// an event that landed under the wrong org (or none) and needs correcting.
+const swapOrgEvent   = ref(null)
+const swapOrgPos     = ref({ top: 0, left: 0 })
+const swapOrgSearch  = ref('')
+const swapOrgSaving  = ref(false)
+const allOrgs        = ref([])
+const allOrgsReady   = ref(false)
+
+async function fetchAllOrgs() {
+  if (allOrgsReady.value) return
+  try {
+    const snap = await getDocs(collection(db, 'organizations'))
+    allOrgs.value = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    allOrgsReady.value = true
+  } catch (e) { console.error('fetchAllOrgs:', e) }
+}
+
+function openOrgSwap(event, e) {
+  e.stopPropagation()
+  closeSwap()
+  if (swapOrgEvent.value?.id === event.id) { swapOrgEvent.value = null; return }
+  const rect = e.currentTarget.getBoundingClientRect()
+  swapOrgPos.value = { top: rect.bottom + 6, left: Math.max(8, rect.left) }
+  swapOrgEvent.value = event
+  swapOrgSearch.value = ''
+  fetchAllOrgs()
+}
+function closeOrgSwap() { swapOrgEvent.value = null; swapOrgSearch.value = '' }
+
+async function doOrgSwap(org) {
+  if (!swapOrgEvent.value || swapOrgSaving.value) return
+  swapOrgSaving.value = true
+  try {
+    await updateDoc(doc(db, 'events', swapOrgEvent.value.id), { orgId: org.id })
+    swapOrgEvent.value.orgId = org.id
+    orgNames.value[org.id] = org.name
+    closeOrgSwap()
+  } catch (e) { console.error('doOrgSwap:', e) } finally { swapOrgSaving.value = false }
+}
+
+const orgSwapFiltered = computed(() => {
+  const q = swapOrgSearch.value.trim().toLowerCase()
+  if (!q) return allOrgs.value
+  return allOrgs.value.filter(o => (o.name || '').toLowerCase().includes(q))
+})
+
+const ORG_PALETTE = ['#C9A84C', '#30D158', '#0A84FF', '#FF9F0A', '#BF5AF2', '#64D2FF']
+function orgAvatarStyle(id) {
+  const color = ORG_PALETTE[(id || '0').charCodeAt(0) % ORG_PALETTE.length]
+  return { background: color + '22', color, border: `1px solid ${color}55` }
+}
+function orgInitials(id) {
+  return (orgNames.value[id] || '').split(' ').map(w => w[0]?.toUpperCase()).filter(Boolean).slice(0, 2).join('') || '?'
+}
+function formatBalance(n) {
+  if (n == null) return '—'
+  return 'TZS ' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 })
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
