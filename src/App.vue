@@ -40,6 +40,9 @@ body { margin: 0; }
 .app-main {
   flex: 1;
   min-width: 0;
-  overflow-x: hidden;
+  /* `clip` rather than `hidden`: hidden on one axis forces the other to `auto`,
+     which makes this a scroll container and silently kills `position: sticky`
+     for the page topbars inside it. `clip` cuts overflow without that. */
+  overflow-x: clip;
 }
 </style>

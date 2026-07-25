@@ -898,39 +898,142 @@ onMounted(() => {
 .me-root {
   --ink: #f0f0ec;
   --ink-soft: #d8d4cd;
-  --ink-muted: #888;
-  --ink-dim: #555;
-  --line: #242424;
-  --line-soft: #1e1e1e;
-  --line-strong: #2a2a2a;
-  --paper-soft: #141414;
+  --ink-muted: #8a8a8e;
+  --ink-dim: #636366;
+  /* Hairlines are light-on-glass rather than flat greys — they have to read
+     against whatever the aurora happens to be doing behind them. */
+  --line: rgba(255,255,255,0.08);
+  --line-soft: rgba(255,255,255,0.04);
+  --line-strong: rgba(255,255,255,0.16);
+  --paper-soft: rgba(20,20,25,0.35);
   --gold: #C9A84C;
   --emerald: #30D158;
   --emerald-soft: rgba(48,209,88,0.12);
+
   min-height: 100vh;
-  background: #0a0a0b;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', sans-serif;
+  /* flow-root establishes a BFC so the topbar's 16px top margin is contained
+     here instead of collapsing through the root and exposing the flat shell
+     background as a band at the very top edge. */
+  display: flow-root;
+  background-color: #040308;
+  /* Cosmic nebula base backing — static, sits under the animated orbs. */
+  background-image:
+    radial-gradient(circle at 80% 20%, rgba(201,168,76,0.08) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(6,182,212,0.04) 0%, transparent 40%),
+    radial-gradient(140% 120% at 50% 100%, #090815 0%, #030206 100%);
+  position: relative;
+  overflow: clip; /* clip orb overflow */
+  z-index: 1;     /* stacking context so the z-index:-1 orbs stay above the base */
+
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Inter', 'Segoe UI', sans-serif;
   color: var(--ink);
 }
 
-/* ── Topbar ── */
+/* ── Animated ambient glow ── two slow liquid orbs drifting behind everything.
+   `screen` blending keeps them additive over the nebula instead of muddying it. */
+.me-root::before,
+.me-root::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(140px);
+  opacity: 0.85;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: -1;
+  will-change: transform, border-radius;
+}
+
+/* Indigo-cyan aurora */
+.me-root::before {
+  top: -15%;
+  left: -5%;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle,
+    rgba(6,182,212,0.22) 0%,
+    rgba(124,58,237,0.08) 55%,
+    transparent 100%);
+  animation: float-aurora-indigo 26s infinite alternate ease-in-out;
+}
+
+/* Fuchsia-gold aurora */
+.me-root::after {
+  bottom: -15%;
+  right: -10%;
+  width: 55vw;
+  height: 55vw;
+  background: radial-gradient(circle,
+    rgba(236,72,153,0.18) 0%,
+    rgba(201,168,76,0.05) 60%,
+    transparent 100%);
+  animation: float-aurora-gold 30s infinite alternate ease-in-out;
+}
+
+/* The border-radius morph is what makes them read as liquid rather than as a
+   blurred circle sliding around. */
+@keyframes float-aurora-indigo {
+  0%   { transform: translate(0, 0) scale(1) rotate(0deg);          border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+  33%  { transform: translate(8vw, 6vh) scale(1.15) rotate(120deg); border-radius: 60% 40% 50% 50% / 50% 60% 40% 60%; }
+  66%  { transform: translate(-4vw, 10vh) scale(0.9) rotate(240deg);border-radius: 50% 60% 40% 60% / 60% 40% 60% 40%; }
+  100% { transform: translate(0, 0) scale(1) rotate(360deg);        border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+}
+
+@keyframes float-aurora-gold {
+  0%   { transform: translate(0, 0) scale(1) rotate(0deg);              border-radius: 50% 50% 30% 70% / 50% 60% 40% 50%; }
+  33%  { transform: translate(-10vw, -12vh) scale(1.2) rotate(-120deg); border-radius: 30% 70% 60% 40% / 60% 40% 60% 40%; }
+  66%  { transform: translate(6vw, 4vh) scale(0.95) rotate(-240deg);    border-radius: 60% 40% 50% 50% / 40% 60% 40% 60%; }
+  100% { transform: translate(0, 0) scale(1) rotate(-360deg);           border-radius: 50% 50% 30% 70% / 50% 60% 40% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .me-root::before,
+  .me-root::after { animation: none; }
+}
+
+/* ── Topbar — floats as a rounded glass capsule, aligned to the same 1200px
+   content column as .me-page so its edges line up with the cards below. The
+   outer element is just the width container; the capsule visual lives on
+   .me-topbar-inner. ── */
 .me-topbar {
   position: sticky;
-  top: 0;
+  top: 16px;
   z-index: 100;
-  background: rgba(10,10,11,0.88);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border-bottom: 1px solid var(--line);
-  box-shadow: 0 1px 0 rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.3);
+  max-width: 1200px;
+  margin: 16px auto 0;
+  padding: 0 32px;
+  box-sizing: border-box;
 }
 .me-topbar-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 14px 32px;
+  padding: 12px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-radius: 28px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%),
+    rgba(14,14,18,0.28);
+  backdrop-filter: blur(36px) saturate(190%);
+  -webkit-backdrop-filter: blur(36px) saturate(190%);
+  border: 1px solid rgba(255,255,255,0.16);
+  /* Top inset = the light catching the upper lip of the glass; bottom inset =
+     the shaded underside. Both are what sell it as a physical surface. */
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    inset 0 -1px 0 rgba(0,0,0,0.22),
+    0 8px 32px rgba(0,0,0,0.35),
+    0 20px 48px -12px rgba(0,0,0,0.4);
+  transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.me-topbar-inner:hover {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.03) 100%),
+    rgba(14,14,18,0.28);
+  border-color: rgba(255,255,255,0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    inset 0 -1px 0 rgba(0,0,0,0.22),
+    0 12px 40px rgba(0,0,0,0.45);
 }
 .me-page-title {
   font-family: 'Instrument Serif', Georgia, serif;
@@ -938,27 +1041,88 @@ onMounted(() => {
   font-weight: 400;
   color: var(--ink);
   letter-spacing: -0.3px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.55);
 }
 
-/* ── Create button (gold) ── */
+/* ── Create button — neon ──
+   Not a solid fill. Three layers stacked read as "lit from within":
+     1. a translucent tinted glass body (the aurora shows through it)
+     2. a luminous 1px edge, brighter than anything inside the button
+     3. a two-stop outer halo — tight + hot, then wide + faint — which is what
+        actually makes it glow rather than just sit on a shadow.
+   Everything keys off --neon, so recoloring the CTA is a one-line change. */
 .me-create-btn {
+  --neon: 34, 211, 238;        /* cyan — matches the aurora's indigo-cyan orb */
+  --neon-lit: 103, 232, 249;   /* brighter tint for the edge + highlights */
+
   display: flex;
   align-items: center;
   gap: 7px;
-  background: #C9A84C;
-  color: #070707;
-  border: none;
+  position: relative;
+  background:
+    linear-gradient(135deg,
+      rgba(var(--neon), 0.30) 0%,
+      rgba(var(--neon), 0.14) 55%,
+      rgba(var(--neon), 0.20) 100%),
+    rgba(8, 24, 32, 0.55);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  color: #eaffff;
+  border: 1px solid rgba(var(--neon-lit), 0.75);
   padding: 8px 18px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
-  transition: background 130ms;
+  transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1);
   letter-spacing: 0.1px;
+  /* Hold the label on one line — a squeezed flex item wrapping mid-phrase is
+     what makes a topbar look mangled at narrow widths. */
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-shadow: 0 0 12px rgba(var(--neon-lit), 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 0 18px rgba(var(--neon), 0.22),
+    0 0 0 1px rgba(var(--neon), 0.18),
+    0 0 18px rgba(var(--neon), 0.38),
+    0 0 44px rgba(var(--neon), 0.20);
 }
-.me-create-btn:hover { background: #d4b560; }
-.me-create-btn--lg { padding: 10px 24px; font-size: 14px; border-radius: 12px; }
+.me-create-btn:hover {
+  border-color: rgba(var(--neon-lit), 0.95);
+  transform: translateY(-1px);
+  background:
+    linear-gradient(135deg,
+      rgba(var(--neon), 0.42) 0%,
+      rgba(var(--neon), 0.20) 55%,
+      rgba(var(--neon), 0.28) 100%),
+    rgba(8, 24, 32, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 0 24px rgba(var(--neon), 0.32),
+    0 0 0 1px rgba(var(--neon), 0.28),
+    0 0 26px rgba(var(--neon), 0.55),
+    0 0 66px rgba(var(--neon), 0.30);
+}
+/* Pressed = the tube dimming, so the halo contracts rather than the button
+   just sliding back down. */
+.me-create-btn:active {
+  transform: translateY(0);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 0 14px rgba(var(--neon), 0.28),
+    0 0 12px rgba(var(--neon), 0.32);
+}
+.me-create-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 0 18px rgba(var(--neon), 0.22),
+    0 0 0 3px rgba(var(--neon), 0.45),
+    0 0 26px rgba(var(--neon), 0.5);
+}
+.me-create-btn--lg { padding: 10px 24px; font-size: 14px; border-radius: 14px; }
 
 /* ── Page shell ── */
 .me-page {
@@ -978,7 +1142,7 @@ onMounted(() => {
   gap: 32px;
   flex-wrap: wrap;
   padding-bottom: 18px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid rgba(255,255,255,0.14);
 }
 .me-header-left { display: flex; flex-direction: column; gap: 5px; }
 .me-greeting {
@@ -989,8 +1153,16 @@ onMounted(() => {
   margin: 0;
   letter-spacing: -1px;
   line-height: 1;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
 }
-.me-subline { font-size: 13px; color: var(--ink-muted); margin: 0; }
+/* Copy sits directly on the aurora, so it carries its own shadow instead of
+   relying on a card behind it for contrast. */
+.me-subline {
+  font-size: 13px;
+  color: rgba(255,255,255,0.88);
+  margin: 0;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+}
 
 .me-header-stats {
   display: flex;
@@ -1011,20 +1183,22 @@ onMounted(() => {
   color: var(--ink);
   line-height: 1;
   letter-spacing: -1px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.55);
 }
-.me-stat-value--gold { color: var(--gold); }
-.me-stat-value--emerald { color: var(--emerald); }
+.me-stat-value--gold    { color: var(--gold);    text-shadow: 0 0 18px rgba(201,168,76,0.35); }
+.me-stat-value--emerald { color: var(--emerald); text-shadow: 0 0 18px rgba(48,209,88,0.35); }
 .me-stat-label {
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 1.3px;
   text-transform: uppercase;
-  color: var(--ink-muted);
+  color: rgba(255,255,255,0.72);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
 }
 .me-stat-divider {
   width: 1px;
   height: 44px;
-  background: var(--line-strong);
+  background: rgba(255,255,255,0.16);
   flex-shrink: 0;
 }
 
@@ -1032,14 +1206,26 @@ onMounted(() => {
 .me-filterbar {
   display: flex;
   align-items: center;
-  gap: 0;
-  background: #111;
-  border: 1px solid var(--line-strong);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%),
+    rgba(18,18,22,0.35);
+  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 14px;
   padding: 8px 8px 8px 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 4px 16px rgba(0,0,0,0.25);
+  transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
   flex-wrap: wrap;
   gap: 4px;
+}
+.me-filterbar:hover {
+  border-color: rgba(255,255,255,0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 6px 22px rgba(0,0,0,0.3);
 }
 
 .me-tabs { display: flex; align-items: center; gap: 2px; }
@@ -1049,29 +1235,46 @@ onMounted(() => {
   gap: 7px;
   padding: 7px 14px;
   border-radius: 8px;
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
   font-size: 13px;
   font-weight: 500;
-  color: var(--ink-muted);
+  color: rgba(255,255,255,0.65);
   cursor: pointer;
   font-family: inherit;
-  transition: background 120ms, color 120ms;
+  transition: all 180ms ease;
   white-space: nowrap;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.2);
 }
-.me-tab:hover { background: rgba(255,255,255,0.04); color: var(--ink-soft); }
-.me-tab--active { background: rgba(240,240,236,0.09); color: var(--ink); font-weight: 600; }
+.me-tab:hover {
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  transform: translateY(-0.5px);
+}
+/* Active tab is a raised chip of glass, not just a lighter fill. */
+.me-tab--active {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 100%),
+    rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.15);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 2px 8px rgba(0,0,0,0.2);
+  color: #fff;
+  font-weight: 600;
+}
 .me-tab-count {
   font-size: 10.5px;
   font-weight: 600;
-  background: rgba(255,255,255,0.06);
-  color: var(--ink-dim);
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.5);
   padding: 1px 6px;
   border-radius: 6px;
+  transition: all 150ms ease;
 }
-.me-tab-count--active { background: rgba(240,240,236,0.10); color: var(--ink-muted); }
+.me-tab-count--active { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.95); }
 
-.me-fb-divider { width: 1px; height: 26px; background: var(--line-strong); flex-shrink: 0; margin: 0 4px; }
+.me-fb-divider { width: 1px; height: 26px; background: rgba(255,255,255,0.14); flex-shrink: 0; margin: 0 4px; }
 
 .me-search-wrap {
   position: relative;
@@ -1083,7 +1286,7 @@ onMounted(() => {
 .me-search-icon-svg {
   position: absolute;
   left: 11px;
-  color: var(--ink-dim);
+  color: rgba(255,255,255,0.7);
   pointer-events: none;
   flex-shrink: 0;
 }
@@ -1097,7 +1300,7 @@ onMounted(() => {
   outline: none;
   font-family: inherit;
 }
-.me-search-input::placeholder { color: var(--ink-dim); }
+.me-search-input::placeholder { color: rgba(255,255,255,0.6); }
 .me-search-clear {
   position: absolute;
   right: 6px;
@@ -1114,31 +1317,48 @@ onMounted(() => {
 
 .me-fb-select {
   padding: 6px 10px;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(255,255,255,0.14);
   border-radius: 8px;
-  background: var(--paper-soft);
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   font-size: 12.5px;
   font-weight: 500;
-  color: var(--ink-muted);
+  color: rgba(255,255,255,0.85);
   font-family: inherit;
   outline: none;
   cursor: pointer;
   color-scheme: dark;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  transition: all 180ms ease;
 }
-.me-fb-select:focus { border-color: var(--line-strong); }
+/* The native popup isn't glass — give its options an opaque surface so they
+   stay readable when the control itself is translucent. */
+.me-fb-select option { color: #1a1a1a; text-shadow: none; background: #fff; }
+.me-fb-select:hover  { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.08); }
+.me-fb-select:focus  { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.09); }
 
 /* ── Owner filter ── */
 .me-owner-wrap { position: relative; flex-shrink: 0; }
 .me-owner-btn {
   display: flex; align-items: center; gap: 6px;
   padding: 6px 10px; border-radius: 8px;
-  border: 1px solid var(--line); background: var(--paper-soft);
-  font-size: 12.5px; font-weight: 500; color: var(--ink-muted);
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-size: 12.5px; font-weight: 500; color: rgba(255,255,255,0.85);
   cursor: pointer; font-family: inherit; white-space: nowrap;
-  transition: border-color 130ms, color 130ms;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  transition: all 180ms ease;
 }
-.me-owner-btn:hover { border-color: var(--line-strong); color: var(--ink); }
-.me-owner-btn--active { border-color: rgba(201,168,76,0.4); color: var(--gold); background: rgba(201,168,76,0.06); }
+.me-owner-btn:hover { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.08); color: #fff; }
+.me-owner-btn--active {
+  border-color: rgba(201,168,76,0.4);
+  color: var(--gold);
+  background: rgba(201,168,76,0.10);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 2px 10px rgba(201,168,76,0.15);
+}
 .me-owner-clear {
   display: flex; align-items: center; justify-content: center;
   width: 16px; height: 16px; border-radius: 50%;
@@ -1152,13 +1372,25 @@ onMounted(() => {
 .me-owner-drop {
   position: absolute; top: calc(100% + 8px); right: 0;
   width: 240px; z-index: 100;
-  background: #161616; border: 1px solid var(--line-strong);
-  border-radius: 14px; overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+  /* Opaque body — a menu is a read-and-act surface, so nothing behind it should
+     compete with its contents. The glass reads through the sheen, hairline and
+     insets instead of through the alpha. */
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.01) 60%, rgba(255,255,255,0.03) 100%),
+    rgba(17,17,23,0.985);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 16px; overflow: hidden;
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255,255,255,0.16),
+    inset 0 -1px 0 0 rgba(0,0,0,0.2),
+    0 24px 64px rgba(0,0,0,0.62),
+    0 4px 12px rgba(0,0,0,0.4);
 }
 .me-owner-search-wrap {
   position: relative; display: flex; align-items: center;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .me-owner-search {
   width: 100%; padding: 10px 12px 10px 30px;
@@ -1192,7 +1424,13 @@ onMounted(() => {
 .me-skeleton {
   height: 160px;
   border-radius: 16px;
-  background: linear-gradient(90deg, #141414 25%, #1a1a1a 50%, #141414 75%);
+  border: 1px solid rgba(255,255,255,0.06);
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.03) 25%,
+    rgba(255,255,255,0.07) 50%,
+    rgba(255,255,255,0.03) 75%);
+  backdrop-filter: blur(28px) saturate(185%);
+  -webkit-backdrop-filter: blur(28px) saturate(185%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
 }
@@ -1208,11 +1446,26 @@ onMounted(() => {
   align-items: center;
   gap: 14px;
   padding: 80px 20px;
-  border: 1px dashed var(--line-strong);
+  border: 1px dashed rgba(255,255,255,0.18);
   border-radius: 20px;
+  background: rgba(255,255,255,0.02);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
-.me-empty-glyph { font-size: 32px; color: var(--gold); opacity: 0.6; }
-.me-empty-title { font-family: 'Instrument Serif', Georgia, serif; font-size: 22px; color: var(--ink); margin: 0; text-align: center; }
+.me-empty-glyph {
+  font-size: 32px;
+  color: var(--gold);
+  opacity: 0.6;
+  text-shadow: 0 0 24px rgba(201,168,76,0.5);
+}
+.me-empty-title {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 22px;
+  color: var(--ink);
+  margin: 0;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
 
 /* ── Status pills ── */
 .me-status-pill {
@@ -1289,17 +1542,29 @@ onMounted(() => {
 
 /* ── Owner swap panel ── */
 .me-swap-backdrop { position: fixed; inset: 0; z-index: 9998; }
+/* Teleported to <body>, so it can't inherit the page's aurora. Opaque body —
+   this panel carries a search field and a list you pick from, and it sits over
+   the densest part of the page. */
 .me-swap-panel {
   position: fixed; z-index: 9999;
   width: 272px;
-  background: #1a1a1a; border: 1px solid #303030;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.01) 60%, rgba(255,255,255,0.03) 100%),
+    rgba(17,17,23,0.985);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.18);
   border-radius: 16px; overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255,255,255,0.16),
+    inset 0 -1px 0 0 rgba(0,0,0,0.2),
+    0 24px 64px rgba(0,0,0,0.62),
+    0 4px 12px rgba(0,0,0,0.4);
 }
 .me-swap-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 13px 14px 10px;
-  border-bottom: 1px solid #252525;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .me-swap-header-left {
   display: flex; align-items: center; gap: 7px;
@@ -1307,7 +1572,7 @@ onMounted(() => {
 }
 .me-swap-close {
   width: 24px; height: 24px; border-radius: 7px;
-  border: 1px solid #2a2a2a; background: transparent; color: var(--ink-dim);
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: var(--ink-dim);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; transition: color 120ms; padding: 0; flex-shrink: 0;
 }
@@ -1315,8 +1580,8 @@ onMounted(() => {
 
 .me-swap-current {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 14px; background: rgba(201,168,76,0.05);
-  border-bottom: 1px solid #252525;
+  padding: 8px 14px; background: rgba(201,168,76,0.08);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .me-swap-current-label { font-size: 10px; font-weight: 700; color: var(--gold); letter-spacing: 0.8px; text-transform: uppercase; }
 .me-swap-current-val { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-muted); }
@@ -1326,7 +1591,7 @@ onMounted(() => {
   display: inline-flex; align-items: center; justify-content: center;
 }
 
-.me-swap-search-wrap { position: relative; border-bottom: 1px solid #252525; }
+.me-swap-search-wrap { position: relative; border-bottom: 1px solid rgba(255,255,255,0.08); }
 .me-swap-search {
   width: 100%; padding: 10px 12px 10px 30px; box-sizing: border-box;
   background: transparent; border: none; outline: none;
@@ -1393,20 +1658,27 @@ onMounted(() => {
   gap: 8px;
 }
 
+/* Rows are glass over the aurora rather than opaque panels — the orbs drift
+   through them, which is what keeps the list feeling like one lit surface. */
 .me-row {
   position: relative;
   display: grid;
   grid-template-columns: 118px 1fr 110px;
   gap: 0;
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.08);
   border-left: 4px solid rgba(255,255,255,0.12);
-  background: linear-gradient(160deg, #181818 0%, #141414 100%);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.005) 60%, rgba(255,255,255,0.02) 100%),
+    rgba(18,18,22,0.32);
+  backdrop-filter: blur(28px) saturate(185%);
+  -webkit-backdrop-filter: blur(28px) saturate(185%);
   cursor: pointer;
   box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.10),
     0 2px 8px rgba(0,0,0,0.3),
-    0 8px 24px -4px rgba(0,0,0,0.2);
-  transition: border-color 200ms, box-shadow 200ms, transform 200ms, filter 200ms;
+    0 8px 24px -4px rgba(0,0,0,0.25);
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
   min-height: 124px;
   overflow: hidden;
 }
@@ -1414,12 +1686,12 @@ onMounted(() => {
 .me-row--ongoing   { border-left-color: rgba(48,209,88,0.85); }
 .me-row--completed { border-left-color: rgba(255,255,255,0.10); }
 .me-row:hover {
-  border-color: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.18);
   box-shadow:
-    0 4px 20px rgba(0,0,0,0.5),
-    0 16px 40px -6px rgba(0,0,0,0.35);
-  transform: translateY(-2px);
-  filter: brightness(1.05);
+    inset 0 1px 1px rgba(255,255,255,0.10),
+    0 12px 40px rgba(0,0,0,0.55);
+  transform: translateY(-2px) scale(1.003);
+  filter: brightness(1.04);
 }
 
 
@@ -1472,6 +1744,7 @@ onMounted(() => {
   color: var(--ink);
   margin: 0 0 10px;
   letter-spacing: -0.4px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
   line-height: 1.2;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -1518,6 +1791,7 @@ onMounted(() => {
   letter-spacing: -3px;
   line-height: 0.85;
   display: block;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.45);
 }
 .me-row-cd-year {
   font-size: 9.5px;
@@ -1597,24 +1871,30 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px;
-  background: var(--paper-soft);
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   font-size: 13px;
   font-weight: 500;
-  color: var(--ink-muted);
+  color: rgba(255,255,255,0.7);
   cursor: pointer;
   font-family: inherit;
-  transition: border-color 130ms, color 130ms, background 130ms;
+  transition: all 180ms ease;
 }
 .me-page-btn:hover:not(:disabled):not(.me-page-btn--active) {
-  border-color: var(--line-strong);
-  color: var(--ink);
+  border-color: rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.08);
+  color: #fff;
 }
 .me-page-btn--active {
-  background: rgba(240,240,236,0.12);
-  border-color: rgba(240,240,236,0.18);
-  color: var(--ink);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 100%),
+    rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 2px 8px rgba(0,0,0,0.2);
+  color: #fff;
   font-weight: 700;
 }
 .me-page-btn--nav { color: var(--ink-dim); }
