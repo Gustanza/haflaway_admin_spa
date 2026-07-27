@@ -46,6 +46,9 @@
             <div class="pv-card-title-row">
               <span class="pv-card-name">{{ pkg.name }}</span>
               <span class="pv-rank-badge">Rank {{ pkg.rank }}</span>
+              <span class="pv-vis-badge" :class="`pv-vis-badge--${pkg.visibility ?? 'public'}`">
+                {{ visibilitySummary(pkg) }}
+              </span>
             </div>
             <div class="pv-card-actions">
               <button class="pv-icon-btn" title="Edit" @click="openEdit(pkg)">
@@ -188,6 +191,103 @@
                 </div>
               </div>
 
+              <!-- Availability -->
+              <div class="pv-modal-section-label">Availability</div>
+              <div class="pv-vis-modes">
+                <button
+                  v-for="m in VIS_MODES"
+                  :key="m.value"
+                  type="button"
+                  class="pv-vis-mode"
+                  :class="{ 'pv-vis-mode--on': form.visibility === m.value }"
+                  @click="form.visibility = m.value"
+                >
+                  <span class="pv-vis-mode-label">{{ m.label }}</span>
+                  <span class="pv-vis-mode-hint">{{ m.hint }}</span>
+                </button>
+              </div>
+
+              <!-- Segments — only meaningful in segments mode -->
+              <template v-if="form.visibility === 'segments'">
+                <label class="pv-field-label pv-vis-label">Segments that can choose this package</label>
+                <div class="pv-chip-row">
+                  <span v-for="s in form.segments" :key="s" class="pv-chip pv-chip--on">
+                    {{ s }}
+                    <button type="button" class="pv-chip-x" @click="removeSegment(s)">×</button>
+                  </span>
+                  <span v-if="!form.segments.length" class="pv-vis-empty">
+                    No segments yet — no organization can choose this package.
+                  </span>
+                </div>
+                <div class="pv-chip-row">
+                  <button
+                    v-for="s in suggestibleSegments"
+                    :key="s"
+                    type="button"
+                    class="pv-chip pv-chip--add"
+                    @click="addSegment(s)"
+                  >+ {{ s }}</button>
+                </div>
+                <div class="pv-seg-input-row">
+                  <input
+                    v-model="segmentDraft"
+                    class="pv-field-input"
+                    type="text"
+                    placeholder="New segment, e.g. agent"
+                    @keydown.enter.prevent="addSegment(segmentDraft)"
+                  />
+                  <button type="button" class="pv-add-service-btn" @click="addSegment(segmentDraft)">Add</button>
+                </div>
+                <p class="pv-vis-note">
+                  Segments are set per organization on the Organizations screen. An org sees this
+                  package if it carries any one of these.
+                </p>
+              </template>
+
+              <!-- Per-org overrides — deliberately secondary -->
+              <details class="pv-vis-overrides">
+                <summary class="pv-vis-summary">
+                  Per-organization overrides
+                  <span v-if="overrideCount" class="pv-vis-count">{{ overrideCount }}</span>
+                </summary>
+                <p class="pv-vis-note">
+                  For letting one org in early or holding one back. If an org needs different
+                  <em>rates</em>, give it its own package instead — overrides shouldn't carry pricing.
+                </p>
+
+                <label class="pv-field-label pv-vis-label">Always allow</label>
+                <div class="pv-chip-row">
+                  <span v-for="id in form.allowOrgIds" :key="id" class="pv-chip pv-chip--allow">
+                    {{ orgName(id) }}
+                    <button type="button" class="pv-chip-x" @click="toggleOverride('allow', id)">×</button>
+                  </span>
+                  <span v-if="!form.allowOrgIds.length" class="pv-vis-empty">None</span>
+                </div>
+
+                <label class="pv-field-label pv-vis-label">Never allow <span class="pv-vis-wins">(wins over everything)</span></label>
+                <div class="pv-chip-row">
+                  <span v-for="id in form.denyOrgIds" :key="id" class="pv-chip pv-chip--deny">
+                    {{ orgName(id) }}
+                    <button type="button" class="pv-chip-x" @click="toggleOverride('deny', id)">×</button>
+                  </span>
+                  <span v-if="!form.denyOrgIds.length" class="pv-vis-empty">None</span>
+                </div>
+
+                <div class="pv-seg-input-row">
+                  <select v-model="overrideOrgId" class="pv-field-input">
+                    <option value="">Choose an organization…</option>
+                    <option v-for="o in orgs" :key="o.id" :value="o.id">{{ o.name || o.id }}</option>
+                  </select>
+                  <button type="button" class="pv-add-service-btn" :disabled="!overrideOrgId" @click="toggleOverride('allow', overrideOrgId)">Allow</button>
+                  <button type="button" class="pv-add-service-btn pv-add-service-btn--deny" :disabled="!overrideOrgId" @click="toggleOverride('deny', overrideOrgId)">Deny</button>
+                </div>
+              </details>
+
+              <!-- Live preview: who can actually see this right now -->
+              <p class="pv-vis-preview">
+                <strong>{{ eligibleOrgs.length }}</strong> of {{ orgs.length }} organizations can choose this package<span v-if="eligibleOrgs.length">: {{ eligibleOrgs.map(o => o.name || o.id).join(', ') }}</span>.
+              </p>
+
               <!-- Messaging Quotas -->
               <div class="pv-modal-section-label">Messaging Quotas</div>
               <div class="pv-quota-form-head">
@@ -255,9 +355,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { db } from '../firebase'
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy, query } from 'firebase/firestore'
+import {
+  PLAN_VISIBILITY, canOrgSeePlan, normalizeSegment, knownSegments,
+} from '../utils/planVisibility.js'
 
 const packages          = ref([])
 const loading           = ref(true)
@@ -293,10 +396,71 @@ function emptyForm() {
       whatsApp: { invitationCardDispatch: 0, invitationCardReminder: 0, invitationCardGratitudeDispatch: 0, contributionCardDispatch: 0, saveTheDateCardDispatch: 0 },
     },
     services: [],
+    // New packages must state their audience rather than inheriting a default —
+    // a package that silently ships as public is a pricing leak, and one that
+    // silently ships as hidden reads as a bug. 'public' is pre-selected only so
+    // the control has a value; the three options are equally weighted in the UI.
+    visibility: PLAN_VISIBILITY.PUBLIC,
+    segments: [],
+    allowOrgIds: [],
+    denyOrgIds: [],
   }
 }
 
 const form = ref(emptyForm())
+
+// ── Availability ───────────────────────────────────────────────────────────
+const VIS_MODES = [
+  { value: PLAN_VISIBILITY.PUBLIC,   label: 'Public',     hint: 'Every organization can choose it' },
+  { value: PLAN_VISIBILITY.SEGMENTS, label: 'By segment', hint: 'Only orgs carrying a matching segment' },
+  { value: PLAN_VISIBILITY.HIDDEN,   label: 'Hidden',     hint: 'Nobody — draft or retired' },
+]
+
+const orgs = ref([])
+const segmentDraft = ref('')
+const overrideOrgId = ref('')
+
+const orgName = (id) => orgs.value.find(o => o.id === id)?.name || id
+
+// Existing vocabulary minus what's already on this package, so the chips only
+// offer something that would actually change the form.
+const suggestibleSegments = computed(() => {
+  const used = new Set(form.value.segments)
+  return knownSegments(orgs.value, packages.value).filter(s => !used.has(s))
+})
+
+const overrideCount = computed(() => form.value.allowOrgIds.length + form.value.denyOrgIds.length)
+
+// Runs the same predicate the client app uses, so this preview can't disagree
+// with what orgs actually see in their picker.
+const eligibleOrgs = computed(() => orgs.value.filter(o => canOrgSeePlan(o, form.value)))
+
+function addSegment(raw) {
+  const s = normalizeSegment(raw)
+  if (!s || form.value.segments.includes(s)) { segmentDraft.value = ''; return }
+  form.value.segments.push(s)
+  segmentDraft.value = ''
+}
+function removeSegment(s) {
+  form.value.segments = form.value.segments.filter(x => x !== s)
+}
+
+// An org is in exactly one override list or neither — putting it in both would
+// be ambiguous to read even though deny would win.
+function toggleOverride(kind, orgId) {
+  if (!orgId) return
+  const inList = kind === 'allow' ? form.value.allowOrgIds : form.value.denyOrgIds
+  if (inList.includes(orgId)) {
+    if (kind === 'allow') form.value.allowOrgIds = form.value.allowOrgIds.filter(x => x !== orgId)
+    else form.value.denyOrgIds = form.value.denyOrgIds.filter(x => x !== orgId)
+  } else {
+    form.value.allowOrgIds = form.value.allowOrgIds.filter(x => x !== orgId)
+    form.value.denyOrgIds  = form.value.denyOrgIds.filter(x => x !== orgId)
+    if (kind === 'allow') form.value.allowOrgIds.push(orgId)
+    else form.value.denyOrgIds.push(orgId)
+  }
+  overrideOrgId.value = ''
+}
 
 function toggleServices(id) {
   const s = collapsedServices.value
@@ -310,6 +474,19 @@ function toggleQuota(id) {
   collapsedQuotas.value = new Set(s)
 }
 
+// Card-level summary — says who can choose the package without opening it.
+function visibilitySummary(pkg) {
+  const mode = pkg.visibility ?? PLAN_VISIBILITY.PUBLIC
+  const extra = (pkg.allowOrgIds?.length ?? 0) + (pkg.denyOrgIds?.length ?? 0)
+  const suffix = extra ? ` · ${extra} override${extra > 1 ? 's' : ''}` : ''
+  if (mode === PLAN_VISIBILITY.HIDDEN) return 'Hidden' + suffix
+  if (mode === PLAN_VISIBILITY.SEGMENTS) {
+    const segs = pkg.segments ?? []
+    return (segs.length ? segs.join(', ') : 'No segments') + suffix
+  }
+  return 'Public' + suffix
+}
+
 function fmt(n) {
   if (n == null) return '—'
   return 'TZS ' + Number(n).toLocaleString('en-US')
@@ -318,7 +495,15 @@ function fmt(n) {
 async function load() {
   loading.value = true
   try {
-    const snap = await getDocs(query(collection(db, 'eventPlans'), orderBy('rank', 'asc')))
+    // Orgs are needed to resolve segment names into "who can actually see this"
+    // and to populate the override picker.
+    const [snap, orgSnap] = await Promise.all([
+      getDocs(query(collection(db, 'eventPlans'), orderBy('rank', 'asc'))),
+      getDocs(collection(db, 'organizations')),
+    ])
+    orgs.value = orgSnap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
     packages.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
     const ids = new Set(packages.value.map(p => p.id))
     collapsedQuotas.value   = new Set(ids)
@@ -365,7 +550,16 @@ function openEdit(pkg) {
       },
     },
     services: [...(pkg.services ?? [])],
+    // Packages created before this feature carry no visibility field; reading
+    // that as public matches how the client resolver treats them, so opening
+    // and saving an old package doesn't silently change who can see it.
+    visibility:  pkg.visibility ?? PLAN_VISIBILITY.PUBLIC,
+    segments:    [...(pkg.segments ?? [])],
+    allowOrgIds: [...(pkg.allowOrgIds ?? [])],
+    denyOrgIds:  [...(pkg.denyOrgIds ?? [])],
   }
+  segmentDraft.value = ''
+  overrideOrgId.value = ''
   showModal.value = true
 }
 
@@ -390,6 +584,13 @@ async function savePackage() {
         whatsApp: { ...form.value.messagingQuota.whatsApp },
       },
       services: form.value.services.filter(s => s.trim()),
+      visibility:  form.value.visibility,
+      // Segments are only consulted in 'segments' mode, but they're persisted
+      // either way so flipping a package to public and back doesn't lose the
+      // audience someone already configured.
+      segments:    [...new Set(form.value.segments.map(normalizeSegment).filter(Boolean))],
+      allowOrgIds: [...new Set(form.value.allowOrgIds)],
+      denyOrgIds:  [...new Set(form.value.denyOrgIds)],
     }
     if (editingId.value) {
       await updateDoc(doc(db, 'eventPlans', editingId.value), payload)
@@ -546,6 +747,73 @@ onMounted(load)
   color: var(--gold); background: var(--gold-bg); border: 1px solid var(--gold-border);
   border-radius: 8px; padding: 2px 8px;
 }
+/* ── Availability ── */
+.pv-card-title-row { flex-wrap: wrap; }
+.pv-vis-badge {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px;
+  border-radius: 8px; padding: 2px 8px; border: 1px solid transparent;
+}
+.pv-vis-badge--public   { color: var(--ink-dim);  background: rgba(142,142,147,.12); border-color: rgba(142,142,147,.2); }
+.pv-vis-badge--segments { color: #64D2FF; background: rgba(100,210,255,.10); border-color: rgba(100,210,255,.24); }
+.pv-vis-badge--hidden   { color: #FF9F0A; background: rgba(255,159,10,.10); border-color: rgba(255,159,10,.24); }
+
+.pv-vis-modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pv-vis-mode {
+  display: flex; flex-direction: column; gap: 3px; text-align: left;
+  padding: 10px 12px; border-radius: 10px; cursor: pointer; font-family: inherit;
+  border: 1px solid var(--line-strong); background: transparent;
+  transition: border-color 140ms, background 140ms;
+}
+.pv-vis-mode:hover { border-color: rgba(255,255,255,0.22); }
+.pv-vis-mode--on { border-color: var(--gold-border); background: var(--gold-bg); }
+.pv-vis-mode-label { font-size: 13px; font-weight: 700; color: var(--ink); }
+.pv-vis-mode--on .pv-vis-mode-label { color: var(--gold); }
+.pv-vis-mode-hint { font-size: 11px; color: var(--ink-dim); line-height: 1.4; }
+
+.pv-vis-label { margin-top: 12px; display: block; }
+.pv-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.pv-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; font-weight: 600; border-radius: 8px; padding: 4px 8px;
+  border: 1px solid transparent; font-family: inherit;
+}
+.pv-chip--on    { color: #64D2FF; background: rgba(100,210,255,.10); border-color: rgba(100,210,255,.24); }
+.pv-chip--allow { color: var(--emerald, #30D158); background: rgba(48,209,88,.10); border-color: rgba(48,209,88,.24); }
+.pv-chip--deny  { color: #FF453A; background: rgba(255,69,58,.10); border-color: rgba(255,69,58,.22); }
+.pv-chip--add {
+  color: var(--ink-dim); background: transparent; border: 1px dashed var(--line-strong); cursor: pointer;
+}
+.pv-chip--add:hover { color: var(--ink); border-color: rgba(255,255,255,0.28); }
+.pv-chip-x {
+  background: none; border: none; color: inherit; cursor: pointer;
+  font-size: 14px; line-height: 1; padding: 0 1px; opacity: 0.7;
+}
+.pv-chip-x:hover { opacity: 1; }
+
+.pv-seg-input-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+.pv-seg-input-row .pv-field-input { flex: 1; }
+.pv-add-service-btn--deny { color: #FF453A; border-color: rgba(255,69,58,.3); }
+.pv-vis-empty { font-size: 11.5px; color: var(--ink-dim); font-style: italic; }
+.pv-vis-wins  { font-weight: 400; color: var(--ink-dim); text-transform: none; letter-spacing: 0; }
+.pv-vis-note  { font-size: 11.5px; color: var(--ink-dim); line-height: 1.55; margin: 8px 0 0; }
+.pv-vis-preview {
+  font-size: 12px; color: var(--ink-muted); line-height: 1.55; margin: 12px 0 0;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--line-strong);
+  border-radius: 10px; padding: 9px 12px;
+}
+.pv-vis-preview strong { color: var(--ink); }
+
+.pv-vis-overrides { margin-top: 14px; border-top: 1px solid var(--line-strong); padding-top: 12px; }
+.pv-vis-summary {
+  font-size: 12px; font-weight: 600; color: var(--ink-muted);
+  cursor: pointer; display: flex; align-items: center; gap: 7px;
+}
+.pv-vis-summary:hover { color: var(--ink); }
+.pv-vis-count {
+  font-size: 10px; font-weight: 700; color: var(--gold);
+  background: var(--gold-bg); border-radius: 6px; padding: 1px 6px;
+}
+
 .pv-card-actions { display: flex; gap: 6px; }
 .pv-icon-btn {
   width: 32px; height: 32px; border-radius: 8px;

@@ -44,6 +44,19 @@
         <span class="as-item-label">Users</span>
       </router-link>
 
+      <router-link to="/organizations" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/organizations') }" :title="collapsed ? 'Organizations' : ''">
+        <span class="as-item-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18"/>
+            <path d="M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/>
+            <path d="M15 21V11h4a2 2 0 0 1 2 2v8"/>
+            <path d="M9 7h2"/><path d="M9 11h2"/><path d="M9 15h2"/>
+          </svg>
+        </span>
+        <span class="as-item-label">Organizations</span>
+        <span v-if="!collapsed && pendingBrandingCount > 0" class="as-item-badge as-item-badge--alert">{{ pendingBrandingCount }}</span>
+      </router-link>
+
       <router-link to="/global-attendees" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/global-attendees') }" :title="collapsed ? 'Guests' : ''">
         <span class="as-item-icon">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -180,7 +193,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { auth, db } from '../firebase'
 import { signOut, onAuthStateChanged } from 'firebase/auth'
-import { collection, getDoc, getDocs, getCountFromServer, doc, query, orderBy } from 'firebase/firestore'
+import { collection, collectionGroup, getDoc, getDocs, getCountFromServer, doc, query, orderBy, onSnapshot } from 'firebase/firestore'
 
 const router = useRouter()
 const route  = useRoute()
@@ -246,6 +259,48 @@ async function loadAttendeeCount() {
   } catch { /* silent */ }
 }
 
+// Orgs waiting on staff for branding approval. Firestore can't query "field is
+// false OR absent" (and it's absent on every org created before the flag
+// existed), so this counts client-side over the small organizations collection.
+// Live rather than one-shot so the badge clears the moment you act on one
+// instead of going stale until reload.
+let unsubOrgs = null
+let unsubSenderIds = null
+const pendingBrandingOrgs = ref(0)
+const pendingSenderIdOrgs = ref(0)
+
+// Both queues feed one badge — it answers "is there anything for me on the
+// Organizations screen", and splitting it would just make two small numbers.
+const pendingBrandingCount = computed(() => pendingBrandingOrgs.value + pendingSenderIdOrgs.value)
+
+function watchPendingBranding() {
+  unsubOrgs = onSnapshot(
+    collection(db, 'organizations'),
+    snap => {
+      pendingBrandingOrgs.value = snap.docs
+        .filter(d => !d.data().archived && d.data().brandingApproved !== true).length
+    },
+    () => { /* silent — the badge is informational */ },
+  )
+
+  // Sender IDs live one subcollection per org, so a collection-group listener is
+  // the only way to see every pending request without a read per org. Counted by
+  // distinct org so an org with three requests doesn't inflate the badge to 3.
+  unsubSenderIds = onSnapshot(
+    collectionGroup(db, 'senderIds'),
+    snap => {
+      const orgIds = new Set(
+        snap.docs
+          .filter(d => d.data().status === 'pending')
+          .map(d => d.ref.parent.parent?.id)
+          .filter(Boolean)
+      )
+      pendingSenderIdOrgs.value = orgIds.size
+    },
+    () => { pendingSenderIdOrgs.value = 0 },
+  )
+}
+
 async function doLogout() {
   showLogout.value = false
   await signOut(auth)
@@ -260,10 +315,13 @@ onMounted(() => {
   })
   loadEventCount()
   loadAttendeeCount()
+  watchPendingBranding()
 })
 
 onUnmounted(() => {
   if (unsubAuth) unsubAuth()
+  if (unsubOrgs) unsubOrgs()
+  if (unsubSenderIds) unsubSenderIds()
 })
 </script>
 
@@ -444,6 +502,14 @@ onUnmounted(() => {
   border: 1px solid var(--line);
 }
 .as-root--collapsed .as-item-badge { opacity: 0; pointer-events: none; }
+
+/* Pending-approval count — reads as a queue waiting on you, not a total */
+.as-item:not(.as-item--active) .as-item-badge--alert,
+.as-item-badge--alert {
+  background: rgba(255,159,10,0.14);
+  color: #FF9F0A;
+  border: 1px solid rgba(255,159,10,0.28);
+}
 
 /* ── Spacer ── */
 .as-spacer { flex: 1; }

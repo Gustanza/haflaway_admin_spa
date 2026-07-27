@@ -11,6 +11,7 @@ import Event_Landing from '../views/Event_Landing.vue'
 // import DashSettings from '../views/dashboard/DashSettings.vue'
 import CardTemplateGallery from '../views/CardTemplateGallery.vue'
 import UsersView from '../views/UsersView.vue'
+import OrganizationsView from '../views/OrganizationsView.vue'
 import UserEventsView from '../views/UserEventsView.vue'
 import GlobalAttendeesView from '../views/GlobalAttendeesView.vue'
 import Login from '../views/Login.vue'
@@ -64,7 +65,7 @@ async function rejectUser() {
     await signOut(auth)
 }
 
-const PROTECTED_EXACT = ['/', '/users', '/messaging', '/affiliates', '/sms-templates', '/whatsapp-templates', '/packages', '/global-attendees']
+const PROTECTED_EXACT = ['/', '/users', '/organizations', '/messaging', '/affiliates', '/sms-templates', '/whatsapp-templates', '/packages', '/global-attendees']
 const PROTECTED = ['/create-event', '/edit-event', '/event/', '/dashboard', '/user-events/']
 
 const routes = [
@@ -95,6 +96,12 @@ const routes = [
         name: 'Users',
         component: UsersView,
         meta: { title: 'Users' },
+    },
+    {
+        path: '/organizations',
+        name: 'Organizations',
+        component: OrganizationsView,
+        meta: { title: 'Organizations' },
     },
     {
         path: '/user-events/:userId',
