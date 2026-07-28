@@ -202,7 +202,7 @@
                   <!-- Package segments — the org side of plan entitlement -->
                   <div class="ov-members ov-seg-block">
                     <div class="ov-members-hd">
-                      <span class="ov-members-title">Package segments</span>
+                      <span class="ov-members-title">Package access tags</span>
                       <span class="ov-members-hint">
                         Which packages this org can choose from — matched against each package's audience
                       </span>
@@ -231,7 +231,7 @@
                         v-model="segDrafts[org.id]"
                         class="ov-sid-input ov-seg-input"
                         type="text"
-                        placeholder="New segment, e.g. agent"
+                        placeholder="New access tag, e.g. agent"
                         :disabled="segSavingOrgId === org.id"
                         @keydown.enter="addOrgSegment(org, segDrafts[org.id])"
                       />
@@ -846,7 +846,7 @@ async function writeSegments(org, next) {
     org.planSegments = next
   } catch (e) {
     console.error('writeSegments error:', e)
-    writeError.value = `Could not update segments for ${org.name || org.id}. Try again.`
+    writeError.value = `Could not update access tags for ${org.name || org.id}. Try again.`
   } finally {
     segSavingOrgId.value = null
   }

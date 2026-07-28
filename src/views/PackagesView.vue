@@ -193,30 +193,35 @@
 
               <!-- Availability -->
               <div class="pv-modal-section-label">Availability</div>
-              <div class="pv-vis-modes">
+              <div class="pv-vis-modes" role="radiogroup" aria-label="Availability">
                 <button
                   v-for="m in VIS_MODES"
                   :key="m.value"
                   type="button"
+                  role="radio"
+                  :aria-checked="form.visibility === m.value"
                   class="pv-vis-mode"
                   :class="{ 'pv-vis-mode--on': form.visibility === m.value }"
                   @click="form.visibility = m.value"
                 >
-                  <span class="pv-vis-mode-label">{{ m.label }}</span>
+                  <span class="pv-vis-mode-top">
+                    <span class="pv-vis-radio" aria-hidden="true" />
+                    <span class="pv-vis-mode-label">{{ m.label }}</span>
+                  </span>
                   <span class="pv-vis-mode-hint">{{ m.hint }}</span>
                 </button>
               </div>
 
               <!-- Segments — only meaningful in segments mode -->
               <template v-if="form.visibility === 'segments'">
-                <label class="pv-field-label pv-vis-label">Segments that can choose this package</label>
+                <label class="pv-field-label pv-vis-label">Access tags that can choose this package</label>
                 <div class="pv-chip-row">
                   <span v-for="s in form.segments" :key="s" class="pv-chip pv-chip--on">
                     {{ s }}
                     <button type="button" class="pv-chip-x" @click="removeSegment(s)">×</button>
                   </span>
                   <span v-if="!form.segments.length" class="pv-vis-empty">
-                    No segments yet — no organization can choose this package.
+                    No access tags yet — no organization can choose this package.
                   </span>
                 </div>
                 <div class="pv-chip-row">
@@ -233,13 +238,13 @@
                     v-model="segmentDraft"
                     class="pv-field-input"
                     type="text"
-                    placeholder="New segment, e.g. agent"
+                    placeholder="New access tag, e.g. agent"
                     @keydown.enter.prevent="addSegment(segmentDraft)"
                   />
                   <button type="button" class="pv-add-service-btn" @click="addSegment(segmentDraft)">Add</button>
                 </div>
                 <p class="pv-vis-note">
-                  Segments are set per organization on the Organizations screen. An org sees this
+                  Access tags are set per organization on the Organizations screen. An org sees this
                   package if it carries any one of these.
                 </p>
               </template>
@@ -412,7 +417,7 @@ const form = ref(emptyForm())
 // ── Availability ───────────────────────────────────────────────────────────
 const VIS_MODES = [
   { value: PLAN_VISIBILITY.PUBLIC,   label: 'Public',     hint: 'Every organization can choose it' },
-  { value: PLAN_VISIBILITY.SEGMENTS, label: 'By segment', hint: 'Only orgs carrying a matching segment' },
+  { value: PLAN_VISIBILITY.SEGMENTS, label: 'By access tag', hint: 'Only orgs carrying a matching access tag' },
   { value: PLAN_VISIBILITY.HIDDEN,   label: 'Hidden',     hint: 'Nobody — draft or retired' },
 ]
 
@@ -482,7 +487,7 @@ function visibilitySummary(pkg) {
   if (mode === PLAN_VISIBILITY.HIDDEN) return 'Hidden' + suffix
   if (mode === PLAN_VISIBILITY.SEGMENTS) {
     const segs = pkg.segments ?? []
-    return (segs.length ? segs.join(', ') : 'No segments') + suffix
+    return (segs.length ? segs.join(', ') : 'No access tags') + suffix
   }
   return 'Public' + suffix
 }
@@ -759,16 +764,33 @@ onMounted(load)
 
 .pv-vis-modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .pv-vis-mode {
-  display: flex; flex-direction: column; gap: 3px; text-align: left;
+  display: flex; flex-direction: column; gap: 6px; text-align: left;
   padding: 10px 12px; border-radius: 10px; cursor: pointer; font-family: inherit;
-  border: 1px solid var(--line-strong); background: transparent;
-  transition: border-color 140ms, background 140ms;
+  border: 1px solid var(--line-strong); background: rgba(255,255,255,0.02);
+  transition: border-color 140ms, background 140ms, box-shadow 140ms;
 }
-.pv-vis-mode:hover { border-color: rgba(255,255,255,0.22); }
-.pv-vis-mode--on { border-color: var(--gold-border); background: var(--gold-bg); }
+.pv-vis-mode:hover { border-color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.04); }
+.pv-vis-mode--on {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.12);
+  box-shadow: inset 0 0 0 1px rgba(201,168,76,0.35);
+}
+.pv-vis-mode-top { display: flex; align-items: center; gap: 8px; }
+/* Real radio dot — the border-color/background diff alone read as "nothing changed"
+   against this dark panel, so selection needs its own explicit glyph. */
+.pv-vis-radio {
+  width: 15px; height: 15px; flex-shrink: 0; box-sizing: border-box;
+  border-radius: 50%; border: 1.5px solid var(--ink-dim);
+  position: relative;
+  transition: border-color 140ms;
+}
+.pv-vis-mode--on .pv-vis-radio { border-color: var(--gold); }
+.pv-vis-mode--on .pv-vis-radio::after {
+  content: ''; position: absolute; inset: 3px; border-radius: 50%; background: var(--gold);
+}
 .pv-vis-mode-label { font-size: 13px; font-weight: 700; color: var(--ink); }
 .pv-vis-mode--on .pv-vis-mode-label { color: var(--gold); }
-.pv-vis-mode-hint { font-size: 11px; color: var(--ink-dim); line-height: 1.4; }
+.pv-vis-mode-hint { font-size: 11px; color: var(--ink-dim); line-height: 1.4; padding-left: 23px; }
 
 .pv-vis-label { margin-top: 12px; display: block; }
 .pv-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
