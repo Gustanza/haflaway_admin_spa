@@ -295,6 +295,8 @@ const CATEGORIES = [
     vars: '1 Guest name · 2 Card image path' },
   { key: 'haflaway-gratitude-campaign', label: 'Gratitude (General)',
     vars: 'Not currently wired to a WhatsApp sender function — verify before registering a template here' },
+  { key: 'haflaway-general-campaign', label: 'General Campaign (Bulk Messages)',
+    vars: '1 Guest name · 8 Custom message (set per campaign in Bulk Messages)' },
 ]
 
 const LANGUAGES = [

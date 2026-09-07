@@ -131,6 +131,9 @@
               </td>
               <td class="uv-td">
                 <span :class="['uv-cl-badge', `uv-cl-${u.clearanceLevel ?? 0}`]">L{{ u.clearanceLevel ?? 0 }}</span>
+                <span v-if="u.clearanceLevel === 5 && isSuperAdminEmail(u.email)" class="uv-access-super-badge uv-access-super-badge--inline">✦ Super</span>
+                <span v-else-if="u.clearanceLevel === 5 && u.adminSections?.length" class="uv-cl-restricted-badge" :title="u.adminSections.map(k => ADMIN_SECTIONS.find(s => s.key === k)?.label ?? k).join(', ')">{{ u.adminSections.length }} section{{ u.adminSections.length !== 1 ? 's' : '' }}</span>
+                <span v-else-if="u.clearanceLevel === 5" class="uv-cl-restricted-badge uv-cl-restricted-badge--none" title="No admin sections granted yet — this account can't reach the admin panel">No access</span>
               </td>
               <td class="uv-td uv-td--date">{{ formatDate(u.lastLoginDate) }}</td>
               <td class="uv-td uv-td--actions">
@@ -447,11 +450,49 @@
               <label class="uv-field-label">Clearance Level</label>
               <div class="uv-select-wrap">
                 <select v-model.number="form.clearanceLevel" class="uv-field-input">
-                  <option v-for="n in 6" :key="n - 1" :value="n - 1">Level {{ n - 1 }}</option>
+                  <option v-for="n in 6" :key="n - 1" :value="n - 1" :disabled="n - 1 === 5 && !viewerIsSuperAdmin">Level {{ n - 1 }}{{ n - 1 === 5 && !viewerIsSuperAdmin ? ' (super admin only)' : '' }}</option>
                 </select>
                 <svg class="uv-select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
               </div>
             </div>
+
+            <!-- Admin Access — super-admin only, and only meaningful at clearance 5 -->
+            <div v-if="viewerIsSuperAdmin && form.clearanceLevel === 5" class="uv-access-block">
+              <label class="uv-field-label">Admin Access</label>
+              <template v-if="editingUser && isSuperAdminEmail(editingUser.email)">
+                <p class="uv-access-super-note">
+                  <span class="uv-access-super-badge">✦ Super Admin</span>
+                  This account has full access to every section — it can't be restricted.
+                </p>
+              </template>
+              <template v-else>
+                <p class="uv-access-hint">
+                  Nothing is granted by default. Check the sections this admin should see — everything left unchecked stays hidden and unreachable for them.
+                </p>
+                <div class="uv-access-grid">
+                  <button
+                    v-for="s in ADMIN_SECTIONS" :key="s.key"
+                    type="button"
+                    class="uv-access-chip"
+                    :class="{ 'uv-access-chip--on': form.adminSections.includes(s.key) }"
+                    @click="toggleFormSection(s.key)"
+                    :title="s.hint"
+                  >
+                    <span class="uv-access-check" aria-hidden="true">
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </span>
+                    {{ s.label }}
+                  </button>
+                </div>
+                <p v-if="form.adminSections.length" class="uv-access-summary">
+                  Granted {{ form.adminSections.length }} of {{ ADMIN_SECTIONS.length }} sections.
+                </p>
+                <p v-else class="uv-access-summary uv-access-summary--none">⚠ No access yet — this admin can't reach any section until you check at least one.</p>
+              </template>
+            </div>
+
             <div v-if="editingUser" class="uv-meta-strip">
               <div class="uv-meta-item">
                 <span class="uv-meta-key">Registered</span>
@@ -547,7 +588,8 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { db, firebaseApp } from '../firebase'
+import { db, firebaseApp, auth } from '../firebase'
+import { ADMIN_SECTIONS, isSuperAdminEmail } from '../utils/adminAccess.js'
 import {
   collection, getDocs, setDoc, updateDoc,
   deleteDoc, doc, orderBy, query, addDoc, serverTimestamp,
@@ -564,6 +606,11 @@ import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'
 const functions = getFunctions(firebaseApp)
 
 const PAGE_SIZE = 10
+
+// Only a super admin can grant or revoke another admin's section access —
+// a regular clearance-5 admin with 'users' access can still manage accounts,
+// but can't hand out (or take away) admin sections, including their own.
+const viewerIsSuperAdmin = computed(() => isSuperAdminEmail(auth.currentUser?.email))
 
 function formatBalance(n) {
   if (n == null) return '—'
@@ -688,8 +735,14 @@ function parsePhone(stored) {
 }
 
 // ── Form ───────────────────────────────────────────────────────────────────
-const defaultForm = () => ({ firstName: '', lastName: '', email: '', password: '', balance: 0, isActive: true, clearanceLevel: 0 })
+const defaultForm = () => ({ firstName: '', lastName: '', email: '', password: '', balance: 0, isActive: true, clearanceLevel: 0, adminSections: [] })
 const form = ref(defaultForm())
+
+function toggleFormSection(key) {
+  const i = form.value.adminSections.indexOf(key)
+  if (i === -1) form.value.adminSections.push(key)
+  else form.value.adminSections.splice(i, 1)
+}
 
 // ── Computed ───────────────────────────────────────────────────────────────
 const activeCount   = computed(() => users.value.filter(u => u.isActive).length)
@@ -984,6 +1037,7 @@ async function createUser() {
       activeOrgId:      orgRef.id,
       isActive:         form.value.isActive,
       clearanceLevel:   form.value.clearanceLevel,
+      adminSections:    form.value.adminSections,
       searchName:       `${form.value.firstName} ${form.value.lastName}`.trim().toLowerCase(),
       profileImage:     null,
       registrationDate: new Date().toISOString(),
@@ -1015,6 +1069,7 @@ async function saveUser() {
       phoneNumber:    builtPhone(),
       isActive:       form.value.isActive,
       clearanceLevel: form.value.clearanceLevel,
+      adminSections:  form.value.adminSections,
       searchName:     `${form.value.firstName} ${form.value.lastName}`.trim().toLowerCase(),
     })
     await fetchUsers()
@@ -1053,7 +1108,7 @@ function openCreate() {
 
 function openEdit(u) {
   editingUser.value = u
-  form.value = { firstName: u.firstName || '', lastName: u.lastName || '', email: u.email || '', password: '', isActive: u.isActive ?? false, clearanceLevel: u.clearanceLevel ?? 0, balance: 0 }
+  form.value = { firstName: u.firstName || '', lastName: u.lastName || '', email: u.email || '', password: '', isActive: u.isActive ?? false, clearanceLevel: u.clearanceLevel ?? 0, balance: 0, adminSections: [...(u.adminSections ?? [])] }
   parsePhone(u.phoneNumber)
   showCountryDrop.value = false
   countrySearch.value   = ''
@@ -1358,7 +1413,26 @@ onMounted(() => { fetchUsers(); fetchOrgs() })
 .uv-page-ellipsis { width: 28px; text-align: center; font-size: 13px; color: var(--ink-dim); user-select: none; }
 
 /* ── Backdrop ── */
+/* Every modal here is Teleported to <body>, outside .uv-root — so it can't
+   inherit .uv-root's custom properties through the DOM tree. Redeclared here
+   for the same reason as CardTemplatesManagerView's .ctv-backdrop: an
+   unresolvable var() drops its whole declaration, silently killing borders,
+   selected-state fills and muted text throughout every modal below. */
 .uv-backdrop {
+  --ink: #f0f0ec;
+  --ink-soft: #d8d4cd;
+  --ink-muted: #888;
+  --ink-dim: #555;
+  --line: #242424;
+  --line-soft: #1e1e1e;
+  --line-strong: #2a2a2a;
+  --paper-soft: #141414;
+  --gold: #C9A84C;
+  --gold-bg: rgba(201,168,76,0.08);
+  --gold-border: rgba(201,168,76,0.25);
+  --gold-text: #C9A84C;
+  --emerald: #30D158;
+  --emerald-soft: rgba(48,209,88,0.12);
   position: fixed; inset: 0; background: rgba(0,0,0,0.55);
   backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
   display: flex; align-items: center; justify-content: center;
@@ -1473,6 +1547,46 @@ onMounted(() => { fetchUsers(); fetchOrgs() })
 .uv-field-label {
   font-size: 12px; font-weight: 600; color: var(--ink-muted);
 }
+
+/* ── Admin Access ── */
+.uv-access-block { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+.uv-access-hint { font-size: 11.5px; color: var(--ink-dim); line-height: 1.5; margin: 0; }
+.uv-access-super-note {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 12px; color: var(--ink-muted); line-height: 1.5; margin: 0;
+}
+.uv-access-super-badge {
+  font-size: 11px; font-weight: 700; color: var(--gold);
+  background: var(--gold-bg); border: 1px solid var(--gold-border);
+  border-radius: 8px; padding: 3px 9px; flex-shrink: 0;
+}
+.uv-access-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.uv-access-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 12px; font-weight: 600; border-radius: 9px; padding: 6px 10px 6px 8px;
+  border: 1px solid var(--line-strong); background: transparent; color: var(--ink-muted);
+  font-family: inherit; cursor: pointer; transition: border-color 130ms, background 130ms, color 130ms;
+}
+.uv-access-chip:hover { border-color: rgba(255,255,255,0.28); color: var(--ink); }
+.uv-access-chip--on { border-color: var(--gold-border); background: var(--gold-bg); color: var(--gold); }
+/* A real checkbox glyph — a border/background tint alone reads as "nothing
+   changed" against this dark panel, so selection needs its own explicit mark. */
+.uv-access-check {
+  width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; box-sizing: border-box;
+  border: 1.5px solid var(--line-strong); background: transparent; color: transparent;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 130ms, border-color 130ms, color 130ms;
+}
+.uv-access-chip--on .uv-access-check { background: var(--gold); border-color: var(--gold); color: #070707; }
+.uv-access-summary { font-size: 11.5px; color: var(--ink-dim); margin: 0; }
+.uv-access-summary--none { color: #FF9F0A; }
+.uv-access-super-badge--inline { margin-left: 6px; padding: 2px 7px; font-size: 10px; }
+.uv-cl-restricted-badge {
+  margin-left: 6px; font-size: 10px; font-weight: 600; color: var(--ink-muted);
+  background: rgba(255,255,255,0.05); border: 1px solid var(--line-strong);
+  border-radius: 7px; padding: 2px 7px;
+}
+.uv-cl-restricted-badge--none { color: #FF9F0A; background: rgba(255,159,10,0.10); border-color: rgba(255,159,10,0.22); }
 .uv-field-input {
   background: #161616; border: 0.8px solid #2a2a2a; border-radius: 10px;
   padding: 10px 13px; font-size: 14px; color: var(--ink); font-family: inherit;

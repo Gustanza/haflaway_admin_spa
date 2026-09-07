@@ -20,8 +20,7 @@ const showSidebar = computed(() => {
   const p = route.path
   if (NO_SIDEBAR.some(r => p === r || p.startsWith(r))) return false
   if (p.startsWith('/event/')) return false           // EventLayout has its own nav
-  if (p.startsWith('/invitation-card-templates')) return false
-  if (p.startsWith('/contribution-card-templates')) return false
+  if (p.startsWith('/card-templates')) return false
   return true
 })
 </script>

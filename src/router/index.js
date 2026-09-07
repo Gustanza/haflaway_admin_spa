@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { auth, db } from '../firebase'
 import { signOut } from 'firebase/auth'
 import { getDoc, doc } from 'firebase/firestore'
+import { sectionForPath, canAccess, firstAccessiblePath } from '../utils/adminAccess.js'
 import Ahadi_Mchango from '../views/Ahadi_Mchango.vue'
 import Event_Landing from '../views/Event_Landing.vue'
 // import DashboardLayout from '../views/dashboard/DashboardLayout.vue'
@@ -36,6 +37,7 @@ import AffiliatesView from '../views/AffiliatesView.vue'
 import SmsTemplatesView from '../views/SmsTemplatesView.vue'
 import WhatsAppTemplatesView from '../views/WhatsAppTemplatesView.vue'
 import PackagesView from '../views/PackagesView.vue'
+import CardTemplatesManagerView from '../views/CardTemplatesManagerView.vue'
 
 // Resolves once Firebase has restored the persisted session (or confirmed no user)
 let authResolved = false
@@ -47,25 +49,31 @@ const waitForAuth = new Promise(resolve => {
     })
 })
 
-// Cache clearance per uid to avoid a Firestore read on every navigation
-const clearanceCache = {}
-async function getClearanceLevel(uid) {
-    if (clearanceCache[uid] != null) return clearanceCache[uid]
+// Cache the user doc per uid to avoid a Firestore read on every navigation —
+// holds clearanceLevel, email and adminSections together since section-level
+// access (adminAccess.js) needs all three, not just the clearance number.
+const userDocCache = {}
+async function getUserDoc(uid) {
+    if (userDocCache[uid] != null) return userDocCache[uid]
     try {
         const snap = await getDoc(doc(db, 'users', uid))
-        clearanceCache[uid] = snap.exists() ? (Number(snap.data().clearanceLevel) || 0) : 0
+        userDocCache[uid] = snap.exists() ? { id: uid, ...snap.data() } : { id: uid, clearanceLevel: 0 }
     } catch {
-        clearanceCache[uid] = 0
+        userDocCache[uid] = { id: uid, clearanceLevel: 0 }
     }
-    return clearanceCache[uid]
+    return userDocCache[uid]
+}
+async function getClearanceLevel(uid) {
+    const u = await getUserDoc(uid)
+    return Number(u.clearanceLevel) || 0
 }
 
 async function rejectUser() {
-    clearanceCache[auth.currentUser?.uid] = null
+    delete userDocCache[auth.currentUser?.uid]
     await signOut(auth)
 }
 
-const PROTECTED_EXACT = ['/', '/users', '/organizations', '/messaging', '/affiliates', '/sms-templates', '/whatsapp-templates', '/packages', '/global-attendees']
+const PROTECTED_EXACT = ['/', '/users', '/organizations', '/messaging', '/affiliates', '/sms-templates', '/whatsapp-templates', '/packages', '/global-attendees', '/manage-card-templates']
 const PROTECTED = ['/create-event', '/edit-event', '/event/', '/dashboard', '/user-events/']
 
 const routes = [
@@ -145,6 +153,12 @@ const routes = [
         component: PackagesView,
         meta: { title: 'Packages' },
     },
+    {
+        path: '/manage-card-templates',
+        name: 'ManageCardTemplates',
+        component: CardTemplatesManagerView,
+        meta: { title: 'Card Templates' },
+    },
     // {
     //     path: '/dashboard',
     //     component: DashboardLayout,
@@ -188,17 +202,13 @@ const routes = [
         ],
     },
     {
-        path: '/invitation-card-templates',
-        name: 'InvitationTemplates',
+        path: '/card-templates',
+        name: 'CardTemplates',
         component: CardTemplateGallery,
-        props: { type: 'invitation' },
     },
-    {
-        path: '/contribution-card-templates',
-        name: 'ContributionTemplates',
-        component: CardTemplateGallery,
-        props: { type: 'contribution' },
-    },
+    // Old split URLs now resolve into the merged gallery, preserving type via query.
+    { path: '/invitation-card-templates', redirect: () => ({ path: '/card-templates', query: { type: 'invitation' } }) },
+    { path: '/contribution-card-templates', redirect: () => ({ path: '/card-templates', query: { type: 'contribution' } }) },
 ]
 
 const router = createRouter({
@@ -215,17 +225,36 @@ router.beforeEach(async (to) => {
     if (needsAuth) {
         if (!user) return { name: 'Login', query: { redirect: to.fullPath } }
 
-        const level = await getClearanceLevel(user.uid)
-        if (level < 5) {
+        const userDoc = await getUserDoc(user.uid)
+        if (Number(userDoc.clearanceLevel) < 5) {
+            await rejectUser()
+            return { name: 'Login', query: { error: 'unauthorized' } }
+        }
+
+        // Clearance gets you into the admin app; adminSections decides which
+        // parts of it you can actually reach. A section-less route (e.g. the
+        // event sub-tabs, gated by their '/event/' prefix under 'all-events')
+        // returns null here and is allowed through unchecked.
+        const section = sectionForPath(to.path)
+        if (section && !canAccess(userDoc, section)) {
+            const fallback = firstAccessiblePath(userDoc)
+            if (fallback && fallback !== to.path) return { path: fallback }
+            // No section at all is reachable — nothing left to redirect to.
             await rejectUser()
             return { name: 'Login', query: { error: 'unauthorized' } }
         }
     }
 
     if (isGuestOnly && user) {
-        const level = await getClearanceLevel(user.uid)
-        if (level >= 5) return { name: 'MyEvents' }
-        // Logged in but insufficient clearance — sign them out and stay on login
+        const userDoc = await getUserDoc(user.uid)
+        if (Number(userDoc.clearanceLevel) >= 5) {
+            // Land them on the first section they can actually reach rather than
+            // always 'MyEvents' ('/'), which a restricted admin may not have.
+            const fallback = firstAccessiblePath(userDoc)
+            if (fallback) return { path: fallback }
+            // Zero accessible sections — nowhere to send them; falls through to reject below.
+        }
+        // Logged in but insufficient clearance (or no reachable section) — sign out and stay on login
         await rejectUser()
     }
 })

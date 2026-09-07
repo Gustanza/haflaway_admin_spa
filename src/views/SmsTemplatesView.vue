@@ -255,7 +255,9 @@ const CATEGORIES = [
   { key: 'invitation',    label: 'Invitation' },
   { key: 'reminder',      label: 'Reminder' },
   { key: 'save-the-date', label: 'Save the Date' },
+  { key: 'contribution',  label: 'Contribution' },
   { key: 'gratitude',     label: 'Gratitude' },
+  { key: 'contact',       label: 'Contact / General' },
 ]
 
 const CHANNELS = [

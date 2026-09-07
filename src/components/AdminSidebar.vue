@@ -19,7 +19,7 @@
     <nav class="as-nav">
       <span class="as-nav-label">Workspace</span>
 
-      <router-link to="/" class="as-item" :class="{ 'as-item--active': route.path === '/' }" :title="collapsed ? 'All Events' : ''">
+      <router-link v-if="hasAccess('all-events')" to="/" class="as-item" :class="{ 'as-item--active': route.path === '/' }" :title="collapsed ? 'All Events' : ''">
         <span class="as-item-icon">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="3"/>
@@ -32,7 +32,7 @@
         <span v-if="!collapsed" class="as-item-badge">{{ eventCount }}</span>
       </router-link>
 
-      <router-link to="/users" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/users') || route.path.startsWith('/user-events') }" :title="collapsed ? 'Users' : ''">
+      <router-link v-if="hasAccess('users')" to="/users" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/users') || route.path.startsWith('/user-events') }" :title="collapsed ? 'Users' : ''">
         <span class="as-item-icon">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -44,7 +44,7 @@
         <span class="as-item-label">Users</span>
       </router-link>
 
-      <router-link to="/organizations" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/organizations') }" :title="collapsed ? 'Organizations' : ''">
+      <router-link v-if="hasAccess('organizations')" to="/organizations" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/organizations') }" :title="collapsed ? 'Organizations' : ''">
         <span class="as-item-icon">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 21h18"/>
@@ -57,7 +57,7 @@
         <span v-if="!collapsed && pendingBrandingCount > 0" class="as-item-badge as-item-badge--alert">{{ pendingBrandingCount }}</span>
       </router-link>
 
-      <router-link to="/global-attendees" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/global-attendees') }" :title="collapsed ? 'Guests' : ''">
+      <router-link v-if="hasAccess('global-attendees')" to="/global-attendees" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/global-attendees') }" :title="collapsed ? 'Guests' : ''">
         <span class="as-item-icon">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -69,7 +69,7 @@
         <span v-if="!collapsed" class="as-item-badge">{{ attendeeCount }}</span>
       </router-link>
 
-      <router-link to="/messaging" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/messaging') }" :title="collapsed ? 'Messaging' : ''">
+      <router-link v-if="hasAccess('messaging')" to="/messaging" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/messaging') }" :title="collapsed ? 'Messaging' : ''">
         <span class="as-item-icon">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.62 4.38 2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6.09 6.09l.98-.98a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
@@ -78,7 +78,7 @@
         <span class="as-item-label">Messaging</span>
       </router-link>
 
-      <router-link to="/packages" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/packages') }" :title="collapsed ? 'Packages' : ''">
+      <router-link v-if="hasAccess('packages')" to="/packages" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/packages') }" :title="collapsed ? 'Packages' : ''">
         <span class="as-item-icon">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
@@ -89,7 +89,19 @@
         <span class="as-item-label">Packages</span>
       </router-link>
 
-      <router-link to="/sms-templates" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/sms-templates') }" :title="collapsed ? 'SMS Templates' : ''">
+      <router-link v-if="hasAccess('card-templates')" to="/manage-card-templates" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/manage-card-templates') }" :title="collapsed ? 'Card Templates' : ''">
+        <span class="as-item-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="18" height="14" rx="2"/>
+            <path d="M3 8h18"/>
+            <path d="M7 12h4"/>
+            <path d="M7 15.5h7"/>
+          </svg>
+        </span>
+        <span class="as-item-label">Card Templates</span>
+      </router-link>
+
+      <router-link v-if="hasAccess('sms-templates')" to="/sms-templates" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/sms-templates') }" :title="collapsed ? 'SMS Templates' : ''">
         <span class="as-item-icon">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="18" height="14" rx="2"/>
@@ -102,7 +114,7 @@
         <span class="as-item-label">SMS Templates</span>
       </router-link>
 
-      <router-link to="/whatsapp-templates" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/whatsapp-templates') }" :title="collapsed ? 'WhatsApp Templates' : ''">
+      <router-link v-if="hasAccess('whatsapp-templates')" to="/whatsapp-templates" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/whatsapp-templates') }" :title="collapsed ? 'WhatsApp Templates' : ''">
         <span class="as-item-icon">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
@@ -111,7 +123,7 @@
         <span class="as-item-label">WhatsApp Templates</span>
       </router-link>
 
-      <router-link to="/affiliates" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/affiliates') }" :title="collapsed ? 'Affiliates' : ''">
+      <router-link v-if="hasAccess('affiliates')" to="/affiliates" class="as-item" :class="{ 'as-item--active': route.path.startsWith('/affiliates') }" :title="collapsed ? 'Affiliates' : ''">
         <span class="as-item-icon">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="8" r="3"/>
@@ -131,6 +143,26 @@
 
     <!-- Bottom section -->
     <div class="as-bottom">
+
+      <!-- Halotel → smtz SMS routing (clearance >= 5 only) -->
+      <div v-if="canToggleHalotelRouting" class="as-sms-toggle" :title="collapsed ? `Halotel → SMTZ routing: ${halotelSmtzEnabled ? 'on' : 'off'}` : ''">
+        <span class="as-sms-toggle-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+        </span>
+        <div v-if="!collapsed" class="as-sms-toggle-body">
+          <span class="as-sms-toggle-label">Halotel → SMTZ</span>
+          <span class="as-sms-toggle-sub">{{ halotelSmtzEnabled ? 'Routing on' : 'Routing off' }}</span>
+        </div>
+        <button
+          class="as-toggle" :class="{ 'as-toggle--on': halotelSmtzEnabled }"
+          :disabled="togglingHalotelRouting"
+          @click="toggleHalotelRouting"
+        >
+          <span class="as-toggle-knob"/>
+        </button>
+      </div>
 
       <!-- Wallet balance -->
       <div class="as-balance" :title="collapsed ? formatBalance(balance) : ''">
@@ -193,7 +225,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { auth, db } from '../firebase'
 import { signOut, onAuthStateChanged } from 'firebase/auth'
-import { collection, collectionGroup, getDoc, getDocs, getCountFromServer, doc, query, orderBy, onSnapshot } from 'firebase/firestore'
+import { collection, collectionGroup, getDoc, getDocs, getCountFromServer, doc, query, orderBy, onSnapshot, setDoc } from 'firebase/firestore'
+import { canAccess } from '../utils/adminAccess.js'
 
 const router = useRouter()
 const route  = useRoute()
@@ -239,10 +272,49 @@ async function loadUserData() {
   try {
     const snap = await getDoc(doc(db, 'users', uid))
     if (snap.exists()) {
-      const b = snap.data().balance
+      const data = snap.data()
+      const b = data.balance
       balance.value = b != null ? Number(b) : 0
+      currentUser.value = { id: uid, ...data }
     }
   } catch { /* silent */ }
+}
+
+// ── Section visibility ────────────────────────────────────────────────────
+// Which nav items and features this signed-in admin can see — super admins
+// (fixed email allowlist) and unrestricted level-5 admins get everything;
+// a restricted admin only sees what's in their adminSections. See
+// utils/adminAccess.js for the full precedence.
+const currentUser = ref(null)
+function hasAccess(section) { return canAccess(currentUser.value, section) }
+
+// ── Halotel → smtz SMS routing ────────────────────────────────────────────
+// functions/sms/indesms.js reads settings/global.halotelSmtzRouting before
+// forcing Halotel-network numbers through the smtz gateway (see
+// functions/utils/network.js for the number-block check). Defaults to true
+// (routing on) when the doc/field doesn't exist yet, matching the behavior
+// before this toggle existed.
+const canToggleHalotelRouting = computed(() => hasAccess('halotel-routing'))
+const halotelSmtzEnabled = ref(true)
+const togglingHalotelRouting = ref(false)
+let unsubGlobalSettings = null
+
+function watchGlobalSettings() {
+  unsubGlobalSettings = onSnapshot(
+    doc(db, 'settings', 'global'),
+    snap => { halotelSmtzEnabled.value = snap.exists() ? (snap.data().halotelSmtzRouting ?? true) : true },
+    () => { /* silent — falls back to the default (on) */ },
+  )
+}
+
+async function toggleHalotelRouting() {
+  if (togglingHalotelRouting.value) return
+  togglingHalotelRouting.value = true
+  try {
+    await setDoc(doc(db, 'settings', 'global'), { halotelSmtzRouting: !halotelSmtzEnabled.value }, { merge: true })
+  } catch { /* silent — listener will just show the pre-toggle state */ } finally {
+    togglingHalotelRouting.value = false
+  }
 }
 
 async function loadEventCount() {
@@ -316,12 +388,14 @@ onMounted(() => {
   loadEventCount()
   loadAttendeeCount()
   watchPendingBranding()
+  watchGlobalSettings()
 })
 
 onUnmounted(() => {
   if (unsubAuth) unsubAuth()
   if (unsubOrgs) unsubOrgs()
   if (unsubSenderIds) unsubSenderIds()
+  if (unsubGlobalSettings) unsubGlobalSettings()
 })
 </script>
 
@@ -573,6 +647,56 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Halotel → smtz routing toggle */
+.as-sms-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--line);
+  margin-bottom: 2px;
+  min-height: 38px;
+  overflow: hidden;
+}
+.as-sms-toggle-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-muted);
+  flex-shrink: 0;
+}
+.as-sms-toggle-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  overflow: hidden;
+  flex: 1;
+}
+.as-sms-toggle-label { font-size: 11px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.as-sms-toggle-sub { font-size: 10px; color: var(--ink-muted); white-space: nowrap; }
+.as-toggle {
+  width: 34px; height: 20px; border-radius: 10px;
+  background: #383838; border: 1px solid #484848; padding: 2px;
+  display: flex; align-items: center; flex-shrink: 0;
+  cursor: pointer; transition: background 200ms, border-color 200ms;
+}
+.as-toggle--on { background: var(--gold); border-color: var(--gold); }
+.as-toggle:disabled { opacity: 0.6; cursor: not-allowed; }
+.as-toggle-knob {
+  width: 15px; height: 15px; border-radius: 50%;
+  background: #fff; transition: transform 200ms;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+}
+.as-toggle--on .as-toggle-knob { transform: translateX(14px); }
+.as-root--collapsed .as-toggle { display: none; }
 
 /* User row */
 .as-user {
