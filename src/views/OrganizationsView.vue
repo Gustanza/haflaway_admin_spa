@@ -89,6 +89,7 @@
               <th class="ov-th">Organization</th>
               <th class="ov-th">Branding</th>
               <th class="ov-th">Sender ID</th>
+              <th class="ov-th">Messaging</th>
               <th class="ov-th ov-th--num">Members</th>
               <th class="ov-th ov-th--num">Events</th>
               <th class="ov-th">Balance</th>
@@ -158,6 +159,14 @@
                   </button>
                 </td>
 
+                <!-- Messaging accounts (whose account SMS / WhatsApp go out on) -->
+                <td class="ov-td">
+                  <button class="ov-msg-pill" title="Messaging accounts" @click="openMessaging(org)">
+                    <span class="ov-msg-pill-ch" :class="{ 'ov-msg-pill-ch--own': modeOf(org, 'sms') === 'own' }">SMS · {{ modeOf(org, 'sms') === 'own' ? 'Own' : 'Haflaway' }}</span>
+                    <span class="ov-msg-pill-ch" :class="{ 'ov-msg-pill-ch--own': modeOf(org, 'whatsapp') === 'own' }">WA · {{ modeOf(org, 'whatsapp') === 'own' ? 'Own' : 'Haflaway' }}</span>
+                  </button>
+                </td>
+
                 <td class="ov-td ov-td--num">{{ memberIdsOf(org).length }}</td>
                 <td class="ov-td ov-td--num ov-td--muted">{{ eventCounts[org.id] ?? '—' }}</td>
                 <td class="ov-td ov-td--balance">{{ formatBalance(org.balance) }}</td>
@@ -198,7 +207,7 @@
 
               <!-- Expanded: members + owner -->
               <tr v-if="expandedId === org.id" class="ov-subrow">
-                <td class="ov-subrow-td" colspan="9">
+                <td class="ov-subrow-td" colspan="10">
                   <!-- Package segments — the org side of plan entitlement -->
                   <div class="ov-members ov-seg-block">
                     <div class="ov-members-hd">
@@ -324,6 +333,12 @@
               <rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 9h18"/><path d="M9 17v4"/><path d="M15 17v4"/><path d="M9 21h6"/>
             </svg>
             {{ isSenderPending(menuOrg) ? 'Review Sender ID' : 'Manage Sender ID' }}
+          </button>
+          <button class="ov-action-item" @click="openMessaging(menuOrg); closeMenu()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            Messaging Accounts
           </button>
           <button class="ov-action-item" @click="copyId(menuOrg); closeMenu()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -507,6 +522,92 @@
 
             <div class="ov-preview-actions">
               <button class="ov-cancel-btn" @click="reviewOrg = null">Close</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- ── Messaging accounts: the per-channel own/Haflaway switch + its history ── -->
+    <Teleport to="body">
+      <Transition name="ov-fade">
+        <div v-if="msgOrg" class="ov-backdrop" @click.self="closeMessaging">
+          <div class="ov-preview-box ov-msg-box">
+            <div class="ov-bm-header">
+              <h3 class="ov-bm-title">Messaging accounts</h3>
+              <button class="ov-close-btn" @click="closeMessaging">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+
+            <p class="ov-preview-note">
+              <strong>{{ msgOrg.name || 'Untitled Organization' }}</strong> · {{ ownerLabel(msgOrg) }}<br />
+              Decides whose account this organization's messages go out on. On <strong>Own account</strong>,
+              messages only ever go through their own account — if anything is missing, the send is refused
+              rather than falling back to Haflaway's. On <strong>Haflaway</strong>, their own credentials are never used.
+            </p>
+
+            <div v-if="msgLoading" class="ov-msg-empty">Loading…</div>
+            <template v-else-if="msgData">
+              <div v-for="ch in MSG_CHANNELS" :key="ch.key" class="ov-msg-card">
+                <div class="ov-msg-card-hd">
+                  <span class="ov-msg-card-title">{{ ch.label }}</span>
+                  <span class="ov-msg-mode" :class="{ 'ov-msg-mode--own': msgData.modes[ch.key] === 'own' }">
+                    {{ msgData.modes[ch.key] === 'own' ? 'Own account' : "Haflaway's account" }}
+                  </span>
+                </div>
+
+                <ul class="ov-msg-ready">
+                  <li v-for="(item, i) in readinessItems(ch.key)" :key="i" :class="item.ok ? 'ov-msg-ok' : 'ov-msg-miss'">
+                    {{ item.ok ? '✓' : '✕' }} {{ item.text }}
+                  </li>
+                </ul>
+
+                <input
+                  v-model="msgNotes[ch.key]"
+                  class="ov-sid-input"
+                  type="text"
+                  maxlength="500"
+                  placeholder="Reason for the change (optional, kept in the history)"
+                  :disabled="msgSaving === ch.key"
+                />
+                <button
+                  class="ov-approve-btn ov-msg-toggle"
+                  :class="{ 'ov-approve-btn--revoke': msgData.modes[ch.key] === 'own' }"
+                  :disabled="!!msgSaving || (msgData.modes[ch.key] !== 'own' && !canSwitchToOwn(ch.key))"
+                  @click="toggleMessagingMode(ch.key)"
+                >
+                  {{ msgSaving === ch.key ? 'Saving…'
+                    : msgData.modes[ch.key] === 'own' ? `Move ${ch.label} back to Haflaway's account`
+                    : `Switch ${ch.label} to their own account` }}
+                </button>
+                <span v-if="msgData.modes[ch.key] !== 'own' && !canSwitchToOwn(ch.key)" class="ov-sid-hint">
+                  They need to save their own {{ ch.key === 'sms' ? 'smtz or wasambazie' : 'Twilio' }} credentials first (Organization settings in the client app).
+                </span>
+              </div>
+
+              <div class="ov-msg-history">
+                <span class="ov-members-title">Change history</span>
+                <div v-if="!msgData.history.length" class="ov-msg-empty">No changes yet — both channels have always been on Haflaway's account.</div>
+                <div v-for="h in msgData.history" :key="h.id" class="ov-msg-hist-row">
+                  <span class="ov-msg-hist-main">
+                    <strong>{{ h.channel === 'sms' ? 'SMS' : 'WhatsApp' }}</strong>:
+                    {{ modeLabel(h.from) }} → {{ modeLabel(h.to) }}
+                  </span>
+                  <span class="ov-msg-hist-meta">
+                    {{ formatDate(h.changedAt) }} · {{ h.changedBy?.name || h.changedBy?.email || h.changedBy?.uid || 'Unknown' }}<template v-if="h.changedBy?.email && h.changedBy?.name"> ({{ h.changedBy.email }})</template>
+                  </span>
+                  <span v-if="h.note" class="ov-msg-hist-note">“{{ h.note }}”</span>
+                </div>
+              </div>
+            </template>
+
+            <p v-if="msgError" class="ov-sid-error">{{ msgError }}</p>
+
+            <div class="ov-preview-actions">
+              <button class="ov-cancel-btn" @click="closeMessaging">Close</button>
             </div>
           </div>
         </div>
@@ -1036,6 +1137,113 @@ async function toggleApproval(org) {
     writeError.value = `Could not update branding approval for ${org.name || org.id}. Try again.`
   } finally {
     savingOrgId.value = null
+  }
+}
+
+// ── Messaging accounts ─────────────────────────────────────────────────────
+// Whose account an org's SMS / WhatsApp go out on — Haflaway's, or the org's
+// own. Read and written only through haflaway_server's staff-gated admin
+// routes (routes/admin.js), never straight to Firestore: that server re-checks
+// staff access (rules are wide open) and writes the switch together with its
+// history entry (organizations/{orgId}/messagingAccountHistory) in one
+// transaction, so every change is recorded with who made it and when.
+const CARD_SERVER_URL = import.meta.env.VITE_CARD_SERVER_URL || 'http://localhost:8080'
+const MSG_CHANNELS = [
+  { key: 'sms', label: 'SMS' },
+  { key: 'whatsapp', label: 'WhatsApp' },
+]
+const msgOrg = ref(null)
+const msgData = ref(null)       // { modes, readiness, history } from the server
+const msgLoading = ref(false)
+const msgSaving = ref(null)     // null | 'sms' | 'whatsapp'
+const msgError = ref('')
+const msgNotes = ref({ sms: '', whatsapp: '' })
+
+function modeOf(org, channel) {
+  return org?.messagingAccounts?.[channel] === 'own' ? 'own' : 'haflaway'
+}
+function modeLabel(mode) { return mode === 'own' ? 'Own account' : "Haflaway's account" }
+
+async function callServer(path, options = {}) {
+  const user = auth.currentUser
+  if (!user) throw new Error('Not signed in.')
+  const idToken = await user.getIdToken()
+  const res = await fetch(`${CARD_SERVER_URL}${path}`, {
+    ...options,
+    headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json', ...(options.headers ?? {}) },
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok || !data.ok) throw new Error(data.message || `Request failed (${res.status}).`)
+  return data
+}
+
+async function openMessaging(org) {
+  msgOrg.value = org
+  msgData.value = null
+  msgError.value = ''
+  msgNotes.value = { sms: '', whatsapp: '' }
+  msgLoading.value = true
+  try {
+    msgData.value = await callServer(`/admin/organizations/${org.id}/messaging-accounts`)
+  } catch (e) {
+    msgError.value = e.message
+  } finally {
+    msgLoading.value = false
+  }
+}
+function closeMessaging() { if (!msgSaving.value) msgOrg.value = null }
+
+function canSwitchToOwn(channel) {
+  const r = msgData.value?.readiness
+  if (!r) return false
+  return channel === 'sms' ? r.sms.ownProviders.length > 0 : r.whatsapp.credentialsConfigured
+}
+
+// What the org has set up for that channel — what staff need to judge whether
+// "own account" will actually be able to send.
+function readinessItems(channel) {
+  const r = msgData.value?.readiness
+  if (!r) return []
+  if (channel === 'sms') {
+    if (!r.sms.ownProviders.length) return [{ ok: false, text: 'No smtz or wasambazie credentials saved' }]
+    return r.sms.ownProviders.flatMap(p => [
+      { ok: true, text: `${p.provider} credentials saved` },
+      p.senderIds.length
+        ? { ok: true, text: `${p.provider} sender IDs: ${p.senderIds.join(', ')}` }
+        : { ok: false, text: `No sender ID on ${p.provider} — SMS will be refused until they add one` },
+    ])
+  }
+  const items = [{ ok: r.whatsapp.credentialsConfigured, text: r.whatsapp.credentialsConfigured ? 'Twilio credentials saved' : 'No Twilio credentials saved' }]
+  const active = r.whatsapp.templates.filter(t => t.active)
+  items.push(active.length
+    ? { ok: true, text: `${active.length} active template${active.length === 1 ? '' : 's'}: ${active.map(t => `${t.name || t.category} (${String(t.language).toUpperCase()})`).join(', ')}` }
+    : { ok: false, text: 'No active templates — WhatsApp will be refused until they add one' })
+  return items
+}
+
+async function toggleMessagingMode(channel) {
+  if (!msgOrg.value || msgSaving.value) return
+  const org = msgOrg.value
+  const next = msgData.value.modes[channel] === 'own' ? 'haflaway' : 'own'
+  const label = channel === 'sms' ? 'SMS' : 'WhatsApp'
+  const prompt = next === 'own'
+    ? `Switch ${org.name || 'this organization'}'s ${label} to their own account?\n\nFrom now on their ${label} goes out only through their own account — anything missing means the send is refused, never sent through Haflaway's.`
+    : `Move ${org.name || 'this organization'}'s ${label} back to Haflaway's account?\n\nTheir ${label} will be sent and billed through Haflaway's account again.`
+  if (!window.confirm(prompt)) return
+  msgSaving.value = channel
+  msgError.value = ''
+  try {
+    const data = await callServer(`/admin/organizations/${org.id}/messaging-accounts`, {
+      method: 'POST',
+      body: JSON.stringify({ channel, mode: next, note: msgNotes.value[channel] }),
+    })
+    msgData.value = { ...msgData.value, modes: data.modes, history: data.history }
+    org.messagingAccounts = { ...(org.messagingAccounts ?? {}), [channel]: data.modes[channel] }
+    msgNotes.value = { ...msgNotes.value, [channel]: '' }
+  } catch (e) {
+    msgError.value = e.message
+  } finally {
+    msgSaving.value = null
   }
 }
 
@@ -1626,6 +1834,47 @@ onMounted(fetchAll)
 
 /* ── Sender ID review modal ── */
 .ov-review-box { max-width: 500px; }
+.ov-msg-box {
+  /* Teleported to <body>, outside .ov-root where the tokens live — so it
+     carries its own copy of the ones it uses. */
+  --ink: #f0f0ec; --ink-muted: #888; --ink-dim: #777; --line-strong: #2a2a2a; --paper-soft: #141414;
+  color: var(--ink);
+  max-width: 560px; max-height: 88vh; overflow-y: auto;
+}
+.ov-msg-pill {
+  display: inline-flex; flex-direction: column; gap: 3px; align-items: flex-start;
+  background: none; border: none; padding: 0; cursor: pointer;
+}
+.ov-msg-pill-ch {
+  font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+  border: 1px solid var(--line-strong); background: var(--paper-soft); color: var(--ink-dim); white-space: nowrap;
+}
+.ov-msg-pill-ch--own { border-color: rgba(48,209,88,.28); background: rgba(48,209,88,.10); color: #30D158; }
+.ov-msg-pill:hover .ov-msg-pill-ch { filter: brightness(1.15); }
+.ov-msg-card {
+  display: flex; flex-direction: column; gap: 10px;
+  border: 1px solid var(--line-strong); border-radius: 12px; padding: 14px; margin-top: 12px;
+}
+.ov-msg-card-hd { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ov-msg-card-title { font-size: 14px; font-weight: 700; color: var(--ink); }
+.ov-msg-mode {
+  font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 999px;
+  background: var(--paper-soft); color: var(--ink-dim); border: 1px solid var(--line-strong);
+}
+.ov-msg-mode--own { border-color: rgba(48,209,88,.28); background: rgba(48,209,88,.10); color: #30D158; }
+.ov-msg-ready { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+.ov-msg-ok { color: var(--ink-muted); }
+.ov-msg-miss { color: #FF9F0A; }
+.ov-msg-toggle { align-self: flex-start; }
+.ov-msg-history { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.ov-msg-hist-row {
+  display: flex; flex-direction: column; gap: 2px;
+  border-left: 2px solid var(--line-strong); padding: 2px 0 2px 10px;
+}
+.ov-msg-hist-main { font-size: 12.5px; color: var(--ink); }
+.ov-msg-hist-meta { font-size: 11.5px; color: var(--ink-dim); }
+.ov-msg-hist-note { font-size: 11.5px; color: var(--ink-muted); font-style: italic; }
+.ov-msg-empty { font-size: 12.5px; color: var(--ink-dim); padding: 6px 0; }
 .ov-sid-compare {
   display: flex; align-items: center; gap: 14px;
   border: 1px solid #242424; border-radius: 12px; padding: 14px 16px;
