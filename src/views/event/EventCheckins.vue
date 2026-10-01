@@ -204,10 +204,10 @@
               {{ statusLabel(att) }}
             </span>
             <!-- Slots fraction -->
-            <span v-if="(att.checkinStatus ?? []).length" class="ec-badge ec-badge--default ec-badge--slots">
+            <span v-if="slotsOf(att).length" class="ec-badge ec-badge--default ec-badge--slots">
               <span class="ec-slots-checked">{{ checkedSlots(att) }}</span>
               <span class="ec-slots-sep">/</span>
-              <span class="ec-slots-total">{{ att.checkinStatus.length }}</span>
+              <span class="ec-slots-total">{{ totalSlots(att) }}</span>
             </span>
           </div>
 
@@ -295,7 +295,7 @@
               <div class="ec-drawer-body">
 
                 <!-- No card assigned -->
-                <div v-if="!(selectedAtt.checkinStatus ?? []).length" class="ec-drawer-block">
+                <div v-if="!selectedSlots.length" class="ec-drawer-block">
                   <p class="ec-block-lbl">Check-in Status</p>
                   <div class="ec-no-card">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C0BAB2"
@@ -306,60 +306,58 @@
                   </div>
                 </div>
 
-                <!-- Slot rows -->
+                <!-- One slot per person the card admits -->
                 <div v-else class="ec-drawer-block">
                   <div class="ec-block-lbl-row">
                     <p class="ec-block-lbl">Check-in Status</p>
                     <span class="ec-slots-summary">
-                      {{ checkedSlots(selectedAtt) }}/{{ selectedAtt.checkinStatus.length }} slots
+                      {{ checkedSlots(selectedAtt) }}/{{ totalSlots(selectedAtt) }} arrived
                     </span>
                   </div>
 
-                  <div v-for="(slot, si) in selectedAtt.checkinStatus" :key="si" class="ec-slot">
+                  <p v-if="doorError" class="ec-door-msg ec-door-msg--err">{{ doorError }}</p>
+                  <p v-else-if="doorNotice" class="ec-door-msg">{{ doorNotice }}</p>
+
+                  <div v-if="doorCheckpoints.some(cp => remainingAt(cp.id).length)" class="ec-admit-row">
+                    <template v-for="cp in doorCheckpoints" :key="cp.id">
+                      <button v-if="remainingAt(cp.id).length" type="button" class="ec-admit-btn"
+                        :disabled="doorBusy" @click="admitAll(cp)">
+                        Admit {{ remainingAt(cp.id).length }} remaining{{ checkpoints.length ? ` · ${cp.name}` : '' }}
+                      </button>
+                    </template>
+                  </div>
+
+                  <div v-for="slot in selectedSlots" :key="slot.id" class="ec-slot"
+                    :class="{ 'ec-slot--removed': slot.removed }">
                     <div class="ec-slot-head">
-                      <span class="ec-slot-name">{{ slot.attendee_name || `Slot ${si + 1}` }}</span>
+                      <span class="ec-slot-who">
+                        <span class="ec-slot-name">{{ slot.attendee_name }}</span>
+                        <span class="ec-slot-rel">{{ slot.removed ? 'Removed from party' : slot.relation }}</span>
+                      </span>
                       <span class="ec-slot-badge"
-                        :class="isSlotChecked(slot) ? 'ec-slot-badge--on' : 'ec-slot-badge--off'">
-                        {{ isSlotChecked(slot) ? 'Checked In' : 'Not Checked' }}
+                        :class="isSlotCheckedIn(slot) ? 'ec-slot-badge--on' : 'ec-slot-badge--off'">
+                        {{ isSlotCheckedIn(slot) ? 'Checked In' : 'Not Checked' }}
                       </span>
                     </div>
 
-                    <!-- Checkpoint toggles -->
+                    <!-- Tap to check in; tapping a checked-in checkpoint asks before checking out -->
                     <div class="ec-cp-toggles">
-                      <template v-if="checkpoints.length">
-                        <button v-for="cp in checkpoints" :key="cp.id"
-                          class="ec-cp-toggle"
-                          :class="slot.checkpoints?.[cp.id] ? 'ec-cp-toggle--on' : 'ec-cp-toggle--off'"
-                          :disabled="togglingKey === `${selectedAtt.id}-${si}-${cp.id}`"
-                          @click="toggleSlot(selectedAtt, si, cp.id)">
-                          <svg v-if="slot.checkpoints?.[cp.id]" width="11" height="11" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                            <polyline points="20 6 9 17 4 12"/>
-                          </svg>
-                          <svg v-else width="11" height="11" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                            <circle cx="12" cy="12" r="9"/>
-                          </svg>
-                          {{ cp.name }}
-                        </button>
-                      </template>
-                      <!-- Fallback: no checkpoints in DB — use generic toggle -->
-                      <template v-else>
-                        <button class="ec-cp-toggle"
-                          :class="hasAnyCheckin(slot) ? 'ec-cp-toggle--on' : 'ec-cp-toggle--off'"
-                          :disabled="togglingKey === `${selectedAtt.id}-${si}-default`"
-                          @click="toggleSlotGeneric(selectedAtt, si)">
-                          <svg v-if="hasAnyCheckin(slot)" width="11" height="11" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                            <polyline points="20 6 9 17 4 12"/>
-                          </svg>
-                          <svg v-else width="11" height="11" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                            <circle cx="12" cy="12" r="9"/>
-                          </svg>
-                          Check In
-                        </button>
-                      </template>
+                      <button v-for="cp in doorCheckpoints" :key="cp.id" type="button"
+                        class="ec-cp-toggle"
+                        :class="slot.checkpoints?.[cp.id] ? 'ec-cp-toggle--on' : 'ec-cp-toggle--off'"
+                        :disabled="doorBusy || (slot.removed && !slot.checkpoints?.[cp.id])"
+                        :title="slot.checkpoints?.[cp.id] ? checkedInTitle(slot, cp.id) : ''"
+                        @click="slot.checkpoints?.[cp.id] ? checkOut(slot, cp) : checkIn(slot, cp)">
+                        <svg v-if="slot.checkpoints?.[cp.id]" width="11" height="11" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        <svg v-else width="11" height="11" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                          <circle cx="12" cy="12" r="9"/>
+                        </svg>
+                        {{ cp.name }}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -376,10 +374,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, toRaw } from 'vue'
 import { useRoute } from 'vue-router'
-import { db } from '../../firebase'
-import { collection, getDocs, updateDoc, doc, query, orderBy } from 'firebase/firestore'
+import { db, auth } from '../../firebase'
+import { collection, getDocs, doc, query, orderBy, runTransaction, onSnapshot } from 'firebase/firestore'
+import {
+  doorSlots, reconcileSlots, activeSlots, slotCounts, isSlotCheckedIn,
+  applyCheckin, applyCheckout, lastCheckinAt,
+} from '../../utils/checkinSlots'
 
 const props = defineProps({ event: Object, eventId: String })
 const route  = useRoute()
@@ -420,7 +422,9 @@ const sortDir      = ref('asc')
 const currentPage  = ref(1)
 
 const selectedAtt = ref(null)
-const togglingKey = ref(null)
+const doorBusy    = ref(false)
+const doorError   = ref('')
+const doorNotice  = ref('')
 
 // ── Data loading ──────────────────────────────────────────────────────────────
 async function loadData() {
@@ -450,27 +454,31 @@ function getKardType(att) {
   return 'contact'
 }
 
-function isSlotChecked(slot) {
-  return Object.values(slot.checkpoints ?? {}).some(v => v === true)
-}
-
-function hasAnyCheckin(slot) {
-  return isSlotChecked(slot)
+// Door slots come from the stored array reconciled against the party
+// (utils/checkinSlots.js): real names, a removed member's slot kept only if
+// they were already scanned in. Cached per attendee object, since the list
+// derives them for every row and attendee objects are replaced, never mutated.
+const slotCache = new WeakMap()
+function slotsOf(att) {
+  const raw = toRaw(att)
+  if (!slotCache.has(raw)) slotCache.set(raw, doorSlots(raw))
+  return slotCache.get(raw)
 }
 
 function checkedSlots(att) {
-  return (att.checkinStatus ?? []).filter(isSlotChecked).length
+  return slotCounts(slotsOf(att)).checked
+}
+
+function totalSlots(att) {
+  return slotCounts(slotsOf(att)).total
 }
 
 function statusOf(att) {
-  const slots = att.checkinStatus ?? []
+  const slots = slotsOf(att)
   if (!slots.length) return 'nocard'
-  const checkedCount = slots.filter(s => {
-    if (cpFilter.value) return s.checkpoints?.[cpFilter.value] === true
-    return isSlotChecked(s)
-  }).length
-  if (checkedCount === 0)           return 'none'
-  if (checkedCount === slots.length) return 'checked'
+  const { checked, total } = slotCounts(slots, cpFilter.value)
+  if (checked === 0)     return 'none'
+  if (checked >= total)  return 'checked'
   return 'partial'
 }
 
@@ -478,7 +486,7 @@ function statusLabel(att) {
   const s = statusOf(att)
   if (s === 'nocard')  return 'No Card'
   if (s === 'checked') return 'Checked In'
-  if (s === 'partial') return `${checkedSlots(att)}/${att.checkinStatus.length} Slots`
+  if (s === 'partial') return `${checkedSlots(att)}/${totalSlots(att)} Slots`
   return 'Not Checked'
 }
 
@@ -534,7 +542,7 @@ const filteredList = computed(() => {
 
   if (cpFilter.value) {
     list = list.filter(a =>
-      (a.checkinStatus ?? []).some(s => s.checkpoints?.[cpFilter.value] === true)
+      slotsOf(a).some(s => s.checkpoints?.[cpFilter.value] === true)
     )
   }
 
@@ -595,59 +603,114 @@ function goToPage(n) {
 function openDetail(att) { selectedAtt.value = att }
 function closeDetail()   { selectedAtt.value = null }
 
-// ── Toggle checkin ────────────────────────────────────────────────────────────
-async function toggleSlot(att, slotIndex, checkpointId) {
-  const key = `${att.id}-${slotIndex}-${checkpointId}`
-  if (togglingKey.value === key) return
-  togglingKey.value = key
+// ── Door actions ──────────────────────────────────────────────────────────────
+const selectedSlots = computed(() => (selectedAtt.value ? slotsOf(selectedAtt.value) : []))
 
-  const updatedStatus = att.checkinStatus.map((slot, i) => {
-    if (i !== slotIndex) return slot
-    const current = slot.checkpoints?.[checkpointId] === true
-    return {
-      ...slot,
-      checkpoints: { ...(slot.checkpoints ?? {}), [checkpointId]: !current },
-    }
-  })
+// With no checkpoints configured the door still works through one generic
+// "Check In" checkpoint.
+const doorCheckpoints = computed(() =>
+  checkpoints.value.length ? checkpoints.value : [{ id: 'default', name: 'Check In' }]
+)
 
+function remainingAt(checkpointId) {
+  return activeSlots(selectedSlots.value).filter(s => s.checkpoints?.[checkpointId] !== true)
+}
+
+function checkedInTitle(slot, checkpointId) {
+  const at = lastCheckinAt(slot, checkpointId)
+  if (!at) return ''
+  const by = [...(slot.log ?? [])].reverse().find(e => e.cp === checkpointId)?.by
+  return `Checked in ${new Date(at).toLocaleString()}${by ? ` by ${by}` : ''}`
+}
+
+function doorActor() {
+  const u = auth.currentUser
+  return u ? (u.email || u.uid) : null
+}
+
+function replaceLocal(data) {
+  const idx = attendees.value.findIndex(a => a.id === data.id)
+  if (idx !== -1) attendees.value[idx] = data
+  if (selectedAtt.value?.id === data.id) selectedAtt.value = data
+}
+
+// Every door write re-reads the attendee inside a transaction and applies the
+// change to those fresh slots, so two gates admitting the same party at the
+// same moment both land instead of the later write erasing the earlier one.
+// Returns the ids of the slots that actually changed, or null on failure.
+async function commitDoor(att, mutate) {
+  doorBusy.value = true
+  doorError.value = ''
+  doorNotice.value = ''
   try {
-    await updateDoc(doc(db, 'events', eventId.value, 'attendees', att.id), {
-      checkinStatus: updatedStatus,
+    const attRef = doc(db, 'events', eventId.value, 'attendees', att.id)
+    const { data, changed } = await runTransaction(db, async tx => {
+      const snap = await tx.get(attRef)
+      if (!snap.exists()) throw new Error('This guest has been deleted.')
+      const fresh = { id: snap.id, ...snap.data() }
+      const slots = doorSlots(fresh)
+      if (!slots.length) throw new Error('This guest no longer has a card, so they cannot be checked in.')
+      const result = mutate(slots)
+      if (!result.changed.length) return { data: fresh, changed: [] }
+      // Store the slots already tidied, e.g. a removed member who was just
+      // checked out is dropped rather than left behind unchecked.
+      const next = reconcileSlots(result.slots, fresh)
+      tx.update(attRef, { checkinStatus: next })
+      return { data: { ...fresh, checkinStatus: next }, changed: result.changed }
     })
-    const updated = { ...att, checkinStatus: updatedStatus }
-    selectedAtt.value = updated
-    const idx = attendees.value.findIndex(a => a.id === att.id)
-    if (idx !== -1) attendees.value[idx] = updated
+    replaceLocal(data)
+    return changed
   } catch (e) {
-    console.error('Failed to toggle slot', e)
+    console.error('Check-in update failed', e)
+    doorError.value = /deleted|no longer has a card/.test(e?.message ?? '')
+      ? e.message
+      : 'Could not save — check your connection and try again.'
+    return null
   } finally {
-    togglingKey.value = null
+    doorBusy.value = false
   }
 }
 
-async function toggleSlotGeneric(att, slotIndex) {
-  const current = hasAnyCheckin(att.checkinStatus[slotIndex])
-  const updatedStatus = att.checkinStatus.map((slot, i) => {
-    if (i !== slotIndex) return slot
-    return { ...slot, checkpoints: { default: !current } }
-  })
-  const key = `${att.id}-${slotIndex}-default`
-  if (togglingKey.value === key) return
-  togglingKey.value = key
-  try {
-    await updateDoc(doc(db, 'events', eventId.value, 'attendees', att.id), {
-      checkinStatus: updatedStatus,
-    })
-    const updated = { ...att, checkinStatus: updatedStatus }
-    selectedAtt.value = updated
-    const idx = attendees.value.findIndex(a => a.id === att.id)
-    if (idx !== -1) attendees.value[idx] = updated
-  } catch (e) {
-    console.error('Failed to toggle slot', e)
-  } finally {
-    togglingKey.value = null
+async function checkIn(slot, cp) {
+  const changed = await commitDoor(selectedAtt.value, slots =>
+    applyCheckin(slots, [slot.id], cp.id, doorActor()))
+  if (changed && !changed.length) {
+    doorNotice.value = `${slot.attendee_name} was already checked in (updated from another device).`
   }
 }
+
+async function admitAll(cp) {
+  const changed = await commitDoor(selectedAtt.value, slots =>
+    applyCheckin(slots, activeSlots(slots).map(s => s.id), cp.id, doorActor()))
+  if (changed) {
+    doorNotice.value = changed.length
+      ? `Admitted ${changed.length} ${changed.length === 1 ? 'person' : 'people'}.`
+      : 'Everyone on this card was already checked in.'
+  }
+}
+
+async function checkOut(slot, cp) {
+  const where = checkpoints.value.length ? ` at ${cp.name}` : ''
+  if (!confirm(`Check ${slot.attendee_name} out${where}?\n\nOnly do this to undo a mistaken check-in.`)) return
+  await commitDoor(selectedAtt.value, slots => applyCheckout(slots, slot.id, cp.id, doorActor()))
+}
+
+// Keep the open drawer live, so a check-in from another gate or the scanner
+// app shows up here straight away.
+let stopLive = null
+watch(() => selectedAtt.value?.id, id => {
+  stopLive?.()
+  stopLive = null
+  doorError.value = ''
+  doorNotice.value = ''
+  if (!id) return
+  stopLive = onSnapshot(
+    doc(db, 'events', eventId.value, 'attendees', id),
+    snap => { if (snap.exists()) replaceLocal({ id: snap.id, ...snap.data() }) },
+    e => console.error('Live check-in updates failed', e),
+  )
+})
+onUnmounted(() => stopLive?.())
 </script>
 
 <style scoped>
@@ -1064,6 +1127,20 @@ async function toggleSlotGeneric(att, slotIndex) {
 .ec-cp-toggle--off:hover:not(:disabled) { background: #2a2a2a; color: #f0f0ec; }
 .ec-cp-toggle--on:hover:not(:disabled)  { background: #28BA4E; }
 .ec-cp-toggle:disabled { opacity: 0.5; cursor: not-allowed; }
+.ec-slot-who { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ec-slot-rel { font-size: 11px; color: #777; }
+.ec-slot--removed .ec-slot-name { color: #777; text-decoration: line-through; }
+.ec-slot--removed .ec-slot-rel  { color: #f59e0b; }
+.ec-admit-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+.ec-admit-btn {
+  padding: 8px 16px; border-radius: 20px; border: none;
+  background: #30D158; color: #fff; font-size: 12.5px; font-weight: 600;
+  font-family: inherit; cursor: pointer;
+}
+.ec-admit-btn:hover:not(:disabled) { background: #28BA4E; }
+.ec-admit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.ec-door-msg { margin: 0 0 12px; padding: 8px 12px; border-radius: 10px; font-size: 12px; background: rgba(255,255,255,0.06); color: #ccc; }
+.ec-door-msg--err { background: rgba(239,68,68,0.12); color: #f87171; }
 
 /* ══ Transitions ══ */
 .ec-fade-enter-active, .ec-fade-leave-active { transition: opacity 200ms ease; }
